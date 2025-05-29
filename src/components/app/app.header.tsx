@@ -1,13 +1,11 @@
-import Box from '@mui/material/Box'
-import Container from '@mui/material/Container'
 
 const AppHeader = () => {
   return (
-    <Box>
-      <Container maxWidth="lg">
+    <div className="app-footer">
+      <div className="container">
         AppHeader
-      </Container>
-    </Box>
+      </div>
+    </div>
   )
 }
 

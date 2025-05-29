@@ -1,13 +1,12 @@
-import Box from '@mui/material/Box'
-import Container from '@mui/material/Container'
+
 
 const AppFooter = () => {
   return (
-    <Box>
-      <Container maxWidth="lg">
+    <div className="app-footer">
+      <div className="container">
         AppFooter
-      </Container>
-    </Box>
+      </div>
+    </div>
   )
 }
 
