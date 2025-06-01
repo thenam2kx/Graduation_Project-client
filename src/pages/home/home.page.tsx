@@ -4,7 +4,7 @@ import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/navigation' // Thêm dòng này
 import { motion } from 'framer-motion'
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 // Fake data
 const categoriesWomen = [
@@ -180,10 +180,10 @@ const HomePage = () => {
           ))}
           {/* Custom navigation buttons */}
           <button className="custom-prev-women absolute top-1/2 -left-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <FiChevronLeft size={28} className="text-purple-600" />
+            <ChevronLeft size={28} className="text-purple-600" />
           </button>
           <button className="custom-next-women absolute top-1/2 -right-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <FiChevronRight size={28} className="text-purple-600" />
+            <ChevronRight size={28} className="text-purple-600" />
           </button>
         </Swiper>
       </motion.section>
@@ -216,10 +216,10 @@ const HomePage = () => {
             </SwiperSlide>
           ))}
           <button className="custom-prev-men absolute top-1/2 -left-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <FiChevronLeft size={28} className="text-purple-600" />
+            <ChevronLeft size={28} className="text-purple-600" />
           </button>
           <button className="custom-next-men absolute top-1/2 -right-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <FiChevronRight size={28} className="text-purple-600" />
+            <ChevronRight size={28} className="text-purple-600" />
           </button>
         </Swiper>
       </motion.section>
@@ -280,10 +280,10 @@ const HomePage = () => {
             </SwiperSlide>
           ))}
           <button className="custom-prev-product absolute top-1/2 -left-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <FiChevronLeft size={28} className="text-purple-600" />
+            <ChevronLeft size={28} className="text-purple-600" />
           </button>
           <button className="custom-next-product absolute top-1/2 -right-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <FiChevronRight size={28} className="text-purple-600" />
+            <ChevronRight size={28} className="text-purple-600" />
           </button>
         </Swiper>
       </motion.section>
@@ -320,10 +320,10 @@ const HomePage = () => {
             </SwiperSlide>
           ))}
           <button className="custom-prev-feedback absolute top-1/2 -left-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <FiChevronLeft size={28} className="text-purple-600" />
+            <ChevronLeft size={28} className="text-purple-600" />
           </button>
           <button className="custom-next-feedback absolute top-1/2 -right-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <FiChevronRight size={28} className="text-purple-600" />
+            <ChevronRight size={28} className="text-purple-600" />
           </button>
         </Swiper>
       </motion.section>
