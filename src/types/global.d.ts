@@ -21,6 +21,12 @@ declare global {
 
   interface IAuth {
     access_token: string
-    user: IUser
+    user: IUserAuth
+  }
+
+  interface IUserAuth {
+    _id: string
+    email: string
+    role: string
   }
 }

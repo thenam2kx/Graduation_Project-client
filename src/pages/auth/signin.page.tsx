@@ -41,8 +41,8 @@ const SigninPage = () => {
       }
     },
     onSuccess: (data: IAuth) => {
-      dispatch(setStateSignin(true))
-      dispatch(setAccessToken(data.access_token))
+      dispatch(setStateSignin({ user: data.user, access_token: data.access_token }))
+      dispatch(setAccessToken({ access_token: data.access_token }))
       toast.success('Đăng nhập thành công!')
       navigate('/')
     },
