@@ -36,7 +36,7 @@ const SignupPage = () => {
       }
     },
     onSuccess: () => {
-      navigate('/verification?email=' + form.getValues('email'))
+      navigate('/verification?email=' + form.getValues('email'), { replace: true } )
       toast.success('Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản của bạn.')
     },
     onError: (error) => {
