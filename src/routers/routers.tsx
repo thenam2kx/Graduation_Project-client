@@ -8,6 +8,9 @@ import SigninPage from '@/pages/auth/signin.page'
 import SignupPage from '@/pages/auth/signup.page'
 import { useAppSelector } from '@/redux/hooks'
 import VerificationPage from '@/pages/auth/verification.page'
+import AccountPage from '@/pages/account/account-info/account.page'
+import LayoutAccountPage from '@/pages/account/layout.account.page'
+import AddressForm from '@/pages/account/account-info/address.form'
 
 const Routers = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
@@ -18,6 +21,10 @@ const Routers = () => {
         <Route path='/' element={<LayoutPage />}>
           <Route index element={<HomePage />} />
           <Route path='' element={<ProductPage />} />
+          <Route path='account/:id' element={<LayoutAccountPage />}>
+            <Route index element={<AccountPage />} />
+            <Route path='add-address' element={<AddressForm />} />
+          </Route>
         </Route>
       </Route>
       <Route element={<PrivateRouters isAllowed={isAuthenticated ? false : true} redirectTo='/' />}>

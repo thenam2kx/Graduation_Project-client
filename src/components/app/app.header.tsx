@@ -1,9 +1,20 @@
+import { useAppSelector } from '@/redux/hooks'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 
 const AppHeader = () => {
   const [open, setOpen] = useState(false)
   const [iconMenuOpen, setIconMenuOpen] = useState(false)
+  const navigate = useNavigate()
+  const user = useAppSelector((state) => state.auth.user)
+
+  const handleRedirectAccount = () => {
+    if (!user) {
+      navigate('/signin')
+      return
+    }
+    navigate(`/account/${user._id}`)
+  }
 
   return (
     <header className="w-full h-20 border-b border-stone-300 bg-white px-4 md:px-8 lg:px-24 flex items-center">
@@ -51,7 +62,7 @@ const AppHeader = () => {
           <span className="sr-only">Giỏ hàng</span>
           <i className="fa fa-shopping-cart text-zinc-500"></i>
         </button>
-        <button className="p-2 md:p-3 bg-neutral-100 rounded-lg hover:bg-purple-100 transition cursor-pointer">
+        <button className="p-2 md:p-3 bg-neutral-100 rounded-lg hover:bg-purple-100 transition cursor-pointer" onClick={handleRedirectAccount}>
           <span className="sr-only">Tài khoản</span>
           <i className="fa fa-user text-zinc-500"></i>
         </button>
