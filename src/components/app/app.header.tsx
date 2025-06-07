@@ -33,7 +33,7 @@ const AppHeader = () => {
         <Link to="/shop" className="text-neutral-700 text-lg md:text-xl font-bold  hover:text-purple-600 transition">Cửa hàng</Link>
         <Link to="/men" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Nam</Link>
         <Link to="/women" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Nữ</Link>
-        <Link to="/combos" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Bài viết</Link>
+        <Link to="/blogs" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Bài viết</Link>
         <Link to="/joggers" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Giới thiệu</Link>
       </nav>
       {/* Hamburger menu on mobile */}
