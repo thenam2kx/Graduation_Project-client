@@ -122,24 +122,24 @@ const HomePage = () => {
   const products = Array.isArray(dataProducts?.results) ? dataProducts.results : []
   const brands = Array.isArray(dataBrand?.results) ? dataBrand.results : []
   const categories = Array.isArray(dataCategory?.results) ? dataCategory.results : []
-  
+
   // Sử dụng cùng dữ liệu sản phẩm cho cả hai phần
   const discountProducts = products
   const featuredProducts = products
-  
+
   // Tạo fashion slides từ sản phẩm random
-  const fashionSlides = products.length > 0 
+  const fashionSlides = products.length > 0
     ? products
-        .sort(() => 0.5 - Math.random()) // Trộn ngẫu nhiên mảng sản phẩm
-        .slice(0, 3) // Lấy 3 sản phẩm đầu tiên
-        .map(product => ({
-          left: {
-            bg: product.img || product.image || 'https://placehold.co/400x400?text=Product',
-            title: product.name?.toUpperCase() || 'SẢN PHẨM NỔI BẬT',
-            desc: product.desc || product.description || 'Khám phá ngay những sản phẩm nước hoa cao cấp với mùi hương độc đáo.',
-            btn: 'Mua ngay'
-          }
-        }))
+      .sort(() => 0.5 - Math.random()) // Trộn ngẫu nhiên mảng sản phẩm
+      .slice(0, 3) // Lấy 3 sản phẩm đầu tiên
+      .map(product => ({
+        left: {
+          bg: product.img || product.image || 'https://placehold.co/400x400?text=Product',
+          title: product.name?.toUpperCase() || 'SẢN PHẨM NỔI BẬT',
+          desc: product.desc || product.description || 'Khám phá ngay những sản phẩm nước hoa cao cấp với mùi hương độc đáo.',
+          btn: 'Mua ngay'
+        }
+      }))
     : defaultFashionSlides
 
   // Loading và error chung
