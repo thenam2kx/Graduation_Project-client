@@ -198,7 +198,7 @@ const HomePage = () => {
           spaceBetween={24}
           slidesPerView={2}
           breakpoints={{
-            1024: { slidesPerView: 4 }
+            1024: { slidesPerView: 5 }
           }}
           modules={[Navigation]}
           className="category-women-swiper relative"
@@ -239,7 +239,7 @@ const HomePage = () => {
           spaceBetween={24}
           slidesPerView={2}
           breakpoints={{
-            1024: { slidesPerView: 4 }
+            1024: { slidesPerView: 5 }
           }}
           modules={[Navigation]}
           className="category-men-swiper relative"
@@ -298,7 +298,7 @@ const HomePage = () => {
           slidesPerView={2}
           breakpoints={{
             640: { slidesPerView: 2 },
-            1024: { slidesPerView: 4 }
+            1024: { slidesPerView: 5 }
           }}
           modules={[Navigation]}
           className="product-swiper relative"

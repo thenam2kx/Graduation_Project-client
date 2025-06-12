@@ -12,7 +12,6 @@ import AccountPage from '@/pages/account/account-info/account.page'
 import LayoutAccountPage from '@/pages/account/layout.account.page'
 import AddressForm from '@/pages/account/account-info/address.form'
 import BlogPage from '@/pages/blog/blog.page'
-import BlogDetailPage from '@/pages/blog/blogDetail.page'
 
 const Routers = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
@@ -24,7 +23,6 @@ const Routers = () => {
           <Route index element={<HomePage />} />
           <Route path='shops' element={<ProductPage />} />
           <Route path='blogs' element={<BlogPage />} />
-          <Route path='blogs/:blogId' element={<BlogDetailPage />} />
           <Route path='account/:id' element={<LayoutAccountPage />}>
             <Route index element={<AccountPage />} />
             <Route path='add-address' element={<AddressForm />} />

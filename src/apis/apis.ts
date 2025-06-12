@@ -25,3 +25,13 @@ export const fetchListBrand = async () => {
   const response = await axios.get('/api/v1/brand')
   return response
 }
+
+export const fetchListCateBlog = async () => {
+  const response = await axios.get('/api/v1/cateblog')
+  return response
+}
+
+export const fetchCateBlogDetail = async (cateBlogId: string) => {
+  const response = await axios.get(`/api/v1/cateblog/${cateBlogId}`)
+  return response
+}
