@@ -10,6 +10,11 @@ export const fetchUserAPI = async (id: string) => {
   return axios.get<IBackendResponse<IUser>>(url)
 }
 
+//Api updateinfor
+export const updateUserAPI = async (id: string, data: { fullName: string; phone: string }) => {
+  const url = `/api/v1/users/${id}`
+  return axios.patch<IBackendResponse<IUser>>(url, data)
+}
 
 // Api handle address
 export const createAddressAPI = async (userId: string, address: IAddress) => {

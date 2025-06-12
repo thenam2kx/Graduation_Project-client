@@ -14,7 +14,7 @@ const AddressCard = () => {
       if (res.data) {
         return res.data
       } else {
-        toast.error('Đã có lỗi sảy ra!')
+        toast.error('Đã có lỗi xảy ra!')
       }
     }
   })
