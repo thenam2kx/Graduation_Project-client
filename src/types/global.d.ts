@@ -12,4 +12,21 @@ declare global {
     result: T[]
     meta: IMeta
   }
+
+  interface IMeta {
+    current: number
+    pageSize: number
+    total: number
+  }
+
+  interface IAuth {
+    access_token: string
+    user: IUserAuth
+  }
+
+  interface IUserAuth {
+    _id: string
+    email: string
+    role: string
+  }
 }

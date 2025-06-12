@@ -13,10 +13,9 @@ import LayoutAccountPage from '@/pages/account/layout.account.page'
 import AddressForm from '@/pages/account/account-info/address.form'
 import BlogPage from '@/pages/blog/blog.page'
 import BlogDetailPage from '@/pages/blog/blogDetail.page'
-import CartPage from '@/pages/cart/cart.page'
 
 const Routers = () => {
-  const isAuthenticated = true
+  const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
 
   return (
     <Routes>
@@ -30,12 +29,12 @@ const Routers = () => {
             <Route index element={<AccountPage />} />
             <Route path='add-address' element={<AddressForm />} />
           </Route>
-          <Route path='cart' element={<CartPage/>} />
         </Route>
       </Route>
       <Route element={<PrivateRouters isAllowed={isAuthenticated ? false : true} redirectTo='/' />}>
         <Route path='/signin' element={<SigninPage />} />
         <Route path='/signup' element={<SignupPage />} />
+        <Route path='/verification' element={<VerificationPage />} />
       </Route>
       <Route path='*' element={<NotFoundPage />} />
     </Routes>
