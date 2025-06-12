@@ -30,10 +30,10 @@ const AppHeader = () => {
       <nav className={`${
         open ? 'flex' : 'hidden'
       } absolute top-20 left-0 w-full bg-white flex-col gap-4 px-4 py-4 shadow md:static md:flex md:flex-row md:gap-10 md:bg-transparent md:shadow-none z-50`}>
-        <Link to="/shop" className="text-neutral-700 text-lg md:text-xl font-bold  hover:text-purple-600 transition">Cửa hàng</Link>
-        <Link to="/men" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Nam</Link>
-        <Link to="/women" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Nữ</Link>
-        <Link to="/blogs" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Bài viết</Link>
+        <Link to="/" className="text-neutral-700 text-lg md:text-xl font-bold  hover:text-purple-600 transition">Trang chủ</Link>
+        <Link to="/shops" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Cửa hàng</Link>
+        <Link to="/women" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Danh mục</Link>
+        <Link to="/blogs" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Tin tức</Link>
         <Link to="/joggers" className="text-zinc-500 text-lg md:text-xl font-medium  hover:text-purple-600 transition">Giới thiệu</Link>
       </nav>
       {/* Hamburger menu on mobile */}
