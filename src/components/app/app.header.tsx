@@ -58,7 +58,7 @@ const AppHeader = () => {
           <span className="sr-only">Yêu thích</span>
           <i className="fa fa-heart text-zinc-500"></i>
         </button>
-        <button className="p-2 md:p-3 bg-neutral-100 rounded-lg hover:bg-purple-100 transition cursor-pointer">
+        <button className="p-2 md:p-3 bg-neutral-100 rounded-lg hover:bg-purple-100 transition cursor-pointer" onClick={() => navigate('/cart')}>
           <span className="sr-only">Giỏ hàng</span>
           <i className="fa fa-shopping-cart text-zinc-500"></i>
         </button>
