@@ -43,31 +43,6 @@ const AppHeader = () => {
         scrolled ? 'shadow-md bg-white/95 backdrop-blur-sm' : 'bg-white'
       }`}
     >
-      {/* Top bar - only visible on desktop */}
-      <div className="hidden md:flex justify-between items-center px-6 lg:px-12 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm">
-        <div className="flex items-center gap-6">
-          <span className="flex items-center">
-            <Bell size={14} className="mr-1.5" /> Miễn phí vận chuyển cho đơn hàng từ 500K
-          </span>
-          <a href="tel:+84123456789" className="hover:underline">Hotline: 0123 456 789</a>
-        </div>
-        <div className="flex items-center gap-4">
-          <a href="#" className="hover:underline">Theo dõi đơn hàng</a>
-          <a href="#" className="hover:underline">Trợ giúp</a>
-          {!user ? (
-            <div className="flex items-center gap-2">
-              <Link to="/signin" className="hover:underline">Đăng nhập</Link>
-              <span>/</span>
-              <Link to="/signup" className="hover:underline">Đăng ký</Link>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span>Xin chào, {user.name || 'Khách hàng'}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Main header */}
       <div className="px-4 md:px-6 lg:px-12 py-3 md:py-4 flex items-center justify-between border-b border-gray-100">
         {/* Mobile menu button */}

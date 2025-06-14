@@ -5,6 +5,11 @@ export const fetchListBlog = async (params: any) => {
   return response
 }
 
+export const fetchBlogByCategory = async (categoryId: string, params: any) => {
+  const response = await axios.get(`/api/v1/blogs/by-category/${categoryId}`, { params })
+  return response
+}
+
 export const fetchBlogDetail = async (blogId: string) => {
   const response = await axios.get(`/api/v1/blogs/${blogId}`)
   return response
@@ -12,10 +17,5 @@ export const fetchBlogDetail = async (blogId: string) => {
 
 export const fetchListCateBlog = async () => {
   const response = await axios.get('/api/v1/cateblog')
-  return response
-}
-
-export const fetchCateBlogDetail = async (cateBlogId: string) => {
-  const response = await axios.get(`/api/v1/cateblog/${cateBlogId}`)
   return response
 }

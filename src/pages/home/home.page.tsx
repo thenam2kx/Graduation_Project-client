@@ -370,40 +370,7 @@ const HomePage = () => {
             <div className="w-1.5 h-8 bg-teal-600 rounded-full mr-3"></div>
             <h3 className='text-2xl sm:text-3xl font-bold'>Danh mục nước hoa</h3>
           </div>
-          <button className="text-teal-600 text-sm sm:text-base font-medium hover:underline flex items-center">
-            Xem tất cả <ChevronRight size={14} className="ml-1" />
-          </button>
         </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
-          {categories.slice(0, 6).map((category: any, idx: number) => (
-            <motion.div
-              key={idx}
-              className="relative overflow-hidden rounded-xl sm:rounded-2xl cursor-pointer group"
-              custom={idx}
-              initial='hidden'
-              whileInView='visible'
-              viewport={{ once: true }}
-              variants={fadeInUp}
-              whileHover={{ y: -5 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10"></div>
-              <img
-                src={category.img || category.image || `https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=500`}
-                alt={category.name}
-                className="w-full h-32 sm:h-40 md:h-48 lg:h-64 object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4 z-20 text-white">
-                <h4 className="font-bold text-sm sm:text-base md:text-lg mb-0.5 sm:mb-1">{category.name}</h4>
-                <p className="text-xs sm:text-sm text-white/80 mb-1 sm:mb-2 line-clamp-2 hidden sm:block">
-                  {category.desc || 'Khám phá bộ sưu tập độc đáo'}
-                </p>
-                <div className="w-0 group-hover:w-full h-0.5 bg-white transition-all duration-300"></div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
         <div className="bg-gradient-to-r from-teal-50 to-emerald-50 p-6 rounded-2xl">
           <Swiper
             navigation={{
