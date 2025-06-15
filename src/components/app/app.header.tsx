@@ -46,6 +46,7 @@ const AppHeader = () => {
       {/* Main header */}
       <div className="px-4 md:px-6 lg:px-12 py-3 md:py-4 flex items-center justify-between border-b border-gray-100">
         {/* Mobile menu button */}
+
         <button
           className="md:hidden p-2 rounded-full hover:bg-gray-100"
           onClick={() => setOpen(!open)}
