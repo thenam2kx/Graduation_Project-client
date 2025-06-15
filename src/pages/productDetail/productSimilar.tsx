@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
-import { Heart } from 'lucide-react'
+import { Heart, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Pagination } from 'antd'
 
 const ProductsSimilar = () => {
   const { id } = useParams()
@@ -132,15 +131,38 @@ const ProductsSimilar = () => {
         ))}
       </div>
 
-      <div className="mt-8 flex justify-center">
-        <Pagination
-          current={currentPage}
-          pageSize={pageSize}
-          total={products.length}
-          onChange={handlePageChange}
-          showSizeChanger={false}
-        />
+      <div className="mt-8 flex justify-center items-center gap-2">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="p-2 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+
+        {Array.from({ length: Math.ceil(products.length / pageSize) }, (_, i) => i + 1).map((page) => (
+          <button
+            key={page}
+            onClick={() => handlePageChange(page)}
+            className={`px-3 py-1 rounded border text-sm ${
+              currentPage === page
+                ? 'bg-purple-600 text-white border-purple-600'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === Math.ceil(products.length / pageSize)}
+          className="p-2 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
+
     </div>
   )
 }

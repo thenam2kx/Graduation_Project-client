@@ -11,7 +11,7 @@ const ProductDescription = ({ product }: ProductDescriptionProps) => {
   const [activeTab, setActiveTab] = useState('description')
 
   useEffect(() => {
-    console.log('Mô tả sản phẩm:', product?.description)
+    // console.log('Mô tả sản phẩm:', product?.description)
   }, [product])
 
   const tabs = [

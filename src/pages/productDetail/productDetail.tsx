@@ -2,12 +2,13 @@ import {
   ShoppingCart,
   Shield,
   Truck,
-  RotateCcw
+  RotateCcw,
+  AlertTriangle,
+  LoaderCircle
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
-import { Skeleton, Alert } from 'antd'
 import ProductDescription from './productDescription'
 import ProductsSimilar from './productSimilar'
 import { useParams } from 'react-router-dom'
@@ -66,12 +67,13 @@ const ProductDetail = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {isError && (
-          <Alert type="error" message="Không thể tải dữ liệu sản phẩm" showIcon />
+          <div className="flex items-center gap-2 p-4 bg-red-100 text-red-700 rounded-md">
+            <AlertTriangle className="w-5 h-5" />
+            <span>Không thể tải dữ liệu sản phẩm</span>
+          </div>
         )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left side - Images */}
           <div className="flex gap-4">
-            {/* Thumbnails */}
             <div className="flex flex-col gap-3 items-center justify-center">
               {thumbnails.map((thumb: string) => (
                 <div
@@ -91,11 +93,11 @@ const ProductDetail = () => {
                 </div>
               ))}
             </div>
-
-            {/* Main Image */}
             <div className="flex-1 bg-white rounded-2xl overflow-hidden flex items-center justify-center h-[500px]">
               {isLoading ? (
-                <Skeleton.Image style={{ width: '100%', height: 500 }} />
+                <div className="w-full h-full flex items-center justify-center animate-pulse bg-gray-100">
+                  <LoaderCircle className="w-8 h-8 text-gray-400 animate-spin" />
+                </div>
               ) : (
                 <img
                   src={mainImage || '/placeholder.svg'}
@@ -105,20 +107,17 @@ const ProductDetail = () => {
               )}
             </div>
           </div>
-
-          {/* Right side - Product Details */}
           <div className="space-y-6">
             <h1 className="text-3xl font-bold text-gray-900">
               {isLoading ? (
-                <Skeleton.Input active size="large" style={{ width: 300 }} />
+                <div className="w-72 h-8 bg-gray-200 rounded animate-pulse" />
               ) : product?.name}
             </h1>
             <div className="text-sm text-gray-500">
               {isLoading ? (
-                <Skeleton.Input size="small" style={{ width: 150 }} />
+                <div className="w-36 h-4 bg-gray-200 rounded animate-pulse" />
               ) : `Thương hiệu: ${product?.brand?.name || 'Không xác định'}`}
             </div>
-
             <div className="space-y-3">
               <div className="flex gap-2">
                 {availableSizes.map(size => (
@@ -145,16 +144,14 @@ const ProductDetail = () => {
               <div className="flex items-center justify-center px-8 py-3 border border-gray-300 rounded-lg bg-white">
                 <span className="text-xl font-bold text-gray-900">
                   {isLoading ? (
-                    <Skeleton.Input size="small" />
+                    <div className="w-24 h-6 bg-gray-200 rounded animate-pulse" />
                   ) : (
                     `₫${product?.price?.toLocaleString('vi-VN')}`
                   )}
                 </span>
               </div>
             </div>
-
             <hr className="my-8 border-gray-200" />
-
             <div className="grid grid-cols-2 gap-4 pt-6">
               <div className="flex items-center gap-3">
                 <Shield className="w-5 h-5 text-gray-600" />
@@ -172,7 +169,6 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
-
       <ProductDescription product={product} />
       <ProductsSimilar />
     </div>
