@@ -28,4 +28,14 @@ declare global {
     address: string
     isPrimary: boolean
   }
+
+  interface IAddressListResponse {
+    meta: {
+      current: number
+      pageSize: number
+      pages: number
+      total: number
+    }
+    results: IAddress[]
+  }
 }
