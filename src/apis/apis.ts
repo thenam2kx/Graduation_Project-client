@@ -1,5 +1,4 @@
-import axios from '@/config/axios.customize'
-// Write functions to call APIs here
+
 
 export const fetchListProduct = async (params: any) => {
   const response = await axios.get('/api/v1/products', { params })
@@ -62,3 +61,4 @@ export const deleteCartItem = async (cartItemId: string) => {
   const response = await axios.delete(`/api/v1/cartitems/${cartItemId}`)
   return response
 }
+

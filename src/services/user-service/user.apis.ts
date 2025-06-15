@@ -10,24 +10,34 @@ export const fetchUserAPI = async (id: string) => {
   return axios.get<IBackendResponse<IUser>>(url)
 }
 
+//Api updateinfor
+export const updateUserAPI = async (id: string, data: { fullName: string; phone: string }) => {
+  const url = `/api/v1/users/${id}`
+  return axios.patch<IBackendResponse<IUser>>(url, data)
+}
 
 // Api handle address
 export const createAddressAPI = async (userId: string, address: IAddress) => {
-  const url = `/api/v1/users/${userId}/addresses`
+  const url = `/api/v1/addresses/users/${userId}`
   return axios.post<IBackendResponse<IAddress>>(url, address)
 }
 
 export const updateAddressAPI = async (userId: string, addressId: string, address: IAddress) => {
-  const url = `/api/v1/users/${userId}/addresses/${addressId}`
+  const url = `/api/v1/addresses/users/${userId}/${addressId}`
   return axios.patch<IBackendResponse<IAddress>>(url, address)
 }
 
 export const fetchAllAddressByUserAPI = async (userId: string) => {
-  const url = `/api/v1/users/${userId}/addresses`
-  return axios.get<IBackendResponse<IAddress[]>>(url)
+  const url = `/api/v1/addresses/users/${userId}`
+  return axios.get<IBackendResponse<IAddressListResponse>>(url)
 }
 
 export const fetchInfoAddressByUserAPI = async (userId: string, addressId: string) => {
-  const url = `/api/v1/users/${userId}/addresses/${addressId}`
+  const url = `/api/v1/addresses/users/${userId}/${addressId}`
   return axios.get<IBackendResponse<IAddress>>(url)
+}
+
+export const deleteAddressAPI = async (userId: string, addressId: string) => {
+  const url = `/api/v1/addresses/users/${userId}/${addressId}`
+  return axios.delete<IBackendResponse<IAddress>>(url)
 }

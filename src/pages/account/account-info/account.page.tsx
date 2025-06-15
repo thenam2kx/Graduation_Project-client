@@ -6,18 +6,25 @@ import AccountAddress from './address.card'
 import { useQuery } from '@tanstack/react-query'
 import { fetchUserAPI } from '@/services/user-service/user.apis'
 import { toast } from 'react-toastify'
+import * as Dialog from '@radix-ui/react-dialog'
+import UpdateAccount from './update.account'
+import AddressForm from './address.form'
+
+import { useState } from 'react'
 
 const AccountPage = () => {
   const { id } = useParams<{ id: string }>()
+  const [open, setOpen] = useState(false)
+  const [openAddAddress, setOpenAddAddress] = useState(false)
 
-  const { data: userInfo } = useQuery({
+  const { data: userInfo, refetch } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
       const res = await fetchUserAPI(id as string)
       if (res.data) {
         return res.data
       } else {
-        toast.error('Đã có lỗi sảy ra!')
+        toast.error('Đã có lỗi xảy ra!')
       }
     }
   })
@@ -28,7 +35,6 @@ const AccountPage = () => {
         Thông tin liên hệ
       </h2>
 
-      {/* Contact Information Sections */}
       <div className="space-y-4 lg:space-y-6">
         {/* Full Name Section */}
         <section className="w-full py-3 lg:py-4">
@@ -44,6 +50,7 @@ const AccountPage = () => {
             <Button
               variant="link"
               className="font-semibold text-sm text-[#3c4242] p-0 h-auto self-start sm:self-auto"
+              onClick={() => setOpen(true)}
             >
               Sửa
             </Button>
@@ -51,6 +58,33 @@ const AccountPage = () => {
         </section>
 
         <Separator className="my-2" />
+
+        {/* Modal cập nhật thông tin người dùng */}
+        <Dialog.Root open={open} onOpenChange={setOpen}>
+          <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-fadeIn" />
+            <Dialog.Content className="fixed top-[50%] left-[50%] max-w-xl w-[90vw] max-h-[85vh] overflow-auto rounded-md bg-white p-6 shadow-lg transform -translate-x-1/2 -translate-y-1/2 focus:outline-none data-[state=open]:animate-slideIn">
+              {userInfo && (
+                <UpdateAccount
+                  defaultValues={userInfo}
+                  onClose={() => setOpen(false)}
+                  onUpdated={() => {
+                    setOpen(false)
+                    refetch()
+                  }}
+                />
+              )}
+              <Dialog.Close asChild>
+                <button
+                  aria-label="Close"
+                  className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </Dialog.Close>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
 
         {/* Phone Section */}
         <section className="w-full py-3 lg:py-4">
@@ -65,12 +99,6 @@ const AccountPage = () => {
                     {userInfo && userInfo.phone}
                   </span>
                 </div>
-                <Button
-                  variant="link"
-                  className="p-0 h-auto font-semibold text-[#3c4242] text-sm self-start sm:self-auto"
-                >
-                  Sửa
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -99,19 +127,37 @@ const AccountPage = () => {
           <h2 className="font-bold text-[#3c4242] text-lg md:text-[22px] tracking-[0.44px] leading-[33.5px]">
             Địa chỉ
           </h2>
-          <Button
-            variant="ghost"
-            className="font-semibold text-[#3c4242] text-sm lg:text-lg self-start sm:self-auto"
-          >
-            Thêm mới
-          </Button>
         </div>
 
-        {/* Address Component */}
+        {/* Address List */}
         <div className="w-full">
           <AccountAddress />
         </div>
       </div>
+
+      {/* Modal thêm địa chỉ mới */}
+      <Dialog.Root open={openAddAddress} onOpenChange={setOpenAddAddress}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-fadeIn" />
+          <Dialog.Content className="fixed top-[50%] left-[50%] max-w-xl w-[90vw] max-h-[85vh] overflow-auto rounded-md bg-white p-6 shadow-lg transform -translate-x-1/2 -translate-y-1/2 focus:outline-none data-[state=open]:animate-slideIn">
+            <AddressForm
+              onSuccess={() => {
+                setOpenAddAddress(false)
+                refetch()
+              }}
+              onCancel={() => setOpenAddAddress(false)}
+            />
+            <Dialog.Close asChild>
+              <button
+                aria-label="Close"
+                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </Dialog.Close>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   )
 }
