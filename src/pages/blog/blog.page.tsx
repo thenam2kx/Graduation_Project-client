@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { BLOG_KEYS } from '@/services/blog-service/blog.keys'
 import { fetchListBlog, fetchBlogByCategory } from '../../services/blog-service/blog.apis'
