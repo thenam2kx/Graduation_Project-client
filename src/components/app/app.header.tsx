@@ -55,8 +55,10 @@ const AppHeader = () => {
       {/* Icons */}
       <div className="hidden md:flex gap-2 md:gap-3 ml-2">
         <button className="p-2 md:p-3 bg-neutral-100 rounded-lg hover:bg-purple-100 transition cursor-pointer">
+          <Link to='/wishlist' >
           <span className="sr-only">Yêu thích</span>
           <i className="fa fa-heart text-zinc-500"></i>
+        </Link>
         </button>
         <button className="p-2 md:p-3 bg-neutral-100 rounded-lg hover:bg-purple-100 transition cursor-pointer">
           <span className="sr-only">Giỏ hàng</span>
