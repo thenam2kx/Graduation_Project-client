@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { Heart, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router'
 
 const ProductsSimilar = () => {
   const { id } = useParams()
