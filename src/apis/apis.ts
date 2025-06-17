@@ -1,4 +1,4 @@
-
+import axios from '@/config/axios.customize'
 
 export const fetchListProduct = async (params: any) => {
   const response = await axios.get('/api/v1/products', { params })

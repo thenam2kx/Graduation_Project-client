@@ -20,7 +20,7 @@ const AppHeader = () => {
         setScrolled(false)
       }
     }
-    
+
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -38,7 +38,7 @@ const AppHeader = () => {
   }
 
   return (
-    <header 
+    <header
       className={`w-full sticky top-0 z-50 transition-all duration-300 ${
         scrolled ? 'shadow-md bg-white/95 backdrop-blur-sm' : 'bg-white'
       }`}
@@ -69,15 +69,15 @@ const AppHeader = () => {
           <Link to="/" className="px-3 py-2 text-neutral-800 font-semibold hover:text-purple-600 transition">
             Trang chủ
           </Link>
-          
+
           <div className="relative group">
-            <button 
+            <button
               className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition flex items-center"
               onClick={() => toggleDropdown('shop')}
             >
               Cửa hàng <ChevronDown size={16} className={`ml-1 transition-transform ${activeDropdown === 'shop' ? 'rotate-180' : ''}`} />
             </button>
-            
+
             <div className={`absolute top-full left-0 bg-white shadow-lg rounded-lg w-56 py-2 transition-all ${activeDropdown === 'shop' ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
               <Link to="/shops/men" className="block px-4 py-2 hover:bg-purple-50 hover:text-purple-600 transition">
                 Nước hoa nam
@@ -93,15 +93,15 @@ const AppHeader = () => {
               </Link>
             </div>
           </div>
-          
+
           <div className="relative group">
-            <button 
+            <button
               className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition flex items-center"
               onClick={() => toggleDropdown('category')}
             >
               Danh mục <ChevronDown size={16} className={`ml-1 transition-transform ${activeDropdown === 'category' ? 'rotate-180' : ''}`} />
             </button>
-            
+
             <div className={`absolute top-full left-0 bg-white shadow-lg rounded-lg w-56 py-2 transition-all ${activeDropdown === 'category' ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
               <Link to="/category/new-arrivals" className="block px-4 py-2 hover:bg-purple-50 hover:text-purple-600 transition">
                 Sản phẩm mới
@@ -114,11 +114,11 @@ const AppHeader = () => {
               </Link>
             </div>
           </div>
-          
+
           <Link to="/blogs" className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition">
             Tin tức
           </Link>
-          
+
           <Link to="/about" className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition">
             Giới thiệu
           </Link>
@@ -135,30 +135,30 @@ const AppHeader = () => {
             />
             <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
-          
+
           {/* Search - Mobile */}
-          <button 
+          <button
             className="md:hidden p-2 rounded-full hover:bg-gray-100"
             onClick={() => setSearchOpen(!searchOpen)}
           >
             <Search size={20} />
           </button>
-          
+
           {/* Wishlist */}
           <button className="p-2 rounded-full hover:bg-gray-100 relative">
             <Heart size={20} className="text-gray-700" />
             <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">2</span>
           </button>
-          
+
           {/* Cart */}
-          <button className="p-2 rounded-full hover:bg-gray-100 relative">
+          <Link to="/cart" className="p-2 rounded-full hover:bg-gray-100 relative">
             <ShoppingBag size={20} className="text-gray-700" />
             <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">3</span>
-          </button>
-          
+          </Link>
+
           {/* Account */}
-          <button 
-            className="p-2 rounded-full hover:bg-gray-100" 
+          <button
+            className="p-2 rounded-full hover:bg-gray-100"
             onClick={handleRedirectAccount}
           >
             <User size={20} className="text-gray-700" />
