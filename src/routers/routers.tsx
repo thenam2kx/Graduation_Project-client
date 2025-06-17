@@ -16,7 +16,6 @@ import ProductDetail from '@/pages/productDetail/productDetail'
 import BlogDetailPage from '@/pages/blog/blogDetail.page'
 import CartPage from '@/pages/cart/cart.page'
 import WishlistPage from '@/pages/wishlist/wishlist.page'
-import BlogDetailPage from '@/pages/blog/blog.detail.page'
 
 const Routers = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
