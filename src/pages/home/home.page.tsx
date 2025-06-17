@@ -1,12 +1,17 @@
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Autoplay, Pagination, Navigation } from 'swiper/modules'
+import { Autoplay, Pagination, Navigation, EffectFade, EffectCoverflow } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
-import 'swiper/css/navigation' // Thêm dòng này
+import 'swiper/css/navigation'
+import 'swiper/css/effect-fade'
+import 'swiper/css/effect-coverflow'
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { fetchListBrand, fetchListCategory, fetchListProduct } from '@/apis/apis'
+import { ChevronLeft, ChevronRight, Star, ShoppingBag, Heart, TrendingUp, Award, Sparkles } from 'lucide-react'
+import { PRODUCT_KEYS } from '@/services/product-service/product.keys'
 import { useQuery } from '@tanstack/react-query'
+import { fetchListBrand, fetchListCategory, fetchListProduct } from '@/services/product-service/product.apis'
+import { useState } from 'react'
+import { Eye } from 'lucide-react'
 
 const feedbacks = [
   { name: 'Nguyễn Văn A', content: 'Mùi hương rất sang trọng, lưu hương lâu. Sẽ ủng hộ shop dài dài!', img: 'https://placehold.co/58x58?text=A' },
@@ -21,26 +26,30 @@ const bannerSlides = [
   {
     title: 'Khám phá nước hoa chính hãng',
     desc: 'Nước hoa nam & nữ - Sang trọng, quyến rũ, cá tính',
-    img: 'https://placehold.co/400x400?text=Perfume+Banner',
-    btn: 'Mua ngay'
+    img: 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=1000',
+    btn: 'Mua ngay',
+    bgColor: 'from-purple-600 to-blue-400'
   },
   {
     title: 'Ưu đãi mùa hè',
     desc: 'Giảm giá lên đến 30% cho nước hoa hot',
-    img: 'https://placehold.co/400x400?text=Summer+Sale',
-    btn: 'Xem ngay'
+    img: 'https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?q=80&w=1000',
+    btn: 'Xem ngay',
+    bgColor: 'from-emerald-500 to-teal-400'
   },
   {
     title: 'Bộ sưu tập mới 2025',
     desc: 'Khám phá mùi hương mới nhất từ các thương hiệu nổi tiếng',
-    img: 'https://placehold.co/400x400?text=New+Collection+2025',
-    btn: 'Khám phá'
+    img: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000',
+    btn: 'Khám phá',
+    bgColor: 'from-amber-500 to-orange-400'
   },
   {
     title: 'Quà tặng đặc biệt',
     desc: 'Tặng kèm gift set cho đơn hàng từ 2 triệu',
-    img: 'https://placehold.co/400x400?text=Gift+Set',
-    btn: 'Nhận quà'
+    img: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=1000',
+    btn: 'Nhận quà',
+    bgColor: 'from-rose-500 to-pink-400'
   }
 ]
 
@@ -82,13 +91,24 @@ const fadeInUp = {
 }
 
 const HomePage = () => {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [favorites, setFavorites] = useState<string[]>([])
+
+  // Handle favorite toggle
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev =>
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    )
+  }
   // Sản phẩm (dùng chung cho cả sản phẩm đang giảm giá và sản phẩm nổi bật)
   const {
     data: dataProducts,
     isLoading: isLoadingProducts,
     isError: isErrorProducts
   } = useQuery({
-    queryKey: ['products'],
+    queryKey: [PRODUCT_KEYS.FETCH_LIST_PRODUCT],
     queryFn: () => fetchListProduct({}),
     select: (res) => res.data,
     keepPreviousData: true
@@ -100,7 +120,7 @@ const HomePage = () => {
     isLoading: isLoadingBrand,
     isError: isErrorBrand
   } = useQuery({
-    queryKey: ['brand'],
+    queryKey: [PRODUCT_KEYS.FETCH_LIST_BRAND],
     queryFn: () => fetchListBrand(),
     select: (res) => res.data,
     keepPreviousData: true
@@ -112,7 +132,7 @@ const HomePage = () => {
     isLoading: isLoadingCategory,
     isError: isErrorCategory
   } = useQuery({
-    queryKey: ['categories'],
+    queryKey: [PRODUCT_KEYS.FETCH_LIST_CATEGORY],
     queryFn: () => fetchListCategory(),
     select: (res) => res.data,
     keepPreviousData: true
@@ -161,249 +181,632 @@ const HomePage = () => {
   )
 
   return (
-    <div className='bg-white min-h-screen p-3'>
+    <div className='bg-gradient-to-b from-white to-gray-50 min-h-screen p-3'>
       {/* Banner with Swiper */}
-      <section className='container mx-auto rounded-xl p-2 md:p-8 mb-5'>
-        <Swiper loop autoplay={{ delay: 3500, disableOnInteraction: false }} pagination={{ clickable: true }} modules={[Autoplay, Pagination]} className='rounded-xl'>
+      <section className='container mx-auto rounded-xl p-2 md:p-8 mb-8'>
+        <Swiper
+          loop
+          effect="fade"
+          autoplay={{ delay: 4000, disableOnInteraction: false }}
+          pagination={{ clickable: true, dynamicBullets: true }}
+          modules={[Autoplay, Pagination, EffectFade]}
+          className='rounded-xl shadow-2xl'
+          onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
+        >
           {bannerSlides.map((slide, idx) => (
             <SwiperSlide key={idx}>
-              <div className='flex flex-col md:flex-row items-stretch justify-between bg-gradient-to-r from-purple-600 to-blue-400 rounded-xl p-4 md:p-16 h-92 md:h-[400px] overflow-hidden'>
-                <motion.div className='z-10 max-w-xs md:max-w-lg flex flex-col justify-center' initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }}>
-                  <h2 className='text-white text-xl md:text-5xl font-extrabold mb-4'>{slide.title}</h2>
-                  <p className='text-white text-base md:text-xl mb-6'>{slide.desc}</p>
-                  <button className='px-4 py-2 md:px-8 md:py-3 bg-white text-purple-700 font-bold rounded-lg shadow hover:bg-purple-700 hover:text-white transition duration-200 transform hover:scale-105 cursor-pointer'>{slide.btn}</button>
+              <div className={`flex flex-col md:flex-row items-stretch justify-between bg-gradient-to-r ${slide.bgColor} rounded-xl p-5 md:p-16 h-auto min-h-[400px] md:h-[450px] overflow-hidden relative`}>
+                {/* Decorative elements - hidden on smallest screens */}
+                <div className="absolute top-0 left-0 w-full h-full opacity-10 hidden sm:block">
+                  <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-white"></div>
+                  <div className="absolute bottom-10 right-10 w-24 h-24 rounded-full bg-white"></div>
+                  <div className="absolute top-1/2 left-1/3 w-16 h-16 rounded-full bg-white"></div>
+                </div>
+
+                <motion.div
+                  className='z-10 max-w-full md:max-w-lg flex flex-col justify-center mb-6 md:mb-0'
+                  initial={{ opacity: 0, x: -60 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                >
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm px-3 py-1.5 md:px-4 md:py-2 rounded-lg inline-block mb-3 md:mb-4 w-fit">
+                    <span className="text-white text-xs md:text-sm font-medium flex items-center">
+                      <Sparkles size={14} className="mr-1.5 md:mr-2" /> Khuyến mãi đặc biệt
+                    </span>
+                  </div>
+                  <h2 className='text-white text-xl sm:text-3xl md:text-5xl font-extrabold mb-3 md:mb-4 drop-shadow-md'>{slide.title}</h2>
+                  <p className='text-white text-sm sm:text-base md:text-xl mb-4 md:mb-6 drop-shadow-sm'>{slide.desc}</p>
+                  <button className='px-3 py-1.5 sm:px-4 sm:py-2 md:px-8 md:py-3 bg-white text-purple-700 font-bold rounded-lg shadow-lg hover:bg-purple-700 hover:text-white transition duration-300 transform hover:scale-105 cursor-pointer flex items-center justify-center w-fit'>
+                    <ShoppingBag size={16} className="mr-1.5 md:mr-2" />
+                    {slide.btn}
+                  </button>
                 </motion.div>
-                <motion.img
-                  src={slide.img}
-                  alt='Banner'
-                  className='w-40 h-40 md:w-80 md:h-80 object-cover rounded-xl shadow-lg z-0 mt-8 md:mt-0 md:ml-8 self-center'
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.7, delay: 0.2 }}
-                />
+
+                <motion.div
+                  className="relative z-10 flex justify-center"
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
+                >
+                  <img
+                    src={slide.img}
+                    alt='Banner'
+                    className='w-32 h-32 sm:w-40 sm:h-40 md:w-96 md:h-96 object-cover rounded-xl shadow-2xl mt-0 md:mt-0 md:ml-8 self-center'
+                  />
+                  <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-3/4 h-8 bg-black opacity-20 blur-xl rounded-full"></div>
+                </motion.div>
               </div>
             </SwiperSlide>
           ))}
         </Swiper>
+
+        {/* Banner indicators */}
+        <div className="flex justify-center mt-4 gap-1.5 md:gap-2">
+          {bannerSlides.map((_, idx) => (
+            <div
+              key={idx}
+              className={`w-2 md:w-3 h-2 md:h-3 rounded-full transition-all duration-300 cursor-pointer ${activeIndex === idx ? 'bg-purple-600 w-6 md:w-8' : 'bg-gray-300'}`}
+              onClick={() => setActiveIndex(idx)}
+            ></div>
+          ))}
+        </div>
       </section>
 
-      {/* Sản phẩm đang giảm giá (thay thế nước hoa dành cho nữ) */}
-      <motion.section className='container mx-auto mb-8' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
-        <h3 className='text-3xl font-semibold mb-6 ml-1'>Sản phẩm đang giảm giá</h3>
-        <Swiper
-          navigation={{
-            nextEl: `.custom-next-women`,
-            prevEl: `.custom-prev-women`
-          }}
-          spaceBetween={24}
-          slidesPerView={2}
-          breakpoints={{
-            1024: { slidesPerView: 5 }
-          }}
-          modules={[Navigation]}
-          className="category-women-swiper relative"
-        >
-          {discountProducts.map((product: any, idx: number) => (
-            <SwiperSlide key={idx}>
-              <motion.div className='bg-white rounded-xl border-2 border-gray-200 shadow hover:shadow-xl transition p-2 md:p-4 flex flex-col items-center group cursor-pointer' custom={idx} initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
-                <img src={product.img || product.image} alt={product.name} className='w-full h-60 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform duration-200 cursor-pointer' />
-                <div
-                  className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 max-w-[200px] h-12 flex items-center justify-center'
+      {/* Sản phẩm đang giảm giá */}
+      <motion.section className='container mx-auto mb-12' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="w-1.5 h-8 bg-purple-600 rounded-full mr-3"></div>
+            <h3 className='text-3xl font-bold'>Sản phẩm đang giảm giá</h3>
+          </div>
+          <button className="text-purple-600 font-medium hover:underline flex items-center">
+            Xem tất cả <ChevronRight size={16} className="ml-1" />
+          </button>
+        </div>
+
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-2xl mb-6">
+          <Swiper
+            navigation={{
+              nextEl: `.custom-next-women`,
+              prevEl: `.custom-prev-women`
+            }}
+            spaceBetween={24}
+            slidesPerView={2}
+            breakpoints={{
+              640: { slidesPerView: 3 },
+              1024: { slidesPerView: 5 }
+            }}
+            modules={[Navigation]}
+            className="category-women-swiper relative"
+          >
+            {discountProducts.map((product: any, idx: number) => (
+              <SwiperSlide key={idx}>
+                <motion.div
+                  className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 md:p-4 flex flex-col group cursor-pointer relative overflow-hidden'
+                  custom={idx}
+                  initial='hidden'
+                  whileInView='visible'
+                  viewport={{ once: true }}
+                  variants={fadeInUp}
+                  whileHover={{ y: -5 }}
                 >
-                  {product.name}
-                </div>
-                <div className='text-purple-600 font-medium text-sm group-hover:underline transition cursor-pointer line-clamp-2 h-10 flex items-center justify-center text-center max-w-[180px]'>
-                  {product.desc || 'Khám phá ngay!'}
-                </div>
-              </motion.div>
-            </SwiperSlide>
-          ))}
-          {/* Custom navigation buttons */}
-          <button className="custom-prev-women absolute top-1/2 -left-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <ChevronLeft size={28} className="text-purple-600" />
-          </button>
-          <button className="custom-next-women absolute top-1/2 -right-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <ChevronRight size={28} className="text-purple-600" />
-          </button>
-        </Swiper>
+                  {/* Sale badge */}
+                  <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
+                    -{Math.floor(Math.random() * 30) + 10}%
+                  </div>
+
+                  {/* Favorite button */}
+                  <button
+                    className="absolute top-3 right-3 bg-white rounded-full p-1.5 shadow-md z-10 transition-all duration-200 hover:bg-pink-50"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleFavorite(product._id || idx.toString())
+                    }}
+                  >
+                    <Heart
+                      size={18}
+                      className={favorites.includes(product._id || idx.toString()) ? "fill-pink-500 text-pink-500" : "text-gray-400"}
+                    />
+                  </button>
+
+                  <div className="relative overflow-hidden rounded-lg mb-4">
+                    <img
+                      src={product.img || product.image}
+                      alt={product.name}
+                      className='w-full h-60 object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer'
+                    />
+
+                    {/* Quick action overlay */}
+                    <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <button className="bg-white text-purple-700 rounded-full p-2 mx-1 hover:bg-purple-700 hover:text-white transition-colors">
+                        <ShoppingBag size={18} />
+                      </button>
+                      <button className="bg-white text-purple-700 rounded-full p-2 mx-1 hover:bg-purple-700 hover:text-white transition-colors">
+                        <Eye size={18} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 flex flex-col">
+                    <div className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 h-12 flex items-center justify-center'>
+                      {product.name}
+                    </div>
+
+                    <div className="flex items-center justify-center mb-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={14} className={i < 4 ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} />
+                      ))}
+                      <span className="text-xs text-gray-500 ml-1">(4.0)</span>
+                    </div>
+
+                    <div className="flex justify-center items-center gap-2 mt-auto">
+                      <span className="text-gray-400 line-through text-sm">
+                        {typeof product.price === 'number' ? (product.price * 1.3).toLocaleString() : product.price}₫
+                      </span>
+                      <span className="text-purple-700 font-bold">
+                        {typeof product.price === 'number' ? product.price.toLocaleString() : product.price}₫
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              </SwiperSlide>
+            ))}
+
+            {/* Custom navigation buttons */}
+            <button className="custom-prev-women absolute top-1/2 -left-4 z-10 bg-white shadow-lg rounded-full p-2.5 flex items-center justify-center hover:bg-purple-100 transition border border-gray-100 active:scale-90">
+              <ChevronLeft size={24} className="text-purple-600" />
+            </button>
+            <button className="custom-next-women absolute top-1/2 -right-4 z-10 bg-white shadow-lg rounded-full p-2.5 flex items-center justify-center hover:bg-purple-100 transition border border-gray-100 active:scale-90">
+              <ChevronRight size={24} className="text-purple-600" />
+            </button>
+          </Swiper>
+        </div>
       </motion.section>
 
-      {/* Danh mục nước hoa (thay thế nước hoa dành cho nam) */}
-      <motion.section className='container mx-auto mb-8' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
-        <h3 className='text-3xl font-semibold mb-6 ml-1'>Danh mục nước hoa</h3>
-        <Swiper
-          navigation={{
-            nextEl: `.custom-next-men`,
-            prevEl: `.custom-prev-men`
-          }}
-          spaceBetween={24}
-          slidesPerView={2}
-          breakpoints={{
-            1024: { slidesPerView: 5 }
-          }}
-          modules={[Navigation]}
-          className="category-men-swiper relative"
-        >
-          {categories.map((category: any, idx: number) => (
-            <SwiperSlide key={idx}>
-              <motion.div className='bg-white rounded-xl border-2 border-gray-200 shadow hover:shadow-xl transition p-2 md:p-4 flex flex-col items-center group cursor-pointer' custom={idx} initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
-                <img src={category.img || category.image} alt={category.name} className='w-full h-60 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform duration-200 cursor-pointer' />
-                <div className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 max-w-[200px] h-12 flex items-center justify-center'>{category.name}</div>
-                <div className='text-purple-600 font-medium text-sm group-hover:underline transition cursor-pointer line-clamp-2 h-10 flex items-center justify-center text-center max-w-[180px]'>
-                  {category.desc || 'Khám phá ngay!'}
-                </div>
-              </motion.div>
-            </SwiperSlide>
-          ))}
-          <button className="custom-prev-men absolute top-1/2 -left-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <ChevronLeft size={28} className="text-purple-600" />
-          </button>
-          <button className="custom-next-men absolute top-1/2 -right-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <ChevronRight size={28} className="text-purple-600" />
-          </button>
-        </Swiper>
+      {/* Danh mục nước hoa */}
+      <motion.section className='container mx-auto mb-12' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="w-1.5 h-8 bg-teal-600 rounded-full mr-3"></div>
+            <h3 className='text-2xl sm:text-3xl font-bold'>Danh mục nước hoa</h3>
+          </div>
+        </div>
+        <div className="bg-gradient-to-r from-teal-50 to-emerald-50 p-6 rounded-2xl">
+          <Swiper
+            navigation={{
+              nextEl: `.custom-next-men`,
+              prevEl: `.custom-prev-men`
+            }}
+            effect="coverflow"
+            coverflowEffect={{
+              rotate: 0,
+              stretch: 0,
+              depth: 100,
+              modifier: 1,
+              slideShadows: false
+            }}
+            spaceBetween={24}
+            slidesPerView={2}
+            breakpoints={{
+              640: { slidesPerView: 3 },
+              1024: { slidesPerView: 5 }
+            }}
+            modules={[Navigation, EffectCoverflow]}
+            className="category-men-swiper relative"
+          >
+            {categories.map((category: any, idx: number) => (
+              <SwiperSlide key={idx}>
+                <motion.div
+                  className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 md:p-4 flex flex-col items-center group cursor-pointer'
+                  custom={idx}
+                  initial='hidden'
+                  whileInView='visible'
+                  viewport={{ once: true }}
+                  variants={fadeInUp}
+                >
+                  <div className="relative overflow-hidden rounded-lg mb-4">
+                    <img
+                      src={category.img || category.image || `https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=500`}
+                      alt={category.name}
+                      className='w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500'
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                  </div>
+
+                  <div className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 max-w-[200px] h-12 flex items-center justify-center'>
+                    {category.name}
+                  </div>
+
+                  <div className='text-teal-600 font-medium text-sm group-hover:underline transition cursor-pointer line-clamp-2 h-10 flex items-center justify-center text-center max-w-[180px]'>
+                    {category.desc || 'Khám phá ngay!'}
+                  </div>
+
+                  <button className="mt-2 px-4 py-1.5 bg-teal-50 text-teal-700 rounded-full text-sm font-medium hover:bg-teal-100 transition-colors">
+                    Xem thêm
+                  </button>
+                </motion.div>
+              </SwiperSlide>
+            ))}
+
+            <button className="custom-prev-men absolute top-1/2 -left-4 z-10 bg-white shadow-lg rounded-full p-2.5 flex items-center justify-center hover:bg-teal-100 transition border border-gray-100 active:scale-90">
+              <ChevronLeft size={24} className="text-teal-600" />
+            </button>
+            <button className="custom-next-men absolute top-1/2 -right-4 z-10 bg-white shadow-lg rounded-full p-2.5 flex items-center justify-center hover:bg-teal-100 transition border border-gray-100 active:scale-90">
+              <ChevronRight size={24} className="text-teal-600" />
+            </button>
+          </Swiper>
+        </div>
       </motion.section>
 
       {/* Fashion Slideshow Section - Sử dụng sản phẩm random */}
-      <section className='container mx-auto mb-8'>
-        <Swiper loop autoplay={{ delay: 3500, disableOnInteraction: false }} pagination={{ clickable: true }} modules={[Autoplay, Pagination]}>
-          {fashionSlides.map((slide, idx) => (
-            <SwiperSlide key={idx}>
-              <div className='flex flex-col md:flex-row rounded-xl overflow-hidden shadow-lg bg-white h-120'>
-                {/* Left side with image only */}
-                <div className='flex-1 flex items-center justify-center bg-yellow-100'>
-                  <img src={slide.left.bg} alt={slide.left.title} className='object-cover w-full h-80 md:h-full' style={{ maxWidth: 400 }} />
+      <section className='container mx-auto mb-12'>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="w-1.5 h-8 bg-amber-500 rounded-full mr-3"></div>
+            <h3 className='text-3xl font-bold'>Bộ sưu tập nổi bật</h3>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 rounded-2xl">
+          <Swiper
+            loop
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
+            pagination={{ clickable: true, dynamicBullets: true }}
+            modules={[Autoplay, Pagination]}
+            className="rounded-xl overflow-hidden shadow-xl"
+          >
+            {fashionSlides.map((slide, idx) => (
+              <SwiperSlide key={idx}>
+                <div className='flex flex-col md:flex-row rounded-xl overflow-hidden bg-white h-auto md:h-[400px]'>
+                  {/* Left side with image */}
+                  <div className='flex-1 relative overflow-hidden'>
+                    <img
+                      src={slide.left.bg}
+                      alt={slide.left.title}
+                      className='object-cover w-full h-80 md:h-full transition-transform duration-700 hover:scale-110'
+                    />
+                    <div className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full">
+                      <span className="text-amber-600 text-sm font-medium flex items-center">
+                        <TrendingUp size={14} className="mr-1" /> Xu hướng mới
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right side with text */}
+                  <div className='flex-1 flex flex-col justify-center p-8 md:p-12 relative'>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-orange-100 rounded-full -ml-12 -mb-12 opacity-50"></div>
+
+                    <div className="relative z-10">
+                      <span className="inline-block bg-amber-100 text-amber-800 px-3 py-1 rounded-md text-sm font-medium mb-4">
+                        Bộ sưu tập mới
+                      </span>
+
+                      <h2 className='text-black text-2xl md:text-4xl font-extrabold mb-4 leading-tight'>
+                        {slide.left.title}
+                      </h2>
+
+                      <p className='text-zinc-700 text-base md:text-lg mb-8 leading-relaxed'>
+                        {slide.left.desc}
+                      </p>
+
+                      <div className="flex flex-wrap gap-4">
+                        <button className='px-6 py-3 bg-amber-500 text-white font-bold rounded-lg shadow-lg hover:bg-amber-600 transition duration-300 flex items-center'>
+                          <ShoppingBag size={18} className="mr-2" />
+                          {slide.left.btn}
+                        </button>
+
+                        <button className='px-6 py-3 bg-white text-amber-500 font-bold rounded-lg shadow border border-amber-200 hover:bg-amber-50 transition duration-300'>
+                          Xem chi tiết
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                {/* Right side with text */}
-                <div className='flex-1 flex flex-col justify-center p-8 md:p-12'>
-                  <h2 className='text-black text-2xl md:text-3xl font-extrabold mb-4'>{slide.left.title}</h2>
-                  <p className='text-zinc-700 text-base md:text-lg mb-6'>{slide.left.desc}</p>
-                  <button className='px-6 py-2 bg-black text-white font-bold rounded-lg shadow hover:bg-white hover:text-black border border-black transition duration-200 cursor-pointer'>{slide.left.btn}</button>
-                </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
       </section>
 
-      {/* Sản phẩm nổi bật (thay đổi vị trí) */}
-      <motion.section className='container mx-auto mb-8' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
-        <h3 className='text-3xl font-semibold mb-6 ml-1'>Sản phẩm nổi bật</h3>
-        <Swiper
-          navigation={{
-            nextEl: `.custom-next-product`,
-            prevEl: `.custom-prev-product`
-          }}
-          spaceBetween={24}
-          slidesPerView={2}
-          breakpoints={{
-            640: { slidesPerView: 2 },
-            1024: { slidesPerView: 5 }
-          }}
-          modules={[Navigation]}
-          className="product-swiper relative"
-        >
-          {featuredProducts.map((product: any, idx: number) => (
-            <SwiperSlide key={idx}>
-              <motion.div className='bg-white rounded-xl border-2 border-gray-200 shadow hover:shadow-xl transition p-2 md:p-4 flex flex-col items-center group cursor-pointer' custom={idx} initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
-                <img src={product.img || product.image} alt={product.name} className='w-full h-32 md:h-60 object-cover rounded-lg mb-2 md:mb-4 group-hover:scale-105 transition-transform duration-200 cursor-pointer' />
-                <div
-                  className='font-bold text-base mb-1 cursor-pointer text-center line-clamp-2 max-w-[200px] h-12 flex items-center justify-center'
-                >
+      {/* Sản phẩm nổi bật */}
+      <motion.section className='container mx-auto mb-12' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="w-1.5 h-8 bg-indigo-600 rounded-full mr-3"></div>
+            <h3 className='text-2xl sm:text-3xl font-bold'>Sản phẩm nổi bật</h3>
+          </div>
+          <button className="text-indigo-600 text-sm sm:text-base font-medium hover:underline flex items-center">
+            Xem tất cả <ChevronRight size={14} className="ml-1" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6 mb-8">
+          {featuredProducts.slice(0, 5).map((product: any, idx: number) => (
+            <motion.div
+              key={idx}
+              className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-2 sm:p-3 flex flex-col group cursor-pointer relative overflow-hidden'
+              custom={idx}
+              initial='hidden'
+              whileInView='visible'
+              viewport={{ once: true }}
+              variants={fadeInUp}
+              whileHover={{ y: -5 }}
+            >
+              {/* Featured badge - smaller on mobile */}
+              <div className="absolute top-2 sm:top-3 right-2 sm:right-3 bg-indigo-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded z-10 flex items-center">
+                <Award size={10} className="mr-0.5 sm:mr-1" /> Nổi bật
+              </div>
+
+              <div className="relative overflow-hidden rounded-lg mb-2 sm:mb-3">
+                <img
+                  src={product.img || product.image}
+                  alt={product.name}
+                  className='w-full h-32 sm:h-40 md:h-48 object-cover group-hover:scale-110 transition-transform duration-500'
+                />
+
+                {/* Quick action overlay */}
+                <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <button className="bg-white text-indigo-700 rounded-full p-1.5 sm:p-2 mx-1 hover:bg-indigo-700 hover:text-white transition-colors">
+                    <ShoppingBag size={14} className="sm:size-[18px]" />
+                  </button>
+                  <button className="bg-white text-indigo-700 rounded-full p-1.5 sm:p-2 mx-1 hover:bg-indigo-700 hover:text-white transition-colors">
+                    <Eye size={14} className="sm:size-[18px]" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col">
+                <div className='font-bold text-sm sm:text-base mb-1 cursor-pointer line-clamp-2 h-10 sm:h-12'>
                   {product.name}
                 </div>
-                <div className='text-zinc-500 text-sm mb-2 cursor-pointer line-clamp-1 h-6 flex items-center justify-center text-center max-w-[180px]'>
-                  {product.brand}
+
+                <div className='text-indigo-500 text-xs sm:text-sm mb-1 sm:mb-2 cursor-pointer line-clamp-1'>
+                  {product.brand || 'Thương hiệu cao cấp'}
                 </div>
-                <div className='bg-neutral-100 rounded-lg px-2 md:px-4 py-1 md:py-2 font-bold text-purple-700 group-hover:bg-purple-600 group-hover:text-white transition cursor-pointer'>
-                  {typeof product.price === 'number' ? product.price.toLocaleString() : product.price}₫
+
+                <div className="flex items-center mb-1 sm:mb-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={12} className={i < 4 ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} />
+                  ))}
                 </div>
-              </motion.div>
-            </SwiperSlide>
+
+                <div className="mt-auto">
+                  <div className='bg-indigo-50 rounded-lg px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-base text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white transition text-center'>
+                    {typeof product.price === 'number' ? product.price.toLocaleString() : product.price}₫
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           ))}
-          <button className="custom-prev-product absolute top-1/2 -left-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <ChevronLeft size={28} className="text-purple-600" />
-          </button>
-          <button className="custom-next-product absolute top-1/2 -right-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <ChevronRight size={28} className="text-purple-600" />
-          </button>
-        </Swiper>
+        </div>
+
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-2xl">
+          <Swiper
+            navigation={{
+              nextEl: `.custom-next-product`,
+              prevEl: `.custom-prev-product`
+            }}
+            spaceBetween={24}
+            slidesPerView={2}
+            breakpoints={{
+              640: { slidesPerView: 3 },
+              1024: { slidesPerView: 5 }
+            }}
+            modules={[Navigation]}
+            className="product-swiper relative"
+          >
+            {featuredProducts.map((product: any, idx: number) => (
+              <SwiperSlide key={idx}>
+                <motion.div
+                  className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 flex flex-col group cursor-pointer'
+                  custom={idx}
+                  initial='hidden'
+                  whileInView='visible'
+                  viewport={{ once: true }}
+                  variants={fadeInUp}
+                >
+                  <div className="relative overflow-hidden rounded-lg mb-3">
+                    <img
+                      src={product.img || product.image}
+                      alt={product.name}
+                      className='w-full h-40 object-cover group-hover:scale-110 transition-transform duration-500'
+                    />
+
+                    {/* Favorite button */}
+                    <button
+                      className="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow-md z-10 transition-all duration-200 hover:bg-pink-50"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleFavorite(product._id || idx.toString())
+                      }}
+                    >
+                      <Heart
+                        size={16}
+                        className={favorites.includes(product._id || idx.toString()) ? "fill-pink-500 text-pink-500" : "text-gray-400"}
+                      />
+                    </button>
+                  </div>
+
+                  <div className='font-bold text-base mb-1 cursor-pointer line-clamp-2 h-12'>
+                    {product.name}
+                  </div>
+
+                  <div className='text-gray-500 text-sm mb-2 cursor-pointer line-clamp-1'>
+                    {product.brand || 'Thương hiệu cao cấp'}
+                  </div>
+
+                  <div className='bg-indigo-50 rounded-lg px-3 py-1.5 font-bold text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white transition text-center'>
+                    {typeof product.price === 'number' ? product.price.toLocaleString() : product.price}₫
+                  </div>
+                </motion.div>
+              </SwiperSlide>
+            ))}
+
+            <button className="custom-prev-product absolute top-1/2 -left-4 z-10 bg-white shadow-lg rounded-full p-2.5 flex items-center justify-center hover:bg-indigo-100 transition border border-gray-100 active:scale-90">
+              <ChevronLeft size={24} className="text-indigo-600" />
+            </button>
+            <button className="custom-next-product absolute top-1/2 -right-4 z-10 bg-white shadow-lg rounded-full p-2.5 flex items-center justify-center hover:bg-indigo-100 transition border border-gray-100 active:scale-90">
+              <ChevronRight size={24} className="text-indigo-600" />
+            </button>
+          </Swiper>
+        </div>
       </motion.section>
 
       {/* Feedback Section */}
-      <motion.section className='container mx-auto mb-8' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
-        <h3 className='text-3xl font-semibold mb-6 ml-1'>Khách hàng nói gì?</h3>
-        <Swiper
-          navigation={{
-            nextEl: `.custom-next-feedback`,
-            prevEl: `.custom-prev-feedback`
-          }}
-          spaceBetween={24}
-          slidesPerView={2}
-          breakpoints={{
-            1024: { slidesPerView: 4 }
-          }}
-          modules={[Navigation]}
-          className="feedback-swiper relative"
-        >
-          {feedbacks.map((fb, idx) => (
-            <SwiperSlide key={idx}>
-              <motion.div className='bg-white rounded-xl border-2 border-gray-200 shadow hover:shadow-xl transition p-6 flex flex-col items-center group cursor-pointer' custom={idx} initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
-                <img src={fb.img} alt={fb.name} className='w-16 h-16 rounded-full mb-4 border-4 border-purple-100 group-hover:border-purple-600 transition cursor-pointer' />
-                <div
-                  className='font-bold text-lg mb-2 cursor-pointer text-center line-clamp-2 max-w-[150px] h-12 flex items-center justify-center'
+      <motion.section className='container mx-auto mb-12' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="w-1.5 h-8 bg-rose-500 rounded-full mr-3"></div>
+            <h3 className='text-2xl sm:text-3xl font-bold'>Khách hàng nói gì?</h3>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-rose-50 to-pink-50 p-4 sm:p-6 rounded-2xl">
+          <Swiper
+            navigation={{
+              nextEl: `.custom-next-feedback`,
+              prevEl: `.custom-prev-feedback`
+            }}
+            spaceBetween={16}
+            slidesPerView={1}
+            breakpoints={{
+              480: { slidesPerView: 1, spaceBetween: 16 },
+              640: { slidesPerView: 2, spaceBetween: 20 },
+              1024: { slidesPerView: 3, spaceBetween: 24 }
+            }}
+            modules={[Navigation]}
+            className="feedback-swiper relative"
+          >
+            {feedbacks.map((fb, idx) => (
+              <SwiperSlide key={idx}>
+                <motion.div
+                  className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-4 sm:p-6 flex flex-col group cursor-pointer relative'
+                  custom={idx}
+                  initial='hidden'
+                  whileInView='visible'
+                  viewport={{ once: true }}
+                  variants={fadeInUp}
+                  whileHover={{ y: -5 }}
                 >
-                  {fb.name}
-                </div>
-                <div className='text-zinc-500 text-sm text-center cursor-pointer line-clamp-3 h-14 flex items-center justify-center'>
-                  {fb.content}
-                </div>
-              </motion.div>
-            </SwiperSlide>
-          ))}
-          <button className="custom-prev-feedback absolute top-1/2 -left-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <ChevronLeft size={28} className="text-purple-600" />
-          </button>
-          <button className="custom-next-feedback absolute top-1/2 -right-4 z-10 bg-white shadow rounded-full p-2 flex items-center justify-center hover:bg-purple-100 transition border border-gray-200 active:scale-90">
-            <ChevronRight size={28} className="text-purple-600" />
-          </button>
-        </Swiper>
+                  {/* Quote mark */}
+                  <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-rose-200 text-4xl sm:text-5xl font-serif leading-none">"</div>
+
+                  <div className="flex items-center mb-3 sm:mb-4">
+                    <div className="relative">
+                      <img
+                        src={fb.img}
+                        alt={fb.name}
+                        className='w-12 h-12 sm:w-16 sm:h-16 rounded-full border-3 sm:border-4 border-rose-100 group-hover:border-rose-300 transition object-cover'
+                      />
+                      <div className="absolute -bottom-1 -right-1 bg-rose-500 text-white rounded-full p-0.5 sm:p-1">
+                        <Star size={10} className="fill-white" />
+                      </div>
+                    </div>
+                    <div className="ml-3 sm:ml-4">
+                      <div className='font-bold text-base sm:text-lg'>{fb.name}</div>
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={12} className="text-yellow-400 fill-yellow-400" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='text-gray-600 text-sm sm:text-base italic mb-3 sm:mb-4 relative z-10'>
+                    "{fb.content}"
+                  </div>
+
+                  <div className="mt-auto pt-2 sm:pt-3 border-t border-gray-100 flex justify-between items-center">
+                    <span className="text-xs text-gray-400">2 ngày trước</span>
+                    <span className="text-rose-500 text-xs sm:text-sm font-medium hover:underline cursor-pointer">Đã mua hàng</span>
+                  </div>
+                </motion.div>
+              </SwiperSlide>
+            ))}
+
+            {/* Navigation buttons - hidden on smallest screens */}
+            <div className="hidden sm:block">
+              <button className="custom-prev-feedback absolute top-1/2 -left-4 z-10 bg-white shadow-lg rounded-full p-2 sm:p-2.5 flex items-center justify-center hover:bg-rose-100 transition border border-gray-100 active:scale-90">
+                <ChevronLeft size={20} className="text-rose-500" />
+              </button>
+              <button className="custom-next-feedback absolute top-1/2 -right-4 z-10 bg-white shadow-lg rounded-full p-2 sm:p-2.5 flex items-center justify-center hover:bg-rose-100 transition border border-gray-100 active:scale-90">
+                <ChevronRight size={20} className="text-rose-500" />
+              </button>
+            </div>
+          </Swiper>
+        </div>
       </motion.section>
 
       {/* Brand Section */}
-      <motion.section className='container mx-auto mb-8' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
-        <h3 className='text-3xl font-semibold mb-6 ml-1'>Thương hiệu nổi bật</h3>
-        <Swiper
-          loop
-          slidesPerView={2}
-          spaceBetween={24}
-          speed={3000}
-          autoplay={{
-            delay: 0,
-            disableOnInteraction: false,
-            pauseOnMouseEnter: true // Dừng khi hover
-          }}
-          breakpoints={{
-            640: { slidesPerView: 3 },
-            1024: { slidesPerView: 6 }
-          }}
-          modules={[Autoplay]}
-          className="brand-swiper"
-          style={{ cursor: 'pointer' }}
-        >
-          {brands.map((brand: any, idx: number) => (
-            <SwiperSlide key={idx}>
-              <motion.div className='bg-white rounded-xl border-2 border-gray-200 shadow hover:shadow-lg transition p-4 flex flex-col items-center group cursor-pointer' custom={idx} initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
-                <img src={brand.img || brand.logo || brand.image} alt={brand.name} className='w-36 h-14 object-contain mb-2 group-hover:scale-110 transition-transform duration-200 cursor-pointer' />
-                <div
-                  className='font-medium text-base cursor-pointer text-center line-clamp-1 max-w-[150px] h-6 flex items-center justify-center'
+      <motion.section className='container mx-auto mb-12' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="w-1.5 h-8 bg-blue-600 rounded-full mr-3"></div>
+            <h3 className='text-2xl sm:text-3xl font-bold'>Thương hiệu nổi bật</h3>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-blue-50 to-sky-50 p-4 sm:p-6 rounded-2xl">
+          <div className="flex items-center justify-center mb-4 sm:mb-6">
+            <p className="text-center text-gray-600 max-w-2xl text-sm sm:text-base px-2">
+              Chúng tôi hợp tác với các thương hiệu nước hoa hàng đầu thế giới để mang đến cho bạn những sản phẩm chính hãng với chất lượng tốt nhất.
+            </p>
+          </div>
+
+          <Swiper
+            loop
+            slidesPerView={2}
+            spaceBetween={16}
+            speed={3000}
+            autoplay={{
+              delay: 0,
+              disableOnInteraction: false,
+              pauseOnMouseEnter: true
+            }}
+            breakpoints={{
+              480: { slidesPerView: 2, spaceBetween: 16 },
+              640: { slidesPerView: 3, spaceBetween: 20 },
+              1024: { slidesPerView: 6, spaceBetween: 24 }
+            }}
+            modules={[Autoplay]}
+            className="brand-swiper"
+          >
+            {brands.map((brand: any, idx: number) => (
+              <SwiperSlide key={idx}>
+                <motion.div
+                  className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 sm:p-5 flex flex-col items-center group cursor-pointer'
+                  custom={idx}
+                  initial='hidden'
+                  whileInView='visible'
+                  viewport={{ once: true }}
+                  variants={fadeInUp}
+                  whileHover={{ y: -5 }}
                 >
-                  {brand.name}
-                </div>
-              </motion.div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+                  <div className="h-12 sm:h-16 flex items-center justify-center mb-2 sm:mb-3">
+                    <img
+                      src={brand.img || brand.logo || brand.image || `https://placehold.co/200x80?text=${brand.name}`}
+                      alt={brand.name}
+                      className='max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-300'
+                    />
+                  </div>
+
+                  <div className='font-medium text-sm sm:text-base text-center line-clamp-1 max-w-[120px] sm:max-w-[150px]'>
+                    {brand.name}
+                  </div>
+
+                  <div className="w-8 sm:w-12 h-0.5 bg-blue-500 mt-1 sm:mt-2 group-hover:w-16 sm:group-hover:w-20 transition-all duration-300"></div>
+                </motion.div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+
+          <div className="flex justify-center mt-6 sm:mt-8">
+            <button className="px-4 sm:px-6 py-1.5 sm:py-2 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+              Xem tất cả thương hiệu <ChevronRight size={14} className="ml-1" />
+            </button>
+          </div>
+        </div>
       </motion.section>
     </div>
   )
