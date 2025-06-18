@@ -9,9 +9,9 @@ interface BlogCategoriesProps {
   selectedCategory?: string | null
 }
 
-export const BlogCategories: React.FC<BlogCategoriesProps> = ({ 
+export const BlogCategories: React.FC<BlogCategoriesProps> = ({
   onSelectCategory,
-  selectedCategory 
+  selectedCategory
 }) => {
   // Lấy danh sách danh mục
   const { data: cateData, isLoading } = useQuery({
