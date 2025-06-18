@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import ProductDescription from './productDescription'
 import ProductsSimilar from './productSimilar'
-import { useParams } from 'react-router-dom'
+import { useParams } from 'react-router'
 
 const fetchProductDetail = async (id: string) => {
   const res = await axios.get(`http://localhost:8080/api/v1/products/${id}`)
@@ -35,7 +35,7 @@ const ProductDetail = () => {
     if (product) {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       const allImages = product.variants?.map(v => v.image).filter(Boolean) || []
-      const filtered = allImages.filter(img => img !== product.image)
+      const filtered = allImages.filter((img: string) => img !== product.image)
 
       setMainImage(product.image)
       setThumbnails(filtered)
