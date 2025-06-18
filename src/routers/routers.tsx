@@ -16,6 +16,7 @@ import ProductDetail from '@/pages/productDetail/productDetail'
 import BlogDetailPage from '@/pages/blog/blog.detail.page'
 import CartPage from '@/pages/cart/cart.page'
 import WishlistPage from '@/pages/wishlist/wishlist.page'
+import CheckoutBilling from '@/pages/checkout/checkout.billing'
 
 const Routers = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
@@ -28,6 +29,7 @@ const Routers = () => {
           <Route path='shops' element={<ProductPage />} />
           <Route path='blogs' element={<BlogPage />} />
           <Route path='productDetail/:id' element={<ProductDetail />} />
+          <Route path='checkout' element={<CheckoutBilling />} />
           <Route path='blogs/:blogId' element={<BlogDetailPage />} />
           <Route path='account/:id' element={<LayoutAccountPage />}>
             <Route path='wishlist' element={<WishlistPage />} />

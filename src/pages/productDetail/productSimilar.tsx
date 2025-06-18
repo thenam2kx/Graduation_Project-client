@@ -42,7 +42,7 @@ const ProductsSimilar = () => {
   if (isLoading) {
     return (
       <div className="text-center py-12 text-gray-600">
-        Loading similar products...
+        Đang tải sản phẩm tương tự...
       </div>
     )
   }
@@ -50,7 +50,7 @@ const ProductsSimilar = () => {
   if (isError) {
     return (
       <div className="text-center text-red-500 py-12">
-        Failed to load similar products.
+        Không thể tải sản phẩm tương tự. Vui lòng thử lại sau.
       </div>
     )
   }
@@ -59,7 +59,7 @@ const ProductsSimilar = () => {
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="flex items-center gap-3 mb-8">
         <div className="w-1 h-8 bg-purple-600"></div>
-        <h2 className="text-2xl font-bold text-gray-900">Similar Products</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Sản phẩm tương tự</h2>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
