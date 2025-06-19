@@ -12,11 +12,12 @@ import AccountPage from '@/pages/account/account-info/account.page'
 import LayoutAccountPage from '@/pages/account/layout.account.page'
 import AddressForm from '@/pages/account/account-info/address.form'
 import BlogPage from '@/pages/blog/blog.page'
-import ProductDetail from '@/pages/productDetail/productDetail'
+import ProductDetail from '@/pages/productDetail/product.detail'
 import BlogDetailPage from '@/pages/blog/blog.detail.page'
 import CartPage from '@/pages/cart/cart.page'
 import WishlistPage from '@/pages/wishlist/wishlist.page'
 import CheckoutBilling from '@/pages/checkout/checkout.billing'
+import { ContactForm } from '@/pages/contact/contact.pages'
 
 const Routers = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
@@ -30,6 +31,7 @@ const Routers = () => {
           <Route path='blogs' element={<BlogPage />} />
           <Route path='productDetail/:id' element={<ProductDetail />} />
           <Route path='checkout' element={<CheckoutBilling />} />
+          <Route path='contact' element={<ContactForm />} />
           <Route path='blogs/:blogId' element={<BlogDetailPage />} />
           <Route path='account/:id' element={<LayoutAccountPage />}>
             <Route path='wishlist' element={<WishlistPage />} />

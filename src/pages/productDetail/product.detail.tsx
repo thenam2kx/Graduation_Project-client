@@ -9,8 +9,8 @@ import {
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
-import ProductDescription from './productDescription'
-import ProductsSimilar from './productSimilar'
+import ProductDescription from './product.description'
+import ProductsSimilar from './product.similar'
 import { useParams } from 'react-router'
 
 const fetchProductDetail = async (id: string) => {
@@ -35,7 +35,7 @@ const ProductDetail = () => {
     if (product) {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       const allImages = product.variants?.map(v => v.image).filter(Boolean) || []
-      const filtered = allImages.filter((img: string) => img !== product.image)
+      const filtered = allImages.filter(img => img !== product.image)
 
       setMainImage(product.image)
       setThumbnails(filtered)
@@ -116,7 +116,7 @@ const ProductDetail = () => {
             <div className="text-sm text-gray-500">
               {isLoading ? (
                 <div className="w-36 h-4 bg-gray-200 rounded animate-pulse" />
-              ) : `Thương hiệu: ${product?.brand?.name || 'Không xác định'}`}
+              ) : `Thương hiệu: ${product?.brandId?.name || 'Không xác định'}`}
             </div>
             <div className="space-y-3">
               <div className="flex gap-2">
