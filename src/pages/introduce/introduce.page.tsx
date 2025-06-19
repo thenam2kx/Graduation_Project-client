@@ -21,17 +21,17 @@ const AboutPage = () => {
         <div>
           <h2 className="text-2xl font-semibold mb-4 text-purple-700">Chúng tôi là ai?</h2>
             <p className="text-base text-gray-600 leading-relaxed">
-            Với hơn 10 năm kinh nghiệm, chúng tôi tự hào mang đến những sản phẩm nước hoa được tuyển chọn kỹ lưỡng từ các thương hiệu nổi tiếng trên thế giới. 
+            - Với hơn 10 năm kinh nghiệm, chúng tôi tự hào mang đến những sản phẩm nước hoa được tuyển chọn kỹ lưỡng từ các thương hiệu nổi tiếng trên thế giới. 
             Sự hài lòng của khách hàng là động lực lớn nhất giúp VIETPERFUME không ngừng đổi mới và phát triển.
             </p>
-            <p>
-            Chúng tôi không chỉ cung cấp sản phẩm, mà còn truyền tải giá trị về phong cách, cá tính và cảm xúc thông qua từng mùi hương.
+            <p className="text-base text-gray-600 leading-relaxed">
+            - Chúng tôi không chỉ cung cấp sản phẩm, mà còn truyền tải giá trị về phong cách, cá tính và cảm xúc thông qua từng mùi hương.
             </p>
-            <p>
-                Đội ngũ của chúng tôi gồm những chuyên gia đam mê và am hiểu sâu sắc về nước hoa, luôn sẵn sàng tư vấn để khách hàng tìm được mùi hương phù hợp nhất với mình.
+            <p className="text-base text-gray-600 leading-relaxed">
+            - Đội ngũ của chúng tôi gồm những chuyên gia đam mê và am hiểu sâu sắc về nước hoa, luôn sẵn sàng tư vấn để khách hàng tìm được mùi hương phù hợp nhất với mình.
             </p>
-            <p>
-                VIETPERFUME cam kết mang đến trải nghiệm mua sắm chuyên nghiệp, sản phẩm chất lượng và dịch vụ hậu mãi tận tâm.
+            <p className="text-base text-gray-600 leading-relaxed">
+            - VIETPERFUME cam kết mang đến trải nghiệm mua sắm chuyên nghiệp, sản phẩm chất lượng và dịch vụ hậu mãi tận tâm.
             </p>
         </div>
       </div>
