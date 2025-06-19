@@ -8,16 +8,11 @@ interface ProductDescriptionProps {
 }
 
 const ProductDescription = ({ product }: ProductDescriptionProps) => {
-  const [activeTab, setActiveTab] = useState('description')
+  const [activeTab] = useState('description')
 
   useEffect(() => {
     // console.log('Mô tả sản phẩm:', product?.description)
   }, [product])
-
-  const tabs = [
-    { id: 'description', label: 'Description', count: null }
-  ]
-
   const descriptionText = product?.description?.trim()
 
   return (
@@ -28,24 +23,7 @@ const ProductDescription = ({ product }: ProductDescriptionProps) => {
           {/* Header */}
           <div className="flex items-center gap-3">
             <div className="w-1 h-8 bg-purple-600"></div>
-            <h2 className="text-2xl font-bold text-gray-900">Product Description</h2>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex items-center gap-8 border-b border-gray-200">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`pb-3 text-sm font-medium relative flex items-center gap-2 ${
-                  activeTab === tab.id
-                    ? 'text-gray-900 border-b-2 border-gray-900'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            <h2 className="text-2xl font-bold text-gray-900">Mô tả sản phẩm</h2>
           </div>
 
           {/* Tab Content */}
