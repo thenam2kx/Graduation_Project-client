@@ -1,90 +1,88 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
 import {
-  ChevronRight,
   ChevronDown,
   ChevronUp,
-  Heart,
   Star,
   Search,
   ChevronRightIcon
-} from 'lucide-react';
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+} from 'lucide-react'
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 
 const BRANDS = [
   'Dior', 'Chanel', 'Gucci', 'Versace', 'Calvin Klein', 'Jo Malone', 'Le Labo', 'Hermès', 'Tom Ford'
-];
+]
 const FRAGRANCE_FAMILIES = [
   'Hương hoa', 'Hương gỗ', 'Hương phương Đông', 'Hương biển', 'Hương trái cây', 'Hương da thuộc', 'Hương gia vị'
-];
-const USAGE_TIMES = ['Ban ngày', 'Ban đêm', 'Cả ngày', 'Xuân', 'Hạ', 'Thu', 'Đông'];
-const TYPES = ['Eau de Toilette (EDT)', 'Eau de Parfum (EDP)', 'Parfum', 'Body Mist', 'Cologne'];
-const VOLUMES = ['10ml', '30ml', '50ml', '100ml', '150ml+'];
-const GENDERS = ['Nam', 'Nữ', 'Unisex'];
-const RATINGS = [4, 3, 2, 1];
-const STOCK_STATUS = ['Còn hàng', 'Hết hàng'];
+]
+const USAGE_TIMES = ['Ban ngày', 'Ban đêm', 'Cả ngày', 'Xuân', 'Hạ', 'Thu', 'Đông']
+const TYPES = ['Eau de Toilette (EDT)', 'Eau de Parfum (EDP)', 'Parfum', 'Body Mist', 'Cologne']
+const VOLUMES = ['10ml', '30ml', '50ml', '100ml', '150ml+']
+const GENDERS = ['Nam', 'Nữ', 'Unisex']
+const RATINGS = [4, 3, 2, 1]
+const STOCK_STATUS = ['Còn hàng', 'Hết hàng']
 const RELEASE_YEARS = [
   { label: '2020–2024', value: '2020-2024' },
   { label: '2010–2020', value: '2010-2020' },
   { label: 'Trước 2010', value: 'before-2010' }
-];
+]
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 9
 
 const ProductPage = () => {
-  const [showBrandMore, setShowBrandMore] = useState(false);
-  const [showPrice, setShowPrice] = useState(true);
-  const [showVolume, setShowVolume] = useState(true);
-  const [showGender, setShowGender] = useState(true);
-  const [showBrand, setShowBrand] = useState(true);
-  const [showFragrance, setShowFragrance] = useState(true);
-  const [showUsage, setShowUsage] = useState(true);
-  const [showRelease, setShowRelease] = useState(true);
-  const [showType, setShowType] = useState(true);
-  const [showRating, setShowRating] = useState(true);
-  const [showStock, setShowStock] = useState(true);
+  const [showBrandMore, setShowBrandMore] = useState(false)
+  const [showPrice, setShowPrice] = useState(true)
+  const [showVolume, setShowVolume] = useState(true)
+  const [showGender, setShowGender] = useState(true)
+  const [showBrand, setShowBrand] = useState(true)
+  const [showFragrance, setShowFragrance] = useState(true)
+  const [showUsage, setShowUsage] = useState(true)
+  const [showRelease, setShowRelease] = useState(true)
+  const [showType, setShowType] = useState(true)
+  const [showRating, setShowRating] = useState(true)
+  const [showStock, setShowStock] = useState(true)
 
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [meta, setMeta] = useState({ current: 1, pageSize: PAGE_SIZE, pages: 1, total: 0 });
-  const [search, setSearch] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  const [products, setProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [meta, setMeta] = useState({ current: 1, pageSize: PAGE_SIZE, pages: 1, total: 0 })
+  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
 
   // Fetch products with pagination and search
   const fetchProducts = async (page = 1, searchValue = '') => {
-    setLoading(true);
+    setLoading(true)
     try {
       const params: any = {
         current: page,
-        pageSize: PAGE_SIZE,
-      };
-      if (searchValue) params.qs = `name=/${searchValue}/i`;
-      const res = await axios.get('http://localhost:8080/api/v1/products', { params });
-      setProducts(res.data?.data?.results || []);
-      setMeta(res.data?.data?.meta || { current: 1, pageSize: PAGE_SIZE, pages: 1, total: 0 });
+        pageSize: PAGE_SIZE
+      }
+      if (searchValue) params.qs = `name=/${searchValue}/i`
+      const res = await axios.get('http://localhost:8080/api/v1/products', { params })
+      setProducts(res.data?.data?.results || [])
+      setMeta(res.data?.data?.meta || { current: 1, pageSize: PAGE_SIZE, pages: 1, total: 0 })
     } catch (err) {
-      setProducts([]);
-      setMeta({ current: 1, pageSize: PAGE_SIZE, pages: 1, total: 0 });
+      setProducts([])
+      setMeta({ current: 1, pageSize: PAGE_SIZE, pages: 1, total: 0 })
     }
-    setLoading(false);
-  };
+    setLoading(false)
+  }
 
   useEffect(() => {
-    fetchProducts(meta.current, search);
+    fetchProducts(meta.current, search)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meta.current, search]);
+  }, [meta.current, search])
 
   // Xử lý chuyển trang
   const handlePageChange = (page: number) => {
-    setMeta((prev) => ({ ...prev, current: page }));
-  };
+    setMeta((prev) => ({ ...prev, current: page }))
+  }
 
   // Xử lý tìm kiếm
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setMeta((prev) => ({ ...prev, current: 1 }));
-    setSearch(searchInput.trim());
-  };
+    e.preventDefault()
+    setMeta((prev) => ({ ...prev, current: 1 }))
+    setSearch(searchInput.trim())
+  }
 
   return (
     <div className="bg-white min-h-screen py-4">
@@ -381,7 +379,7 @@ const ProductPage = () => {
                         disabled={meta.current === 1}
                         onClick={() => handlePageChange(meta.current - 1)}
                       >
-                        &lt;
+                        &lt
                       </button>
                       {Array.from({ length: meta.pages }, (_, i) => (
                         <button
@@ -397,7 +395,7 @@ const ProductPage = () => {
                         disabled={meta.current === meta.pages}
                         onClick={() => handlePageChange(meta.current + 1)}
                       >
-                        &gt;
+                        &gt
                       </button>
                     </nav>
                   </div>
@@ -408,7 +406,7 @@ const ProductPage = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ProductPage;
+export default ProductPage

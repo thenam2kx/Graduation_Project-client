@@ -1,176 +1,449 @@
 import {
-  ShoppingCart,
-  Shield,
-  Truck,
-  RotateCcw,
-  AlertTriangle,
-  LoaderCircle
+  ShoppingCartIcon
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
-import ProductDescription from './productDescription'
-import ProductsSimilar from './productSimilar'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
+import { QuantityInput } from '@/components/quantity-input'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { PRODUCT_KEYS } from '@/services/product-service/product.keys'
 import { useParams } from 'react-router'
+import { fetchInfoProduct } from '@/services/product-service/product.apis'
 
-const fetchProductDetail = async (id: string) => {
-  const res = await axios.get(`http://localhost:8080/api/v1/products/${id}`)
-  return res.data?.data
-}
+// Product data
+const productColors = [
+  { color: "#3c4242", selected: true },
+  { color: "#edd146", selected: false },
+  { color: "#eb84b0", selected: false },
+  { color: "#9c1f35", selected: false },
+]
+
+
+const productFeatures = [
+  {
+    icon: "/credit-card.svg",
+    title: "Secure payment",
+  },
+  {
+    icon: "/truck.svg",
+    title: "Free shipping",
+  },
+  {
+    icon: "/size---fit.svg",
+    title: "Size & Fit",
+  },
+  {
+    icon: "/free-shipping---returns.svg",
+    title: "Free Shipping & Returns",
+  },
+]
+
 
 const ProductDetail = () => {
-  const { id } = useParams()
-  const [selectedSize, setSelectedSize] = useState<string | null>(null)
-  const [availableSizes, setAvailableSizes] = useState<string[]>([])
-  const [mainImage, setMainImage] = useState<string | null>(null)
-  const [thumbnails, setThumbnails] = useState<string[]>([])
+  const [quantity, setQuantity] = useState(1)
+  const [scents, setScents] = useState<{ id: string; name: string }[]>([])
+  const [selectedScents, setSelectedScents] = useState<string | undefined>(scents[0]?.id)
+  const [capacity, setCapacity] = useState<{ id: string; name: string }[]>([])
+  const [selectedSize, setSelectedSize] = useState('L')
+  const [selectedColor, setSelectedColor] = useState('#3c4242')
+  const queryClient = useQueryClient()
+  const { id } = useParams<{ id: string }>()
 
-  const { data: product, isLoading, isError } = useQuery({
-    queryKey: ['productDetail', id],
-    queryFn: () => fetchProductDetail(id as string),
-    enabled: !!id
+  const { data: product, isLoading, error } = useQuery({
+    queryKey: [PRODUCT_KEYS.FETCH_INFO_PRODUCT, id],
+    queryFn: async () => {
+      const res = await fetchInfoProduct(id as string)
+      if (res && res.data) {
+        return res.data
+      } else {
+        throw new Error('Product not found')
+      }
+    }
   })
+  console.log('🚀 ~ ProductDetail ~ product:', product)
 
   useEffect(() => {
     if (product) {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      const allImages = product.variants?.map(v => v.image).filter(Boolean) || []
-      const filtered = allImages.filter((img: string) => img !== product.image)
-
-      setMainImage(product.image)
-      setThumbnails(filtered)
-
-      const sizes = product.variants
-        ?.map(variant => {
-          const attr = variant.variant_attributes?.find(a => a.attributeId?.value || a.value)
-          return attr?.value || null
+      product.variants?.map((variant) => {
+        return variant.variant_attributes.map((attr) => {
+          if (attr.attributeId.slug === 'dung-tich') {
+            setCapacity((prev) => [...prev, { id: attr._id, name: attr.value }])
+          } else if (attr.attributeId.slug === 'mui-huong') {
+            setScents((prev) => [...prev, { id: attr._id, name: attr.value }])
+          }
+          console.log('🚀 ~ returnvariant.variant_attributes.map ~ attr:', attr)
         })
-        .filter((val): val is string => Boolean(val))
 
-      setAvailableSizes(sizes)
-      if (sizes.length && !selectedSize) {
-        setSelectedSize(sizes[0])
-      }
+      })
     }
-  }, [id, product])
+  }, [product])
 
-  const handleThumbnailClick = (clickedImg: string) => {
-    if (!mainImage || clickedImg === mainImage) return
+  const addToCartMutation = useMutation({
+    mutationFn: (item: any) => {
+      return 'ok'
+    },
+    onSuccess: () => {
+      // Invalidate and refetch cart data
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    }
+  })
 
-    setMainImage(clickedImg)
-    setThumbnails(prev => {
-      return [mainImage, ...prev.filter(img => img !== clickedImg)]
-    })
+  const handleAddToCart = () => {
+    // if (product) {
+    //   addToCartMutation.mutate({
+    //     productId: product.id,
+    //     quantity: quantity,
+    //   });
+    // }
+  }
+
+  const handleSizeSelect = (size: string) => {
+    setSelectedSize(size)
+  }
+
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="bg-white flex flex-row justify-center w-full">
+        <div className="bg-white overflow-hidden w-full max-w-[1440px] relative">
+          {/* <TaskBaarSubsection /> */}
+          <div className="flex items-center justify-center h-96 mt-[108px]">
+            <div className="text-lg text-[#807d7e]">Loading product...</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white flex flex-row justify-center w-full">
+        <div className="bg-white overflow-hidden w-full max-w-[1440px] relative">
+          {/* <TaskBaarSubsection /> */}
+          <div className="flex items-center justify-center h-96 mt-[108px]">
+            <div className="text-lg text-red-500">Error loading product</div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {isError && (
-          <div className="flex items-center gap-2 p-4 bg-red-100 text-red-700 rounded-md">
-            <AlertTriangle className="w-5 h-5" />
-            <span>Không thể tải dữ liệu sản phẩm</span>
-          </div>
-        )}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="flex gap-4">
-            <div className="flex flex-col gap-3 items-center justify-center">
-              {thumbnails.map((thumb: string) => (
-                <div
-                  key={thumb}
-                  onClick={() => handleThumbnailClick(thumb)}
-                  className={`w-20 h-28 border-2 rounded-lg overflow-hidden cursor-pointer transition-colors ${
-                    thumb === mainImage
-                      ? 'border-black'
-                      : 'border-gray-200 hover:border-gray-400'
-                  }`}
+    <div className="bg-white flex flex-row justify-center w-full">
+      <div className="bg-white overflow-hidden w-full max-w-[1440px] relative">
+        {/* <TaskBaarSubsection /> */}
+
+        {/* Product Gallery Section */}
+        <div className="flex mt-[108px]">
+          <div className="relative w-[200px] h-[784px] bg-[#f6f6f6]">
+            <div className="flex flex-col items-center gap-[24.34px] absolute top-[225px] left-[111px]">
+              <div className="flex flex-col items-center justify-center gap-[22.68px]">
+                <div className="relative w-[68.04px] h-[68.04px]">
+                  <div className="w-[68px] h-[68px] rounded-[9.07px] border-[0.53px] border-solid border-white" />
+                </div>
+
+                <div className="w-[75.6px] h-[75.6px] relative">
+                  <div className="relative w-[77px] h-[77px] rounded-[12.1px]">
+                    <img
+                      className="absolute w-[68px] h-[68px] top-[5px] left-[5px] object-cover"
+                      alt="Product thumbnail"
+                      src={product?.images && product?.images[0]}
+                      crossOrigin='anonymous'
+                    />
+                    <div className="absolute w-[77px] h-[77px] top-0 left-0 rounded-[12.1px] border-[0.76px] border-solid border-[#3c4242]" />
+                  </div>
+                </div>
+
+                <div className="w-[68.04px] h-[68.04px] relative">
+                  <div className="w-[68px] h-[68px] rounded-[9.07px] border-[0.53px] border-solid border-white" />
+                </div>
+              </div>
+
+              <div className="flex flex-col items-start gap-[12.17px]">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="w-[21.17px] h-[21.17px] bg-white rounded-[10.58px] shadow-[0.76px_0.76px_3.02px_#0000000a] p-0"
                 >
                   <img
-                    src={thumb || '/placeholder.svg'}
-                    alt="Thumbnail"
-                    className="w-full h-full object-contain bg-white"
+                    className="left-[7px] absolute w-2 h-[5px] top-2"
+                    alt="Left stroke"
+                    src="/left--stroke--2.svg"
+                    crossOrigin='anonymous'
                   />
-                </div>
-              ))}
-            </div>
-            <div className="flex-1 bg-white rounded-2xl overflow-hidden flex items-center justify-center h-[500px]">
-              {isLoading ? (
-                <div className="w-full h-full flex items-center justify-center animate-pulse bg-gray-100">
-                  <LoaderCircle className="w-8 h-8 text-gray-400 animate-spin" />
-                </div>
-              ) : (
-                <img
-                  src={mainImage || '/placeholder.svg'}
-                  alt={product?.name || 'Sản phẩm'}
-                  className="max-h-full max-w-full object-contain bg-white"
-                />
-              )}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="w-[21.17px] h-[21.17px] bg-[#3c4242] rounded-[10.58px] rotate-180 shadow-[0.76px_0.76px_3.02px_#0000000a] p-0"
+                >
+                  <img
+                    className="left-1.5 absolute w-2 h-[5px] top-2"
+                    alt="Left stroke"
+                    src="/left--stroke--3.svg"
+                    crossOrigin='anonymous'
+                  />
+                </Button>
+              </div>
             </div>
           </div>
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {isLoading ? (
-                <div className="w-72 h-8 bg-gray-200 rounded animate-pulse" />
-              ) : product?.name}
+
+          <img
+            className="w-[520px] h-[785px] object-cover"
+            alt="Product image"
+            src={product?.images && product?.images[0]}
+            crossOrigin='anonymous'
+          />
+
+          {/* Product Details Section */}
+          <div className="flex flex-col ml-[67px] max-w-[534px]">
+            {/* Breadcrumb */}
+            <Breadcrumb className="mt-[30px]">
+              <BreadcrumbList className="flex items-center gap-[15px]">
+                <BreadcrumbItem>
+                  <BreadcrumbLink className="[font-family:'Causten-Medium',Helvetica] font-medium text-[#807d7e] text-lg">
+                    Shop
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator>
+                  <img
+                    className="w-[5px] h-[10.14px]"
+                    alt="Left stroke"
+                    src="/left--stroke-.svg"
+                    crossOrigin='anonymous'
+                  />
+                </BreadcrumbSeparator>
+                <BreadcrumbItem>
+                  <BreadcrumbLink className="[font-family:'Causten-Medium',Helvetica] font-medium text-[#807d7e] text-lg capitalize">
+                    {product?.categoryId?.name || 'Category'}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator>
+                  <img
+                    className="w-[5px] h-[10.14px]"
+                    alt="Left stroke"
+                    src="/left--stroke-.svg"
+                    crossOrigin='anonymous'
+                  />
+                </BreadcrumbSeparator>
+                <BreadcrumbItem>
+                  <BreadcrumbLink className="[font-family:'Causten-Medium',Helvetica] font-medium text-[#807d7e] text-lg">
+                    Product
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+
+            {/* Product Title */}
+            <h1 className="mt-[26px] [font-family:'Core_Sans_C-65Bold',Helvetica] font-bold text-[#3c4242] text-[34px] tracking-[0.68px] leading-[47.6px]">
+              {product?.name}
             </h1>
-            <div className="text-sm text-gray-500">
-              {isLoading ? (
-                <div className="w-36 h-4 bg-gray-200 rounded animate-pulse" />
-              ) : `Thương hiệu: ${product?.brand?.name || 'Không xác định'}`}
+
+            {/* Size Selection */}
+            <div className="flex flex-col gap-[25px] mt-[32px]">
+              <div className="flex items-start gap-5">
+                <span className="[font-family:'Causten-SemiBold',Helvetica] font-semibold text-[#3f4646] text-lg">
+                  Chọn dung tích
+                </span>
+              </div>
+
+              <div className="flex items-center gap-5">
+                {capacity && capacity.map((cap, index) => (
+                  <div key={index} className="relative w-[80px] h-[42px]">
+                    <button
+                      onClick={() => handleSizeSelect(cap.name)}
+                      className={`relative w-full h-[38px] rounded-xl transition-colors ${
+                        selectedSize === cap.name
+                          ? 'bg-[#3c4141]'
+                          : 'border-[1.5px] border-solid border-[#bebbbc] hover:border-[#3c4141]'
+                      }`}
+                    >
+                      <div
+                        className={`w-full h-[17px] [font-family:'Causten-Medium',Helvetica] font-medium text-sm text-center ${
+                          selectedSize === cap.name ? 'text-white' : 'text-[#3c4242]'
+                        }`}
+                      >
+                        {`${cap.name} ml`}
+                      </div>
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                {availableSizes.map(size => (
+
+            {/* Color Selection */}
+            <div className="flex flex-col gap-[25px] mt-[32px]">
+              <span className="[font-family:'Causten-SemiBold',Helvetica] font-semibold text-[#3f4646] text-lg">
+                Colours Available
+              </span>
+              <div className="flex items-center gap-5">
+                {productColors.map((colorOption, index) => (
                   <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`w-12 h-12 rounded-lg border-2 font-medium transition-colors ${
-                      selectedSize === size
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-300 hover:border-gray-400'
+                    key={index}
+                    onClick={() => handleColorSelect(colorOption.color)}
+                    className={`relative transition-all ${
+                      selectedColor === colorOption.color ? 'w-[30px] h-[30px]' : 'w-[22px] h-[22px]'
                     }`}
                   >
-                    {size}
+                    {selectedColor === colorOption.color ? (
+                      <div className="relative h-[30px] rounded-[15px]">
+                        <div
+                          className="absolute w-[22px] h-[22px] top-1 left-1 rounded-[11px]"
+                          style={{ backgroundColor: colorOption.color }}
+                        />
+                        <div className="absolute w-[30px] h-[30px] top-0 left-0 rounded-[15px] border border-solid border-[#3f4646]" />
+                      </div>
+                    ) : (
+                      <div
+                        className="w-[22px] h-[22px] rounded-[11px] hover:scale-110 transition-transform"
+                        style={{ backgroundColor: colorOption.color }}
+                      />
+                    )}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="flex gap-4 pt-4">
-              <button className="flex items-center justify-center px-8 py-3 rounded-lg font-medium bg-[#8B5CF6] hover:bg-[#7C3AED] text-white text-base transition-colors" style={{ minWidth: 140 }}>
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Thêm vào giỏ hàng
-              </button>
-              <div className="flex items-center justify-center px-8 py-3 border border-gray-300 rounded-lg bg-white">
-                <span className="text-xl font-bold text-gray-900">
-                  {isLoading ? (
-                    <div className="w-24 h-6 bg-gray-200 rounded animate-pulse" />
-                  ) : (
-                    `₫${product?.price?.toLocaleString('vi-VN')}`
-                  )}
+            {/* Quantity Selection */}
+            <div className="flex flex-col gap-[25px] mt-[32px]">
+              <span className="[font-family:'Causten-SemiBold',Helvetica] font-semibold text-[#3f4646] text-lg">
+                Quantity
+              </span>
+              <QuantityInput
+                value={quantity}
+                onChange={setQuantity}
+                min={1}
+                max={10}
+                className="w-fit"
+              />
+            </div>
+
+            {/* Add to Cart and Price */}
+            <div className="flex gap-4 mt-[45px]">
+              <Button
+                onClick={handleAddToCart}
+                disabled={addToCartMutation.isPending}
+                className="flex items-center justify-center gap-3 px-10 py-3 bg-[#8a33fd] rounded-lg hover:bg-[#7a2de8] transition-colors"
+              >
+                <ShoppingCartIcon className="w-5 h-5" />
+                <span className="[font-family:'Causten-SemiBold',Helvetica] font-semibold text-white text-lg">
+                  {addToCartMutation.isPending ? 'Adding...' : 'Add to cart'}
+                </span>
+              </Button>
+              <Button
+                variant="outline"
+                className="flex items-center justify-center px-10 py-3 rounded-lg border border-solid border-[#3c4242]"
+              >
+                <span className="[font-family:'Causten-Bold',Helvetica] font-bold text-[#3c4242] text-lg">
+                  ${product?.price?.toFixed(2) || '63.00'}
+                </span>
+              </Button>
+            </div>
+
+            {/* Success message */}
+            {addToCartMutation.isSuccess && (
+              <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-lg">
+                <span className="text-green-800 text-sm font-medium">
+                  Product added to cart successfully!
                 </span>
               </div>
-            </div>
-            <hr className="my-8 border-gray-200" />
-            <div className="grid grid-cols-2 gap-4 pt-6">
-              <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-gray-600" />
-                <span className="text-sm text-gray-700">Chính hãng 100%</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Truck className="w-5 h-5 text-gray-600" />
-                <span className="text-sm text-gray-700">Freeship toàn quốc</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <RotateCcw className="w-5 h-5 text-gray-600" />
-                <span className="text-sm text-gray-700">Đổi trả miễn phí</span>
-              </div>
+            )}
+
+            <Separator className="mt-[37px]" />
+
+            {/* Product Features */}
+            <div className="grid grid-cols-2 gap-y-5 mt-[40px]">
+              {productFeatures.map((feature, index) => (
+                <div key={index} className="flex items-center gap-4">
+                  <div className="w-11 h-11 bg-[#f6f6f6] rounded-[22px] flex items-center justify-center">
+                    <img
+                      className="w-auto h-auto"
+                      alt={feature.title}
+                      src={feature.icon}
+                      crossOrigin='anonymous'
+                    />
+                  </div>
+                  <span className="[font-family:'Causten-Medium',Helvetica] font-medium text-[#3c4242] text-lg">
+                    {feature.title}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
+
+        {/* Product Description Section */}
+        <div className="mt-[100px] px-[100px]">
+          <div className="flex items-center mb-6">
+            <div className="w-1.5 h-7 bg-[#8a33fd] rounded-[10px] mr-5"></div>
+            <h2 className="[font-family:'Core_Sans_C-65Bold',Helvetica] font-bold text-[#3c4242] text-[28px] tracking-[0.56px] leading-[33.5px]">
+              Product Description
+            </h2>
+          </div>
+          {/* <DescriptionSubsection description={product?.description} /> */}
+        </div>
+
+        {/* Product Table Section */}
+        {/* <ProductTabelSubsection /> */}
+
+        {/* Frame Section */}
+        {/* <FrameSubsection /> */}
+
+        {/* Similar Products Section */}
+        <div className="mt-[40px] px-[100px]">
+          <div className="flex items-center mb-6">
+            <div className="w-1.5 h-7 bg-[#8a33fd] rounded-[10px] mr-5"></div>
+            <h2 className="[font-family:'Core_Sans_C-65Bold',Helvetica] font-bold text-[#3c4242] text-[28px] tracking-[0.56px] leading-[33.5px]">
+              Similar Products
+            </h2>
+          </div>
+
+          {/* Similar Products Grid */}
+          {/* <div className="grid grid-cols-4 gap-x-[37px] gap-y-[50px]">
+            {similarProducts.map((product, index) => (
+              <Card key={index} className="w-[282px] border-none">
+                <CardContent className="p-0">
+                  <div className="relative w-[282px] h-[370px] bg-[#f6f6f6]">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute top-[27px] right-[23px] w-8 h-8 bg-white rounded-[16.18px] z-10"
+                    >
+                      <HeartIcon className="w-[15px] h-[13px]" />
+                    </Button>
+                  </div>
+                  <div className="flex justify-between items-start mt-[30px]">
+                    <div>
+                      <h3 className="[font-family:'Causten-SemiBold',Helvetica] font-semibold text-[#3c4242] text-base">
+                        {product.title}
+                      </h3>
+                      <p className="[font-family:'Causten-Medium',Helvetica] font-medium text-[#807d7e] text-sm mt-1">
+                        {product.brand}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className="bg-[#f6f6f6] rounded-lg px-4 py-2 border-none"
+                    >
+                      <span className="[font-family:'Causten-Bold',Helvetica] font-bold text-[#3c4242] text-sm">
+                        {product.price}
+                      </span>
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div> */}
+        </div>
+
+        {/* Need Help Section */}
+        {/* <NeedHelpSectionSubsection /> */}
       </div>
-      <ProductDescription product={product} />
-      <ProductsSimilar />
     </div>
   )
 }

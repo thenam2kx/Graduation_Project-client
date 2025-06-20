@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchListBrand, fetchListCategory, fetchListProduct } from '@/services/product-service/product.apis'
 import { useState } from 'react'
 import { Eye } from 'lucide-react'
+import { useNavigate } from 'react-router'
 import 'swiper/css/effect-coverflow'
 import 'swiper/css/effect-fade'
 import 'swiper/css/navigation'
@@ -93,6 +94,7 @@ const fadeInUp = {
 const HomePage = () => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [favorites, setFavorites] = useState<string[]>([])
+  const navigate = useNavigate()
 
   // Handle favorite toggle
   const toggleFavorite = (productId: string) => {
@@ -228,6 +230,7 @@ const HomePage = () => {
                     src={slide.img}
                     alt='Banner'
                     className='w-32 h-32 sm:w-40 sm:h-40 md:w-96 md:h-96 object-cover rounded-xl shadow-2xl mt-0 md:mt-0 md:ml-8 self-center'
+                    crossOrigin="anonymous"
                   />
                   <div className='absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-3/4 h-8 bg-black opacity-20 blur-xl rounded-full'></div>
                 </motion.div>
@@ -285,6 +288,7 @@ const HomePage = () => {
                   viewport={{ once: true }}
                   variants={fadeInUp}
                   whileHover={{ y: -5 }}
+                  onClick={() => navigate(`productDetail/${product._id}`)}
                 >
                   {/* Sale badge */}
                   <div className='absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10'>
@@ -310,6 +314,7 @@ const HomePage = () => {
                       src={product.img || product.image}
                       alt={product.name}
                       className='w-full h-60 object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer'
+                      crossOrigin="anonymous"
                     />
 
                     {/* Quick action overlay */}
@@ -405,6 +410,7 @@ const HomePage = () => {
                       src={category.img || category.image || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=500'}
                       alt={category.name}
                       className='w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500'
+                      crossOrigin="anonymous"
                     />
                     <div className='absolute inset-0 bg-gradient-to-t from-black/30 to-transparent'></div>
                   </div>
@@ -460,6 +466,7 @@ const HomePage = () => {
                       src={slide.left.bg}
                       alt={slide.left.title}
                       className='object-cover w-full h-80 md:h-full transition-transform duration-700 hover:scale-110'
+                      crossOrigin="anonymous"
                     />
                     <div className='absolute top-4 left-4 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full'>
                       <span className='text-amber-600 text-sm font-medium flex items-center'>
@@ -517,7 +524,68 @@ const HomePage = () => {
           </button>
         </div>
 
-        <div className='bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-2xl'>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6 mb-8">
+          {featuredProducts.slice(0, 5).map((product: any, idx: number) => (
+            <motion.div
+              key={idx}
+              className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-2 sm:p-3 flex flex-col group cursor-pointer relative overflow-hidden'
+              custom={idx}
+              initial='hidden'
+              whileInView='visible'
+              viewport={{ once: true }}
+              variants={fadeInUp}
+              whileHover={{ y: -5 }}
+            >
+              {/* Featured badge - smaller on mobile */}
+              <div className="absolute top-2 sm:top-3 right-2 sm:right-3 bg-indigo-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded z-10 flex items-center">
+                <Award size={10} className="mr-0.5 sm:mr-1" /> Nổi bật
+              </div>
+
+              <div className="relative overflow-hidden rounded-lg mb-2 sm:mb-3">
+                <img
+                  src={product.img || product.image}
+                  alt={product.name}
+                  className='w-full h-32 sm:h-40 md:h-48 object-cover group-hover:scale-110 transition-transform duration-500'
+                  crossOrigin="anonymous"
+                />
+
+                {/* Quick action overlay */}
+                <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <button className="bg-white text-indigo-700 rounded-full p-1.5 sm:p-2 mx-1 hover:bg-indigo-700 hover:text-white transition-colors">
+                    <ShoppingBag size={14} className="sm:size-[18px]" />
+                  </button>
+                  <button className="bg-white text-indigo-700 rounded-full p-1.5 sm:p-2 mx-1 hover:bg-indigo-700 hover:text-white transition-colors">
+                    <Eye size={14} className="sm:size-[18px]" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col">
+                <div className='font-bold text-sm sm:text-base mb-1 cursor-pointer line-clamp-2 h-10 sm:h-12'>
+                  {product.name}
+                </div>
+
+                <div className='text-indigo-500 text-xs sm:text-sm mb-1 sm:mb-2 cursor-pointer line-clamp-1'>
+                  {product.brand || 'Thương hiệu cao cấp'}
+                </div>
+
+                <div className="flex items-center mb-1 sm:mb-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={12} className={i < 4 ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} />
+                  ))}
+                </div>
+
+                <div className="mt-auto">
+                  <div className='bg-indigo-50 rounded-lg px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-base text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white transition text-center'>
+                    {typeof product.price === 'number' ? product.price.toLocaleString() : product.price}₫
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-2xl">
           <Swiper
             navigation={{
               nextEl: '.custom-next-product',
@@ -547,6 +615,7 @@ const HomePage = () => {
                       src={product.img || product.image}
                       alt={product.name}
                       className='w-full h-40 object-cover group-hover:scale-110 transition-transform duration-500'
+                      crossOrigin="anonymous"
                     />
 
                     {/* Favorite button */}
@@ -633,6 +702,7 @@ const HomePage = () => {
                       <img
                         src={fb.img}
                         alt={fb.name}
+                        crossOrigin="anonymous"
                         className='w-12 h-12 sm:w-16 sm:h-16 rounded-full border-3 sm:border-4 border-rose-100 group-hover:border-rose-300 transition object-cover'
                       />
                       <div className='absolute -bottom-1 -right-1 bg-rose-500 text-white rounded-full p-0.5 sm:p-1'>
@@ -724,6 +794,7 @@ const HomePage = () => {
                       src={brand.img || brand.logo || brand.image || `https://placehold.co/200x80?text=${brand.name}`}
                       alt={brand.name}
                       className='max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-300'
+                      crossOrigin="anonymous"
                     />
                   </div>
 

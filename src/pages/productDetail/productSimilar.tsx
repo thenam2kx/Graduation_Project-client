@@ -92,6 +92,7 @@ const ProductsSimilar = () => {
                   height: '100%',
                   objectFit: 'contain'
                 }}
+                crossOrigin='anonymous'
               />
               <button
                 onClick={(e) => {
