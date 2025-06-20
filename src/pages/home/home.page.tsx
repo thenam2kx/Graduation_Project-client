@@ -571,7 +571,7 @@ const HomePage = () => {
 
                 <div className="flex items-center mb-1 sm:mb-2">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={12} className={i < 4 ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} />
+                    <Star key={i} size={12} className={i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
                   ))}
                 </div>
 

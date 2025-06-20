@@ -45,6 +45,7 @@ export const SlideshowBlog: React.FC<SlideshowBlogProps> = ({ blogs, navigate })
                 src={blog.image || 'https://via.placeholder.com/1200x600'}
                 alt={blog.title}
                 className="w-full h-full object-cover"
+                crossOrigin='anonymous'
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
               <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">

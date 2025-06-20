@@ -127,6 +127,7 @@ export const BlogSidebar: React.FC<BlogSidebarProps> = ({
                             src={product.img || product.image || 'https://via.placeholder.com/300x180?text=Sản+phẩm'}
                             alt={product.name}
                             className='w-full h-full object-cover'
+                            crossOrigin='anonymous'
                           />
                         </div>
                         <div className='ml-2 flex-1'>
