@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Minus, Plus, Trash2 } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CART_KEYS } from '@/services/cart-service/cart.keys'
 import { fetchCartByUserAPI, fetchInfoCartAPI, updateCartItemAPI } from '@/services/cart-service/cart.apis'
@@ -11,6 +11,7 @@ import { useAppSelector } from '@/redux/hooks'
 export default function ShoppingCartPage() {
   const userId = useAppSelector((state) => state.auth.user?._id)
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
 
   const [couponCode, setCouponCode] = useState('')
@@ -53,6 +54,7 @@ export default function ShoppingCartPage() {
       }
     }
   })
+  console.log('🚀 ~ ShoppingCartPage ~ listProductsCart:', listProductsCart)
 
   const updateQuantity = (id: string, newQuantity: number) => {
     if (newQuantity < 1) return
@@ -106,21 +108,22 @@ export default function ShoppingCartPage() {
             <div className="grid grid-cols-12 gap-4 items-center">
               <div className="col-span-4 flex items-center space-x-4">
                 <img
-                  src={item.variantId.image || '/placeholder.svg'}
+                  src={ item.variantId?.image ? `http://localhost:8080${item.variantId?.image}` : `${item.productId.image[0]}`}
                   alt={item.productId.name}
                   width={80}
                   height={80}
                   className="rounded-lg bg-[#f6f6f6]"
+                  crossOrigin='anonymous'
                 />
                 <div>
-                  <h3 className="font-medium text-[#333333]">{item.productId.name}</h3>
-                  <p className="text-sm text-[#807d7e]">Mã sản phẩm: {item.variantId.sku}</p>
-                  <p className="text-sm text-[#807d7e]">Dung tích: {item.variantId.price} ml</p>
+                  <h3 className="font-medium text-[#333333] cursor-pointer" onClick={() => navigate(`/productDetail/${item.productId._id}`)}>{item.productId.name}</h3>
+                  <p className="text-sm text-[#807d7e]">Mã sản phẩm: {item.variantId?.sku}</p>
+                  <p className="text-sm text-[#807d7e]">Dung tích: {item.variantId?.price} ml</p>
                 </div>
               </div>
 
               <div className="col-span-2">
-                <span className="font-medium text-[#333333]">{item.variantId.price} VND</span>
+                <span className="font-medium text-[#333333]">{item.variantId?.price} VND</span>
               </div>
 
               <div className="col-span-2">
@@ -146,7 +149,7 @@ export default function ShoppingCartPage() {
               </div>
 
               <div className="col-span-2">
-                <span className="font-medium text-[#333333]">{(item.variantId.price * item.quantity)} VND</span>
+                <span className="font-medium text-[#333333]">{(item.variantId?.price * item.quantity)} VND</span>
               </div>
 
               <div className="col-span-2">
@@ -189,7 +192,7 @@ export default function ShoppingCartPage() {
           <div className="space-y-4">
             <div className="flex justify-between">
               <span className="text-[#333333]">Tổng tiền</span>
-              <span className="font-medium text-[#333333]">{listProductsCart?.reduce((acc, item) => acc + (item.variantId.price * item.quantity), 0)} VND</span>
+              <span className="font-medium text-[#333333]">{listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0)} VND</span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#333333]">Phí ship</span>
@@ -198,7 +201,7 @@ export default function ShoppingCartPage() {
             <div className="border-t pt-4">
               <div className="flex justify-between">
                 <span className="text-lg font-medium text-[#333333]">Tổng cộng</span>
-                <span className="text-lg font-medium text-[#333333]">{listProductsCart?.reduce((acc, item) => acc + (item.variantId.price * item.quantity), 0) as number - 20} VND</span>
+                <span className="text-lg font-medium text-[#333333]">{listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) as number - 20} VND</span>
               </div>
             </div>
             <Button className="w-full bg-[#8a33fd] hover:bg-[#6639a6] text-white py-3">Thanh toán</Button>

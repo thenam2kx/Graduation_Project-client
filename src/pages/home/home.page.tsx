@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchListBrand, fetchListCategory, fetchListProduct } from '@/services/product-service/product.apis'
 import { useState } from 'react'
 import { Eye } from 'lucide-react'
+import { useNavigate } from 'react-router'
 
 const feedbacks = [
   { name: 'Nguyễn Văn A', content: 'Mùi hương rất sang trọng, lưu hương lâu. Sẽ ủng hộ shop dài dài!', img: 'https://placehold.co/58x58?text=A' },
@@ -93,6 +94,7 @@ const fadeInUp = {
 const HomePage = () => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [favorites, setFavorites] = useState<string[]>([])
+  const navigate = useNavigate()
 
   // Handle favorite toggle
   const toggleFavorite = (productId: string) => {
@@ -207,7 +209,7 @@ const HomePage = () => {
                   className='z-10 max-w-full md:max-w-lg flex flex-col justify-center mb-6 md:mb-0'
                   initial={{ opacity: 0, x: -60 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
                 >
                   <div className="bg-white bg-opacity-20 backdrop-blur-sm px-3 py-1.5 md:px-4 md:py-2 rounded-lg inline-block mb-3 md:mb-4 w-fit">
                     <span className="text-white text-xs md:text-sm font-medium flex items-center">
@@ -232,6 +234,7 @@ const HomePage = () => {
                     src={slide.img}
                     alt='Banner'
                     className='w-32 h-32 sm:w-40 sm:h-40 md:w-96 md:h-96 object-cover rounded-xl shadow-2xl mt-0 md:mt-0 md:ml-8 self-center'
+                    crossOrigin="anonymous"
                   />
                   <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-3/4 h-8 bg-black opacity-20 blur-xl rounded-full"></div>
                 </motion.div>
@@ -289,6 +292,7 @@ const HomePage = () => {
                   viewport={{ once: true }}
                   variants={fadeInUp}
                   whileHover={{ y: -5 }}
+                  onClick={() => navigate(`productDetail/${product._id}`)}
                 >
                   {/* Sale badge */}
                   <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
@@ -314,6 +318,7 @@ const HomePage = () => {
                       src={product.img || product.image}
                       alt={product.name}
                       className='w-full h-60 object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer'
+                      crossOrigin="anonymous"
                     />
 
                     {/* Quick action overlay */}
@@ -406,9 +411,10 @@ const HomePage = () => {
                 >
                   <div className="relative overflow-hidden rounded-lg mb-4">
                     <img
-                      src={category.img || category.image || `https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=500`}
+                      src={category.img || category.image || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=500'}
                       alt={category.name}
                       className='w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500'
+                      crossOrigin="anonymous"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                   </div>
@@ -464,6 +470,7 @@ const HomePage = () => {
                       src={slide.left.bg}
                       alt={slide.left.title}
                       className='object-cover w-full h-80 md:h-full transition-transform duration-700 hover:scale-110'
+                      crossOrigin="anonymous"
                     />
                     <div className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full">
                       <span className="text-amber-600 text-sm font-medium flex items-center">
@@ -543,6 +550,7 @@ const HomePage = () => {
                   src={product.img || product.image}
                   alt={product.name}
                   className='w-full h-32 sm:h-40 md:h-48 object-cover group-hover:scale-110 transition-transform duration-500'
+                  crossOrigin="anonymous"
                 />
 
                 {/* Quick action overlay */}
@@ -611,6 +619,7 @@ const HomePage = () => {
                       src={product.img || product.image}
                       alt={product.name}
                       className='w-full h-40 object-cover group-hover:scale-110 transition-transform duration-500'
+                      crossOrigin="anonymous"
                     />
 
                     {/* Favorite button */}
@@ -697,6 +706,7 @@ const HomePage = () => {
                       <img
                         src={fb.img}
                         alt={fb.name}
+                        crossOrigin="anonymous"
                         className='w-12 h-12 sm:w-16 sm:h-16 rounded-full border-3 sm:border-4 border-rose-100 group-hover:border-rose-300 transition object-cover'
                       />
                       <div className="absolute -bottom-1 -right-1 bg-rose-500 text-white rounded-full p-0.5 sm:p-1">
@@ -788,6 +798,7 @@ const HomePage = () => {
                       src={brand.img || brand.logo || brand.image || `https://placehold.co/200x80?text=${brand.name}`}
                       alt={brand.name}
                       className='max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-300'
+                      crossOrigin="anonymous"
                     />
                   </div>
 
