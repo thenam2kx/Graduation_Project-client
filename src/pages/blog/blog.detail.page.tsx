@@ -223,7 +223,7 @@ const BlogDetailPage = () => {
   return (
     <BlogLayout
       title={blogDetail.title}
-      description={null}
+      description={undefined}
       breadcrumbs={breadcrumbs}
       sidebar={
         <BlogSidebar
