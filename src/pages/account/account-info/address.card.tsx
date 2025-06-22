@@ -17,7 +17,7 @@ const AddressCard = () => {
     queryKey: ['FETCH_ALL_ADDRESS_BY_USER', userInfo?._id],
     queryFn: async () => {
       const res = await fetchAllAddressByUserAPI(userInfo?._id as string)
-      const results = res.data?.results
+      const results = res.data
       if (Array.isArray(results)) {
         return results
       } else {

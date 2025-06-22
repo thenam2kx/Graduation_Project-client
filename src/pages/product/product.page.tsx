@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
 import {
   ChevronRightIcon,
   ChevronDown,
   ChevronUp,
-  Heart,
   Star,
   Search,
 } from 'lucide-react';
@@ -17,7 +16,7 @@ import { RootState } from '@/redux/store';
 
 const BRANDS = [
   'Dior', 'Chanel', 'Gucci', 'Versace', 'Calvin Klein', 'Jo Malone', 'Le Labo', 'Hermès', 'Tom Ford'
-];
+]
 const FRAGRANCE_FAMILIES = [
   'Hương hoa', 'Hương gỗ', 'Hương phương Đông', 'Hương biển', 'Hương trái cây', 'Hương da thuộc', 'Hương gia vị'
 ];
@@ -82,9 +81,8 @@ const ProductPage = () => {
     fetchProducts(meta.current, search);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meta.current]);
-
   const fetchProducts = async (page = 1, searchValue = '') => {
-    setLoading(true);
+    setLoading(true)
     try {
       const params: any = {
         current: page,
@@ -567,7 +565,7 @@ const ProductPage = () => {
                         disabled={meta.current === 1}
                         onClick={() => handlePageChange(meta.current - 1)}
                       >
-                        &lt;
+                        &lt
                       </button>
                       {meta.current > 3 && (
                         <button
@@ -608,7 +606,7 @@ const ProductPage = () => {
                         disabled={meta.current === meta.pages}
                         onClick={() => handlePageChange(meta.current + 1)}
                       >
-                        &gt;
+                        &gt
                       </button>
                     </nav>
                   </div>
@@ -619,7 +617,7 @@ const ProductPage = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ProductPage;
+export default ProductPage

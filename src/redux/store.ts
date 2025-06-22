@@ -3,18 +3,20 @@ import { persistStore, persistReducer } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
 import appReducer from './slices/app.slices'
 import authReducer from './slices/auth.slice'
+import cartReducer from './slices/cart.slice'
 
 // Config redux-persist
 const persistConfig = {
   key: 'root',
   version: 1,
   storage,
-  whitelist: ['auth', 'app']
+  whitelist: ['auth', 'app', 'cart']
 }
 
 const rootReducer = combineReducers({
   app: appReducer,
-  auth: authReducer
+  auth: authReducer,
+  cart: cartReducer
 })
 
 // Create persist reducer

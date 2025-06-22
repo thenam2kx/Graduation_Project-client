@@ -9,9 +9,9 @@ interface BlogCategoriesProps {
   selectedCategory?: string | null
 }
 
-export const BlogCategories: React.FC<BlogCategoriesProps> = ({ 
+export const BlogCategories: React.FC<BlogCategoriesProps> = ({
   onSelectCategory,
-  selectedCategory 
+  selectedCategory
 }) => {
   // Lấy danh sách danh mục
   const { data: cateData, isLoading } = useQuery({
@@ -36,7 +36,7 @@ export const BlogCategories: React.FC<BlogCategoriesProps> = ({
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
       <h3 className="text-lg font-semibold mb-3">Danh mục</h3>
-      <div className="max-h-[200px] overflow-y-auto pr-1">
+      <div className="max-h-[210px] overflow-y-auto pr-1">
         <ul className="space-y-1">
           <li>
             <button
