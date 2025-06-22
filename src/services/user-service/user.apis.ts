@@ -29,7 +29,7 @@ export const updateAddressAPI = async (userId: string, addressId: string, addres
 
 export const fetchAllAddressByUserAPI = async (userId: string) => {
   const url = `/api/v1/users/${userId}/addresses`
-  return axios.get<IBackendResponse<IAddressListResponse>>(url)
+  return axios.get<IBackendResponse<IAddress[]>>(url)
 }
 
 export const fetchInfoAddressByUserAPI = async (userId: string, addressId: string) => {

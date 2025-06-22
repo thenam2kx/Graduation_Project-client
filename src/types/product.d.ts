@@ -12,7 +12,7 @@ export interface IProduct {
     name: string
     _id: string
   }
-  images?: string[]
+  image?: string[]
   stock?: number
   status?: string
   variants?: {
