@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart, Trash2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { getWishlist, removeFromWishlist } from '@/services/wishlist-service/wishlist.apis';
+import { toast } from 'react-toastify';
 
 const WishlistPage = () => {
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [meta, setMeta] = useState({ current: 1, pageSize: 12, pages: 1, total: 0 });
-  
   const { isSignin, user } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
