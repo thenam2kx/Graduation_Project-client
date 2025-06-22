@@ -104,10 +104,11 @@ const AppHeader = () => {
             <button
               className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition flex items-center"
               onClick={() => toggleDropdown('shop')}
-            >
+             >
+              <Link to= '/shops'  className="flex items-center">
               Cửa hàng <ChevronDown size={16} className={`ml-1 transition-transform ${activeDropdown === 'shop' ? 'rotate-180' : ''}`} />
+              </Link>
             </button>
-
             <div className={`absolute top-full left-0 bg-white shadow-lg rounded-lg w-56 py-2 transition-all ${activeDropdown === 'shop' ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
               <Link to="/shops/men" className="block px-4 py-2 hover:bg-purple-50 hover:text-purple-600 transition">
                 Nước hoa nam
