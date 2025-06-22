@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import {
-  ChevronRightIcon,
   ChevronDown,
   ChevronUp,
   Star,
   Search,
-} from 'lucide-react';
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+  Heart
+} from 'lucide-react'
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router';
 import { addToWishlist, removeFromWishlist, checkProductInWishlist } from '@/services/wishlist-service/wishlist.apis';
 import { RootState } from '@/redux/store';
+import { toast } from 'react-toastify';
 
 const BRANDS = [
   'Dior', 'Chanel', 'Gucci', 'Versace', 'Calvin Klein', 'Jo Malone', 'Le Labo', 'Hermès', 'Tom Ford'
@@ -231,31 +230,7 @@ const ProductPage = () => {
     <div className="bg-white min-h-screen py-4">
       <div className="mx-auto max-w-[1440px] px-2 md:px-8 lg:px-16">
         {/* Breadcrumb & Title */}
-        <header className="mb-8">
-          <div className="bg-white rounded-xl shadow p-4 md:p-6">
-            <Breadcrumb className="mb-2">
-              <BreadcrumbList className="flex items-center gap-[15px]">
-                <BreadcrumbItem>
-                  <BreadcrumbLink className="font-medium cursor-pointer text-gray-600 text-sm md:text-base hover:text-purple-600 transition-colors">
-                    <a href="/">Trang chủ</a>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator>
-                  <ChevronRightIcon className="w-[5px] h-[10.14px] text-gray-600" />
-                </BreadcrumbSeparator>
-                <BreadcrumbItem>
-                  <BreadcrumbLink className="font-medium cursor-pointer text-purple-600 text-sm md:text-base">
-                    <a href="/shop">Cửa hàng</a>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-            <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">Tất cả sản phẩm</h1>
-            <p className="text-gray-600">
-              Khám phá những sản phẩm nước hoa mới nhất, chính hãng, đa dạng thương hiệu và mức giá.
-            </p>
-          </div>
-        </header>
+
 
         <div className="flex flex-col md:flex-row gap-8">
           {/* Sidebar */}
