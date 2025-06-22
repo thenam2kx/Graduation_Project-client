@@ -55,6 +55,12 @@ export const deleteCartItemAPI = async (cartId: string) => {
   return response
 }
 
+export const deleteItemFromCartAPI = async (cartId: string, itemId: string) => {
+  const url = `/api/v1/carts/${cartId}/items/${itemId}`
+  const response = await axios.delete<IBackendResponse<ICart>>(url)
+  return response
+}
+
 export const fetchCartByUserAPI = async (userId: string) => {
   const url = `/api/v1/carts/user/${userId}`
   const response = await axios.get(url)
