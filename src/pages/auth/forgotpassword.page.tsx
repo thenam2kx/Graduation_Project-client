@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -11,58 +12,45 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import { signinAPI } from '@/services/auth-service/auth.apis'
-import { useAppDispatch } from '@/redux/hooks'
-import { setAccessToken, setStateSignin } from '@/redux/slices/auth.slice'
+import { forgotPasswordAPI } from '@/services/auth-service/auth.apis'
 
 
 const formSchema = z.object({
-  email: z.string().email().min(2, {
-    message: 'Email không được để trống.'
-  }),
-
-  password: z.string().min(6, {
-    message: 'Mật khẩu phải có ít nhất 6 ký tự.'
-  })
+  email: z.string().email({ message: 'Email không hợp lệ.' }).min(1, { message: 'Email không được để trống.' })
 })
 
-
-const SigninPage = () => {
-  const dispatch = useAppDispatch()
+const ForgotPasswordPage = () => {
   const navigate = useNavigate()
 
-  const signinMutation = useMutation({
+  const sendEmailMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
-      const res = await signinAPI(data)
-      if (res.data) {
-        return res.data
+      const res = await forgotPasswordAPI(data)
+      const response = res as IBackendResponse<null>
+      if (response.statusCode === 200) {
+        return response
       } else {
-        throw new Error('Đăng nhập không thành công. Vui lòng thử lại.')
+        throw new Error(response.message.toString() || 'Gửi yêu cầu thất bại.')
       }
     },
-    onSuccess: (data: IAuth) => {
-      dispatch(setStateSignin({ user: data.user, access_token: data.access_token }))
-      dispatch(setAccessToken({ access_token: data.access_token }))
-      toast.success('Đăng nhập thành công!')
-      navigate('/')
+    onSuccess: (res, variables) => {
+      localStorage.setItem('reset_email', variables.email)
+      toast.success((res as IBackendResponse<null>).message.toString())
+      navigate(`/verifycode?email=${variables.email}`)
     },
-    onError: (error) => {
-      // eslint-disable-next-line no-console
-      console.log('🚀 ~ SigninPage ~ error:', error)
-      toast.error('Đăng nhập không thành công. Vui lòng thử lại.')
+    onError: (error: any) => {
+      toast.error(error.message || 'Gửi yêu cầu không thành công. Vui lòng thử lại.')
     }
   })
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
-      password: ''
+      email: ''
     }
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    signinMutation.mutate(values)
+    sendEmailMutation.mutate(values)
   }
 
   return (
@@ -74,13 +62,17 @@ const SigninPage = () => {
           <div className="flex-1/2 h-screen relative">
             <img className="w-full h-full object-cover" alt="Fashion models" src={authImg} />
           </div>
-          {/* Right Sign In Form */}
+          {/* Right Forgot Password Form */}
           <div className="flex-1/2 mx-[77px] mt-[171px]">
             <h1 className="[font-family:'Core_Sans_C-65Bold',Helvetica] font-bold text-[#333333] text-[34px] tracking-[0.68px]">
-              Đăng nhập
+              Quên mật khẩu
             </h1>
+            <p className="mt-4 [font-family:'Causten-Regular',Helvetica] font-normal text-[#666666] text-lg">
+              Vui lòng nhập email của bạn để nhận mã xác minh.
+            </p>
+
             <div className="mt-[83px]">
-              {/* Social Login Buttons */}
+              {/* Optional: Social login if desired for "forgot password" flow, often not needed */}
               <Button
                 variant="outline"
                 className="w-full flex items-center justify-center gap-3 px-5 py-4 rounded-lg border border-solid border-[#3c4242] [font-family:'Causten-Medium',Helvetica] font-medium text-[#8a33fd] text-[22px]"
@@ -95,7 +87,6 @@ const SigninPage = () => {
                 <img className="w-5 h-5" alt="Twitter" src={twitterIcon} />
                 Tiếp tục với Twitter
               </Button>
-              {/* OR Divider */}
               <div className="flex items-center justify-center mt-[30px]">
                 <Separator className="w-[248px] bg-[#66666640]" />
                 <span className="mx-5 [font-family:'Core_Sans_C-45Regular',Helvetica] font-normal text-[#666666] text-lg">
@@ -103,7 +94,6 @@ const SigninPage = () => {
                 </span>
                 <Separator className="w-[248px] bg-[#66666640]" />
               </div>
-
 
               <div className="mt-10">
                 <Form {...form}>
@@ -122,39 +112,20 @@ const SigninPage = () => {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mật khẩu</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="********" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="flex justify-end mt-2">
-                      <Link
-                        to="/forgot-password"
-                        className="[font-family:'Causten-Regular',Helvetica] font-normal text-[#3c4242] text-base underline"
-                      >
-                        Quên mật khẩu?
-                      </Link>
-                    </div>
-
-                    <Button type="submit" className="mt-10 w-[167px] flex items-center justify-center gap-3 px-5 py-4 bg-[#8a33fd] rounded-lg [font-family:'Causten-Medium',Helvetica] font-medium text-white text-lg">
-                      Đăng nhập
+                    <Button
+                      type="submit"
+                      className="mt-10 w-[200px] flex items-center justify-center gap-3 px-5 py-4 bg-[#8a33fd] rounded-lg [font-family:'Causten-Medium',Helvetica] font-medium text-white text-lg"
+                      disabled={sendEmailMutation.isPending}
+                    >
+                      {sendEmailMutation.isPending ? 'Đang gửi...' : 'Gửi mã xác minh'}
                     </Button>
                   </form>
                 </Form>
 
                 <p className="mt-[20px] [font-family:'Causten-Regular',Helvetica] font-normal text-[#3c4242] text-base">
-                  Chưa có tài khoản?{' '}
-                  <Link to="/signup" className="underline">
-                    Đăng ký
+                  Quay lại{' '}
+                  <Link to="/signin" className="underline">
+                    Đăng nhập
                   </Link>
                 </p>
               </div>
@@ -166,4 +137,4 @@ const SigninPage = () => {
   )
 }
 
-export default SigninPage
+export default ForgotPasswordPage
