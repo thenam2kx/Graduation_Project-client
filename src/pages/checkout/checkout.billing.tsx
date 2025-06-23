@@ -125,7 +125,7 @@ const CheckoutForm = () => {
     const dataSubmit = {
       userId: userId,
       addressId: selectedAddress?._id || null,
-      addressFree: shippingAddress === 'different' ? addressFormData : '',
+      addressFree: shippingAddress === 'different' ? addressFormData : {},
       totalPrice: listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) as number + 30000 || 0,
       shippingPrice: 30000,
       // discountId: '',
