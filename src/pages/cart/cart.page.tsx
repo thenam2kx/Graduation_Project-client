@@ -22,7 +22,7 @@ export default function ShoppingCartPage() {
       if (res && res.data) {
         return res.data
       } else {
-        throw new Error('Failed to update cart item')
+        toast.error(res.message)
       }
     },
     onSuccess: () => {
@@ -206,7 +206,7 @@ export default function ShoppingCartPage() {
               <div className="flex justify-between">
                 <span className="text-lg font-medium text-[#333333]">Tổng cộng</span>
                 <span className="text-lg font-medium text-[#333333]">
-                  {formatCurrencyVND(listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) as number - 30000)}
+                  {formatCurrencyVND(listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) as number + 30000)}
                 </span>
               </div>
             </div>

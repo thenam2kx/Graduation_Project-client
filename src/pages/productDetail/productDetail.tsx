@@ -81,14 +81,20 @@ const ProductDetail = () => {
   }
 
   const addToCartMutation = useMutation({
-    mutationFn: ({ variantId, quantity }: { variantId: string; quantity: number }) =>
-      addToCartAPI(cartId || '', product?._id || '', variantId, quantity),
+    mutationFn: async ({ variantId, quantity }: { variantId: string; quantity: number }) => {
+      const res = await addToCartAPI(cartId || '', product?._id || '', variantId, quantity)
+      if (res && res.data) {
+        return res.data
+      } else {
+        throw new Error(res.message as string)
+      }
+    },
     onSuccess: () => {
       toast.success('Thêm sản phẩm vào giỏ hàng thành công!')
       queryClient.invalidateQueries({ queryKey: [CART_KEYS.FETCH_CART_INFO, cartId] })
     },
-    onError: () => {
-      toast.error('Lỗi khi thêm sản phẩm vào giỏ hàng.')
+    onError: (error) => {
+      toast.error(error.message)
     }
   })
 
