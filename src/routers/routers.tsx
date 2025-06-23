@@ -18,6 +18,7 @@ import WishlistPage from '@/pages/wishlist/wishlist.page'
 import BlogDetailPage from '@/pages/blog/blog.detail.page'
 import CheckoutBilling from '@/pages/checkout/checkout.billing'
 import AboutPage from '@/pages/introduce/introduce.page'
+import VNPayReturnPage from '@/pages/payment/vnpay-return.page'
 
 const Routers = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
@@ -41,6 +42,7 @@ const Routers = () => {
           <Route path='about' element={<AboutPage />} />
         </Route>
       </Route>
+      <Route path='payment/vnpay-return' element={<VNPayReturnPage />} />
       <Route element={<PrivateRouters isAllowed={isAuthenticated ? false : true} redirectTo='/' />}>
         <Route path='/signin' element={<SigninPage />} />
         <Route path='/signup' element={<SignupPage />} />
