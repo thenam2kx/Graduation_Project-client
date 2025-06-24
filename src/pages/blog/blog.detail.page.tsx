@@ -107,6 +107,7 @@ const BlogDetailPage = () => {
             src={blogDetail.image || 'https://via.placeholder.com/1200x600'}
             alt={blogDetail.title}
             className="w-full h-64 md:h-96 object-cover"
+            crossOrigin='anonymous'
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
 
@@ -223,7 +224,7 @@ const BlogDetailPage = () => {
   return (
     <BlogLayout
       title={blogDetail.title}
-      description={null}
+      description={undefined}
       breadcrumbs={breadcrumbs}
       sidebar={
         <BlogSidebar

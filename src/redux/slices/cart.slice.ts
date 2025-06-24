@@ -1,23 +1,23 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 interface IState {
-  isOpenDrawer: boolean
+  IdCartUser?: string
 }
 
 const initialState: IState = {
-  isOpenDrawer: true
+  IdCartUser: ''
 }
 
 const cartSlice = createSlice({
   name: 'cart',
   initialState,
   reducers: {
-    setStateDrawer: (state) => {
-      state.isOpenDrawer = !state.isOpenDrawer
+    setIdCartUser: (state, action) => {
+      state.IdCartUser = action.payload
     }
   }
 })
 
-export const { setStateDrawer } = cartSlice.actions
+export const { setIdCartUser } = cartSlice.actions
 
 export default cartSlice.reducer

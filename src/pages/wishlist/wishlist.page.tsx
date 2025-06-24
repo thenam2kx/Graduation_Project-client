@@ -1,126 +1,147 @@
-import { X, ShoppingBag, Heart, User, LogOut } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Heart, Trash2 } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { getWishlist, removeFromWishlist } from '@/services/wishlist-service/wishlist.apis';
+import { toast } from 'react-toastify';
 
 const WishlistPage = () => {
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [meta, setMeta] = useState({ current: 1, pageSize: 12, pages: 1, total: 0 });
+  const { isSignin, user } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    if (isSignin && user) {
+      fetchWishlist(user._id);
+    }
+  }, [isSignin, user]);
+
+  const fetchWishlist = async (userId: string, page = 1) => {
+    try {
+      setLoading(true);
+      const response = await getWishlist(userId, page, 12);
+      setWishlistItems(response.data.data.results);
+      setMeta(response.data.data.meta);
+    } catch (error) {
+      toast.error('Không thể tải danh sách yêu thích');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveFromWishlist = async (productId: string) => {
+    try {
+      await removeFromWishlist(productId);
+      toast.success('Đã xóa khỏi danh sách yêu thích!');
+      fetchWishlist(meta.current);
+    } catch (error) {
+      toast.error('Không thể xóa sản phẩm');
+    }
+  };
+
+  if (!isSignin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Heart size={64} className="mx-auto text-gray-300 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Vui lòng đăng nhập</h2>
+          <p className="text-gray-600">Để xem danh sách yêu thích của bạn</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 gap-6">
-      {/* Sidebar menu (mobile hidden, desktop visible) */}
-      <aside className="hidden md:flex md:flex-col md:w-64 md:space-y-6 text-sm text-gray-600">
-        <h2 className="text-purple-700 font-semibold border-l-4 border-purple-700 pl-2 mb-4">Hello Jhanvi</h2>
-        <p className="mb-8 text-gray-400">Welcome to your Account</p>
-        <nav className="space-y-1" aria-label="Sidebar">
-          <a href="#" className="flex items-center px-4 py-2 rounded-md hover:bg-purple-100 cursor-pointer gap-3">
-            <ShoppingBag className="text-gray-400" size={20} />
-            My orders
-          </a>
-          <a href="#" className="flex items-center px-4 py-2 rounded-md bg-purple-100 text-purple-700 font-semibold cursor-default gap-3" aria-current="page">
-            <Heart className="text-purple-700" size={20} />
-            Wishlist
-          </a>
-          <a href="#" className="flex items-center px-4 py-2 rounded-md hover:bg-purple-100 cursor-pointer gap-3">
-            <User className="text-gray-400" size={20} />
-            My info
-          </a>
-          <a href="#" className="flex items-center px-4 py-2 rounded-md hover:bg-purple-100 cursor-pointer gap-3">
-            <LogOut className="text-gray-400" size={20} />
-            Sign out
-          </a>
-        </nav>
-      </aside>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Danh sách yêu thích</h1>
+          <p className="text-gray-600">
+            {meta.total > 0 ? `${meta.total} sản phẩm yêu thích` : 'Chưa có sản phẩm nào'}
+          </p>
+        </div>
 
-      {/* Wishlist Content */}
-      <main className="flex-1 bg-white rounded-lg shadow p-6">
-        <h1 className="text-lg font-semibold mb-6">Wishlist</h1>
-        <ul className="divide-y divide-gray-200">
-          {/* Each wishlist item */}
-          <li className="flex items-center py-4 flex-wrap md:flex-nowrap gap-4">
-            <button aria-label="Remove Blue Flower Print Crop Top" className="text-gray-400 hover:text-red-500 self-start md:self-auto cursor-pointer">
-              <X />
-            </button>
-            <img
-              src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/0299505b-9155-4460-9597-934db4e70fbd.png"
-              alt="Blue Flower Print Crop Top"
-              className="w-20 h-20 rounded-md object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-semibold truncate">Blue Flower Print Crop Top</h2>
-              <p className="text-gray-600 text-xs mt-1">
-                Color : <span className="font-semibold">Yellow</span>
-              </p>
-              <p className="text-gray-600 text-xs">
-                Quantity : <span className="font-semibold">1</span>
-              </p>
-            </div>
-            <p className="w-16 text-right font-semibold">$29.00</p>
-            <button className="bg-purple-600 text-white px-4 py-1 rounded-md text-sm hover:bg-purple-700 transition">Add to cart</button>
-          </li>
+        {wishlistItems.length === 0 ? (
+          <div className="text-center py-16">
+            <Heart size={64} className="mx-auto text-gray-300 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Danh sách yêu thích trống</h2>
+            <p className="text-gray-600 mb-6">Hãy thêm những sản phẩm bạn yêu thích!</p>
+            <a
+              href="/shops"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+            >
+              Khám phá sản phẩm
+            </a>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {wishlistItems.map((item) => (
+              <div key={item._id} className="bg-white rounded-lg shadow-md overflow-hidden group">
+                <div className="relative">
+                  <img
+                    src={item.productId?.image || item.productId?.img || 'https://via.placeholder.com/300x400?text=No+Image'}
+                    alt={item.productId?.name}
+                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                  <button
+                    onClick={() => handleRemoveFromWishlist(item.productId._id)}
+                    className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 size={18} className="text-red-500" />
+                  </button>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+                    {item.productId?.name}
+                  </h3>
+                  <p className="text-purple-600 font-bold text-xl mb-3">
+                    {item.productId?.price?.toLocaleString('vi-VN')}đ
+                  </p>
+                  <button
+                    onClick={() => window.location.href = `/product/${item.productId?.slug || item.productId?._id}`}
+                    className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors"
+                  >
+                    Xem chi tiết
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-          <li className="flex items-center py-4 flex-wrap md:flex-nowrap gap-4">
-            <button aria-label="Remove Yellow Flower Print Dress" className="text-gray-400 hover:text-red-500 self-start md:self-auto cursor-pointer">
-              <X />
-            </button>
-            <img
-              src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/385688a4-f979-46d8-9a1f-6be57ef1b371.png"
-              alt="Yellow Flower Print Dress"
-              className="w-20 h-20 rounded-md object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-semibold truncate">Yellow Flower Print Dress</h2>
-              <p className="text-gray-600 text-xs mt-1">
-                Color : <span className="font-semibold">Yellow</span>
-              </p>
-              <p className="text-gray-600 text-xs">
-                Quantity : <span className="font-semibold">1</span>
-              </p>
+        {/* Pagination */}
+        {meta.pages > 1 && (
+          <div className="flex justify-center mt-8">
+            <div className="flex space-x-2">
+              {Array.from({ length: meta.pages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => fetchWishlist(user._id, page)}
+                  className={`px-4 py-2 rounded-md ${
+                    page === meta.current
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
             </div>
-            <p className="w-16 text-right font-semibold">$78.00</p>
-            <button className="bg-purple-600 text-white px-4 py-1 rounded-md text-sm hover:bg-purple-700 transition">Add to cart</button>
-          </li>
-
-          <li className="flex items-center py-4 flex-wrap md:flex-nowrap gap-4">
-            <button aria-label="Remove White Hoodie long sleeve" className="text-gray-400 hover:text-red-500 self-start md:self-auto cursor-pointer">
-              <X />
-            </button>
-            <img
-              src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/32ec529c-e732-40f0-a988-9177648d1d02.png"
-              alt="White Hoodie long sleeve"
-              className="w-20 h-20 rounded-md object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-semibold truncate">White Hoodie long sleeve</h2>
-              <p className="text-gray-600 text-xs mt-1">
-                Color : <span className="font-semibold">White</span>
-              </p>
-              <p className="text-gray-600 text-xs">
-                Quantity : <span className="font-semibold">1</span>
-              </p>
-            </div>
-            <p className="w-16 text-right font-semibold">$134.00</p>
-            <button className="bg-purple-600 text-white px-4 py-1 rounded-md text-sm hover:bg-purple-700 transition">Add to cart</button>
-          </li>
-
-          <li className="flex items-center py-4 flex-wrap md:flex-nowrap gap-4">
-            <button aria-label="Remove Brown men’s long sleeve T-shirt" className="text-gray-400 hover:text-red-500 self-start md:self-auto cursor-pointer">
-              <X />
-            </button>
-            <img
-              src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/86c0434b-fac7-4041-a087-8d4e6bf6f68f.png"
-              alt="Brown men’s long sleeve T-shirt"
-              className="w-20 h-20 rounded-md object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-semibold truncate">Brown men’s long sleeve T-shirt</h2>
-              <p className="text-gray-600 text-xs mt-1">
-                Color : <span className="font-semibold">Brown</span>
-              </p>
-              <p className="text-gray-600 text-xs">
-                Quantity : <span className="font-semibold">1</span>
-              </p>
-            </div>
-            <p className="w-16 text-right font-semibold">$93.00</p>
-            <button className="bg-purple-600 text-white px-4 py-1 rounded-md text-sm hover:bg-purple-700 transition">Add to cart</button>
-          </li>
-        </ul>
-      </main>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

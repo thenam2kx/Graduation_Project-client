@@ -11,7 +11,7 @@ const menuItems = [
   { icon: <PackageIcon className="w-5 h-5" />, label: 'Đơn hàng của tôi' },
   { icon: <HeartIcon className='w-5 h-5' />, label: 'Sản phẩm yêu thích' },
   { icon: <UserIcon className='w-5 h-5' />, label: 'Thông tin tài khoản', active: true },
-  { icon: <LogOutIcon className='w-5 h-5' />, label: 'Đăng xuất' }
+  { key: 'signout', icon: <LogOutIcon className='w-5 h-5' />, label: 'Đăng xuất' }
 ]
 
 const LayoutAccountPage = () => {

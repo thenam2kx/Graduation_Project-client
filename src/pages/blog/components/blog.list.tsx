@@ -33,6 +33,7 @@ export const BlogList: React.FC<BlogListProps> = ({ blogs, fadeInUp, navigate })
               src={blog.image || 'https://via.placeholder.com/400x300'}
               alt={blog.title}
               className="w-full h-36 sm:h-48 object-cover"
+              crossOrigin='anonymous'
             />
             {blog.categoryBlogName && (
               <div className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
