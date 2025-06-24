@@ -20,7 +20,7 @@ const AppHeader = () => {
 
   useEffect(() => {
     (async () => {
-      const res = await fetchCartByUserAPI(user?._id || localStorage.getItem('userId') || '')
+      const res = await fetchCartByUserAPI(user?._id || '')
       if (res && res.data) {
         dispatch(setIdCartUser(res.data._id))
         return res.data
