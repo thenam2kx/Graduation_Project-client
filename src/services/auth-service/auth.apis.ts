@@ -26,8 +26,8 @@ export const forgotPasswordAPI = (data: { email: string }) => {
 }
 
 export const verifyForgotPasswordCodeAPI = (data: { email: string; code: string }) => {
-  const url = '/api/v1/auth/verify-forgot-password-code'
-  return axios.post<IBackendResponse<null>>(url, data)
+  const url = `/api/v1/auth/verify-forgot-password-code?email=${data.email}`
+  return axios.post<IBackendResponse<null>>(url, { code: data.code })
 }
 
 export const resetPasswordAPI = (data: { email: string; password: string; code: string}) => {
@@ -35,7 +35,3 @@ export const resetPasswordAPI = (data: { email: string; password: string; code: 
   return axios.post<IBackendResponse<null>>(url, data)
 }
 
-export const verifyResetPasswordCodeAPI = (data: { email: string; code: string }) => {
-  const url = `/api/v1/auth/verify-reset-password?email=${data.email}`
-  return axios.post<IBackendResponse<null>>(url, { code: data.code })
-}

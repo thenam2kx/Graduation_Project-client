@@ -17,7 +17,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import { verifyAPI } from '@/services/auth-service/auth.apis'
+import { verifyForgotPasswordCodeAPI } from '@/services/auth-service/auth.apis'
 
 const formSchema = z.object({
   code: z
@@ -52,7 +52,7 @@ const VerifyCodePage = () => {
 
   const verifyCodeMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
-      const res = await verifyAPI({ email, code: data.code })
+      const res = await verifyForgotPasswordCodeAPI({ email, code: data.code })
       return res
     },
     onSuccess: (_, variables) => {
