@@ -12,6 +12,7 @@ import { Link, useNavigate } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { signupAPI } from '@/services/auth-service/auth.apis'
+import { createCartAPI } from '@/services/cart-service/cart.apis'
 
 const formSchema = z.object({
   email: z.string().email().min(2, {
@@ -26,6 +27,19 @@ const formSchema = z.object({
 const SignupPage = () => {
   const navigate = useNavigate()
 
+  const createCartMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await createCartAPI(userId)
+      if (res.data) {
+        console.log('Cart created successfully')
+      }
+    },
+    onError: (error) => {
+      console.error('Error creating cart:', error)
+      toast.error('Không thể tạo giỏ hàng. Vui lòng thử lại.')
+    }
+  })
+
   const signupMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
       const res = await signupAPI(data)
@@ -35,9 +49,10 @@ const SignupPage = () => {
         throw new Error('Đăng ký không thành công. Vui lòng thử lại.')
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       navigate('/verification?email=' + form.getValues('email'), { replace: true } )
       toast.success('Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản của bạn.')
+      createCartMutation.mutate(data.user._id)
     },
     onError: (error) => {
       // eslint-disable-next-line no-console
