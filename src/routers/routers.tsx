@@ -17,6 +17,9 @@ import CartPage from '@/pages/cart/cart.page'
 import WishlistPage from '@/pages/wishlist/wishlist.page'
 import BlogDetailPage from '@/pages/blog/blog.detail.page'
 import CheckoutBilling from '@/pages/checkout/checkout.billing'
+import ForgotPasswordPage from '@/pages/auth/forgotpassword.page'
+import ResetPasswordPage from '@/pages/auth/resetpassword.page'
+import VerifyCodePage from '@/pages/auth/verifycode.page'
 import AboutPage from '@/pages/introduce/introduce.page'
 import VNPayReturnPage from '@/pages/payment/vnpay-return.page'
 
@@ -46,7 +49,10 @@ const Routers = () => {
       <Route element={<PrivateRouters isAllowed={isAuthenticated ? false : true} redirectTo='/' />}>
         <Route path='/signin' element={<SigninPage />} />
         <Route path='/signup' element={<SignupPage />} />
-        <Route path='/verification' element={<VerificationPage />} />
+        <Route path='/forgot-password' element={<ForgotPasswordPage />} />
+        <Route path='/reset-password' element={<ResetPasswordPage />} />
+        <Route path='/verify-code' element={<VerificationPage />} />
+        <Route path='/verifycode' element={<VerifyCodePage />} />
       </Route>
       <Route path='*' element={<NotFoundPage />} />
     </Routes>

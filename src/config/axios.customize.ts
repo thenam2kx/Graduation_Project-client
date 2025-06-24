@@ -79,11 +79,11 @@ instance.interceptors.response.use(
       +error.response.status === 400 &&
       error.config.url === '/api/v1/auth/refresh-token'
     ) {
+
       const message = error?.response?.data?.message ?? 'Có lỗi xảy ra, vui lòng đăng nhập!'
       store.dispatch(setRefreshToken({ status: true, message: message }))
     }
-
-    return error?.response?.data ?? Promise.reject(error)
+    return Promise.reject(error)
   }
 )
 
