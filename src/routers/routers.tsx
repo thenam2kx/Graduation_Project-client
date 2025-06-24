@@ -13,13 +13,15 @@ import LayoutAccountPage from '@/pages/account/layout.account.page'
 import AddressForm from '@/pages/account/account-info/address.form'
 import BlogPage from '@/pages/blog/blog.page'
 import ProductDetail from '@/pages/productDetail/productDetail'
-import BlogDetailPage from '@/pages/blog/blog.detail.page'
 import CartPage from '@/pages/cart/cart.page'
 import WishlistPage from '@/pages/wishlist/wishlist.page'
+import BlogDetailPage from '@/pages/blog/blog.detail.page'
 import CheckoutBilling from '@/pages/checkout/checkout.billing'
 import ForgotPasswordPage from '@/pages/auth/forgotpassword.page'
 import ResetPasswordPage from '@/pages/auth/resetpassword.page'
 import VerifyCodePage from '@/pages/auth/verifycode.page'
+import AboutPage from '@/pages/introduce/introduce.page'
+import VNPayReturnPage from '@/pages/payment/vnpay-return.page'
 
 const Routers = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
@@ -40,8 +42,10 @@ const Routers = () => {
             <Route path='add-address' element={<AddressForm />} />
           </Route>
           <Route path='cart' element={<CartPage />} />
+          <Route path='about' element={<AboutPage />} />
         </Route>
       </Route>
+      <Route path='payment/vnpay-return' element={<VNPayReturnPage />} />
       <Route element={<PrivateRouters isAllowed={isAuthenticated ? false : true} redirectTo='/' />}>
         <Route path='/signin' element={<SigninPage />} />
         <Route path='/signup' element={<SignupPage />} />

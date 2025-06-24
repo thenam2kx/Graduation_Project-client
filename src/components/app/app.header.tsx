@@ -1,7 +1,12 @@
-import { useAppSelector } from '@/redux/hooks'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown, Bell } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { CART_KEYS } from '@/services/cart-service/cart.keys'
+import { fetchCartByUserAPI, fetchInfoCartAPI } from '@/services/cart-service/cart.apis'
+import { setIdCartUser } from '@/redux/slices/cart.slice'
+import SearchBox from '@/components/search-box'
 
 const AppHeader = () => {
   const [open, setOpen] = useState(false)
@@ -9,7 +14,33 @@ const AppHeader = () => {
   const [scrolled, setScrolled] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const user = useAppSelector((state) => state.auth.user)
+  const cartId = useAppSelector((state) => state.cart.IdCartUser)
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetchCartByUserAPI(user?._id || localStorage.getItem('userId') || '')
+      if (res && res.data) {
+        dispatch(setIdCartUser(res.data._id))
+        return res.data
+      } else {
+        throw new Error('Cart not found')
+      }
+    })()
+  }, [dispatch, user?._id])
+
+  const { data: cartByUser } = useQuery({
+    queryKey: [CART_KEYS.FETCH_CART_INFO, cartId],
+    queryFn: async () => {
+      const response = await fetchInfoCartAPI(cartId || '')
+      if (response && response.data) {
+        return response.data
+      }
+    },
+    enabled: !!cartId
+  })
+
 
   // Handle scroll effect
   useEffect(() => {
@@ -74,10 +105,11 @@ const AppHeader = () => {
             <button
               className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition flex items-center"
               onClick={() => toggleDropdown('shop')}
-            >
+             >
+              <Link to= '/shops'  className="flex items-center">
               Cửa hàng <ChevronDown size={16} className={`ml-1 transition-transform ${activeDropdown === 'shop' ? 'rotate-180' : ''}`} />
+              </Link>
             </button>
-
             <div className={`absolute top-full left-0 bg-white shadow-lg rounded-lg w-56 py-2 transition-all ${activeDropdown === 'shop' ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
               <Link to="/shops/men" className="block px-4 py-2 hover:bg-purple-50 hover:text-purple-600 transition">
                 Nước hoa nam
@@ -127,14 +159,7 @@ const AppHeader = () => {
         {/* Search and Icons */}
         <div className="flex items-center gap-1 md:gap-3 ml-auto">
           {/* Search - Desktop */}
-          <div className="hidden md:block relative">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              className="w-48 lg:w-64 h-10 px-4 pr-10 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-            />
-            <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
+          <SearchBox className="hidden md:block w-48 lg:w-64" />
 
           {/* Search - Mobile */}
           <button
@@ -153,7 +178,9 @@ const AppHeader = () => {
           {/* Cart */}
           <Link to="/cart" className="p-2 rounded-full hover:bg-gray-100 relative">
             <ShoppingBag size={20} className="text-gray-700" />
-            <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">3</span>
+            <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+              {cartByUser?.length || 0}
+            </span>
           </Link>
 
           {/* Account */}
@@ -169,15 +196,10 @@ const AppHeader = () => {
       {/* Mobile Search Bar - Conditional */}
       {searchOpen && (
         <div className="md:hidden px-4 py-3 border-b border-gray-100 bg-white">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              className="w-full h-10 px-4 pr-10 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              autoFocus
-            />
-            <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
+          <SearchBox 
+            autoFocus 
+            onClose={() => setSearchOpen(false)}
+          />
         </div>
       )}
 
@@ -193,21 +215,20 @@ const AppHeader = () => {
                     <User size={20} className="text-purple-600" />
                   </div>
                   <div>
-                    <p className="font-medium">{user.name || 'Khách hàng'}</p>
                     <p className="text-sm text-gray-500">{user.email}</p>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <Link 
-                    to="/signin" 
+                  <Link
+                    to="/signin"
                     className="w-full py-2 bg-purple-600 text-white text-center rounded-lg font-medium"
                     onClick={() => setOpen(false)}
                   >
                     Đăng nhập
                   </Link>
-                  <Link 
-                    to="/signup" 
+                  <Link
+                    to="/signup"
                     className="w-full py-2 border border-purple-600 text-purple-600 text-center rounded-lg font-medium"
                     onClick={() => setOpen(false)}
                   >
@@ -216,51 +237,51 @@ const AppHeader = () => {
                 </div>
               )}
             </div>
-            
+
             {/* Navigation links */}
             <nav className="flex flex-col gap-1">
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className="px-2 py-3 text-neutral-800 font-semibold hover:bg-purple-50 rounded-lg"
                 onClick={() => setOpen(false)}
               >
                 Trang chủ
               </Link>
-              
+
               <div className="px-2 py-3 text-neutral-700 font-medium">
-                <div 
+                <div
                   className="flex items-center justify-between cursor-pointer"
                   onClick={() => toggleDropdown('mobileShop')}
                 >
                   <span>Cửa hàng</span>
                   <ChevronDown size={18} className={`transition-transform ${activeDropdown === 'mobileShop' ? 'rotate-180' : ''}`} />
                 </div>
-                
+
                 {activeDropdown === 'mobileShop' && (
                   <div className="mt-2 ml-4 flex flex-col gap-2">
-                    <Link 
-                      to="/shops/men" 
+                    <Link
+                      to="/shops/men"
                       className="py-2 hover:text-purple-600"
                       onClick={() => setOpen(false)}
                     >
                       Nước hoa nam
                     </Link>
-                    <Link 
-                      to="/shops/women" 
+                    <Link
+                      to="/shops/women"
                       className="py-2 hover:text-purple-600"
                       onClick={() => setOpen(false)}
                     >
                       Nước hoa nữ
                     </Link>
-                    <Link 
-                      to="/shops/unisex" 
+                    <Link
+                      to="/shops/unisex"
                       className="py-2 hover:text-purple-600"
                       onClick={() => setOpen(false)}
                     >
                       Nước hoa unisex
                     </Link>
-                    <Link 
-                      to="/shops/gift-sets" 
+                    <Link
+                      to="/shops/gift-sets"
                       className="py-2 hover:text-purple-600"
                       onClick={() => setOpen(false)}
                     >
@@ -269,34 +290,34 @@ const AppHeader = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className="px-2 py-3 text-neutral-700 font-medium">
-                <div 
+                <div
                   className="flex items-center justify-between cursor-pointer"
                   onClick={() => toggleDropdown('mobileCategory')}
                 >
                   <span>Danh mục</span>
                   <ChevronDown size={18} className={`transition-transform ${activeDropdown === 'mobileCategory' ? 'rotate-180' : ''}`} />
                 </div>
-                
+
                 {activeDropdown === 'mobileCategory' && (
                   <div className="mt-2 ml-4 flex flex-col gap-2">
-                    <Link 
-                      to="/category/new-arrivals" 
+                    <Link
+                      to="/category/new-arrivals"
                       className="py-2 hover:text-purple-600"
                       onClick={() => setOpen(false)}
                     >
                       Sản phẩm mới
                     </Link>
-                    <Link 
-                      to="/category/best-sellers" 
+                    <Link
+                      to="/category/best-sellers"
                       className="py-2 hover:text-purple-600"
                       onClick={() => setOpen(false)}
                     >
                       Bán chạy nhất
                     </Link>
-                    <Link 
-                      to="/category/sale" 
+                    <Link
+                      to="/category/sale"
                       className="py-2 hover:text-purple-600"
                       onClick={() => setOpen(false)}
                     >
@@ -305,24 +326,24 @@ const AppHeader = () => {
                   </div>
                 )}
               </div>
-              
-              <Link 
-                to="/blogs" 
+
+              <Link
+                to="/blogs"
                 className="px-2 py-3 text-neutral-700 font-medium hover:bg-purple-50 rounded-lg"
                 onClick={() => setOpen(false)}
               >
                 Tin tức
               </Link>
-              
-              <Link 
-                to="/about" 
+
+              <Link
+                to="/about"
                 className="px-2 py-3 text-neutral-700 font-medium hover:bg-purple-50 rounded-lg"
                 onClick={() => setOpen(false)}
               >
                 Giới thiệu
               </Link>
             </nav>
-            
+
             {/* Additional links */}
             <div className="mt-6 border-t border-gray-200 pt-4">
               <div className="flex flex-col gap-3">
