@@ -1,176 +1,294 @@
-import {
-  ShoppingCart,
-  Shield,
-  Truck,
-  RotateCcw,
-  AlertTriangle,
-  LoaderCircle
-} from 'lucide-react'
+import { ShoppingCartIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
-import ProductDescription from './product.description'
-import ProductsSimilar from './product.similar'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
+import { QuantityInput } from '@/components/quantity-input'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { PRODUCT_KEYS } from '@/services/product-service/product.keys'
 import { useParams } from 'react-router'
-
-const fetchProductDetail = async (id: string) => {
-  const res = await axios.get(`http://localhost:8080/api/v1/products/${id}`)
-  return res.data?.data
-}
+import { fetchInfoProduct } from '@/services/product-service/product.apis'
+import { formatCurrencyVND } from '@/utils/utils'
+import { addToCartAPI } from '@/services/cart-service/cart.apis'
+import { CART_KEYS } from '@/services/cart-service/cart.keys'
+import { useAppSelector } from '@/redux/hooks'
+import { toast } from 'react-toastify'
 
 const ProductDetail = () => {
-  const { id } = useParams()
-  const [selectedSize, setSelectedSize] = useState<string | null>(null)
-  const [availableSizes, setAvailableSizes] = useState<string[]>([])
-  const [mainImage, setMainImage] = useState<string | null>(null)
-  const [thumbnails, setThumbnails] = useState<string[]>([])
+  const [quantity, setQuantity] = useState(1)
+  const [scents, setScents] = useState<{ id: string; name: string }[]>([])
+  const [selectedScents, setSelectedScents] = useState<string | undefined>(scents[0]?.id)
+  const [capacity, setCapacity] = useState<{ id: string; name: string }[]>([])
+  const [price, setPrice] = useState<number>(0)
+  const queryClient = useQueryClient()
+  const { id } = useParams<{ id: string }>()
+  const cartId = useAppSelector((state) => state.cart.IdCartUser)
 
-  const { data: product, isLoading, isError } = useQuery({
-    queryKey: ['productDetail', id],
-    queryFn: () => fetchProductDetail(id as string),
-    enabled: !!id
+  const { data: product, isLoading, error } = useQuery({
+    queryKey: [PRODUCT_KEYS.FETCH_INFO_PRODUCT, id],
+    queryFn: async () => {
+      const res = await fetchInfoProduct(id as string)
+      if (res && res.data) {
+        return res.data
+      } else {
+        toast.error('Sản phẩm không tồn tại hoặc đã bị xóa.')
+        throw new Error('Product not found')
+      }
+    }
   })
 
   useEffect(() => {
-    if (product) {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      const allImages = product.variants?.map(v => v.image).filter(Boolean) || []
-      const filtered = allImages.filter(img => img !== product.image)
+    if (product && product.variants) {
+      const newCapacity = new Map<string, { id: string; name: string }>()
+      const newScents = new Map<string, { id: string; name: string }>()
 
-      setMainImage(product.image)
-      setThumbnails(filtered)
-
-      const sizes = product.variants
-        ?.map(variant => {
-          const attr = variant.variant_attributes?.find(a => a.attributeId?.value || a.value)
-          return attr?.value || null
+      product.variants.forEach((variant) => {
+        variant.variant_attributes.forEach((attr) => {
+          if (attr.attributeId.slug === 'dung-tich') {
+            newCapacity.set(attr.value, { id: attr._id || '', name: attr.value })
+          } else if (attr.attributeId.slug === 'mui-huong') {
+            newScents.set(attr.value, { id: attr._id || '', name: attr.value })
+          }
         })
-        .filter((val): val is string => Boolean(val))
+      })
 
-      setAvailableSizes(sizes)
-      if (sizes.length && !selectedSize) {
-        setSelectedSize(sizes[0])
+      setCapacity(Array.from(newCapacity.values()))
+      setScents(Array.from(newScents.values()))
+    }
+  }, [product])
+
+  useEffect(() => {
+    if (capacity.length > 0 && !selectedScents) {
+      setSelectedScents(capacity[0].id)
+    }
+  }, [capacity, selectedScents])
+
+  // Set initial selected capacity
+  useEffect(() => {
+    if (product && product.variants && selectedScents) {
+      const selectedVariant = product.variants.find((variant) =>
+        variant.variant_attributes.some((attr) => attr._id === selectedScents)
+      )
+      if (selectedVariant) {
+        setPrice(selectedVariant.price * quantity)
       }
     }
-  }, [id, product])
+  }, [selectedScents, product, quantity])
 
-  const handleThumbnailClick = (clickedImg: string) => {
-    if (!mainImage || clickedImg === mainImage) return
 
-    setMainImage(clickedImg)
-    setThumbnails(prev => {
-      return [mainImage, ...prev.filter(img => img !== clickedImg)]
-    })
+  const handleSelectedScents = (id: string) => {
+    setSelectedScents(id)
+  }
+
+  const addToCartMutation = useMutation({
+    mutationFn: async ({ variantId, quantity }: { variantId: string; quantity: number }) => {
+      const res = await addToCartAPI(cartId || '', product?._id || '', variantId, quantity)
+      if (res && res.data) {
+        return res.data
+      } else {
+        throw new Error(res.message as string)
+      }
+    },
+    onSuccess: () => {
+      toast.success('Thêm sản phẩm vào giỏ hàng thành công!')
+      queryClient.invalidateQueries({ queryKey: [CART_KEYS.FETCH_CART_INFO, cartId] })
+    },
+    onError: (error) => {
+      toast.error(error.message)
+    }
+  })
+
+  const handleAddToCart = () => {
+    if (product && product.variants && selectedScents) {
+      const selectedVariant = product.variants.find((variant) =>
+        variant.variant_attributes.some((attr) => attr._id === selectedScents)
+      )
+      if (selectedVariant) {
+        addToCartMutation.mutate({ variantId: selectedVariant._id || '', quantity })
+      } else {
+        toast.error('Bạn chưa chọn biến thể nào.')
+      }
+    }
+  }
+
+
+  if (isLoading) {
+    return (
+      <div className="bg-white flex flex-row justify-center w-full">
+        <div className="bg-white overflow-hidden w-full max-w-[1440px] relative">
+          <div className="flex items-center justify-center h-96 mt-[108px]">
+            <div className="text-lg text-[#807d7e]">Loading product...</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white flex flex-row justify-center w-full">
+        <div className="bg-white overflow-hidden w-full max-w-[1440px] relative">
+          <div className="flex items-center justify-center h-96 mt-[108px]">
+            <div className="text-lg text-red-500">Error loading product</div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {isError && (
-          <div className="flex items-center gap-2 p-4 bg-red-100 text-red-700 rounded-md">
-            <AlertTriangle className="w-5 h-5" />
-            <span>Không thể tải dữ liệu sản phẩm</span>
+    <div className="bg-white flex flex-row justify-center w-full">
+      <div className="bg-white overflow-hidden w-full max-w-[1440px] relative">
+        <div className="flex mt-[108px]">
+          <div className="relative w-[200px] h-[784px] bg-[#f6f6f6]">
+            <div className="flex flex-col items-center gap-[24.34px] absolute top-[225px] left-[111px]">
+              <div className="flex flex-col items-center justify-center gap-[22.68px]">
+                {
+                  product?.image && product?.image.length > 0 && product?.image.map((img: string, index: number) => (
+                    <div className="w-[75.6px] h-[75.6px] relative" key={index}>
+                      <div className="relative w-[77px] h-[77px] rounded-[12.1px]">
+                        <img
+                          className="absolute h-full w-full top-0 left-0 object-cover rounded cursor-pointer"
+                          alt="Product thumbnail"
+                          src={img}
+                          crossOrigin='anonymous'
+                        />
+                        <div className="absolute w-[77px] h-[77px] top-0 left-0 rounded-[12.1px] border-[0.76px] border-solid border-[#3c4242]" />
+                      </div>
+                    </div>
+
+                  ))
+                }
+              </div>
+            </div>
           </div>
-        )}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="flex gap-4">
-            <div className="flex flex-col gap-3 items-center justify-center">
-              {thumbnails.map((thumb: string) => (
-                <div
-                  key={thumb}
-                  onClick={() => handleThumbnailClick(thumb)}
-                  className={`w-20 h-28 border-2 rounded-lg overflow-hidden cursor-pointer transition-colors ${
-                    thumb === mainImage
-                      ? 'border-black'
-                      : 'border-gray-200 hover:border-gray-400'
-                  }`}
-                >
+
+          <img
+            className="w-[520px] h-[785px] object-cover"
+            alt={product?.name}
+            src={product?.image?.[0]}
+            crossOrigin='anonymous'
+          />
+
+          {/* Product Details Section */}
+          <div className="flex flex-col ml-[67px] max-w-[534px]">
+            {/* Breadcrumb */}
+            <Breadcrumb className="mt-[30px]">
+              <BreadcrumbList className="flex items-center gap-[15px]">
+                <BreadcrumbItem>
+                  <BreadcrumbLink className="[font-family:'Causten-Medium',Helvetica] font-medium text-[#807d7e] text-lg">
+                    Shop
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator>
                   <img
-                    src={thumb || '/placeholder.svg'}
-                    alt="Thumbnail"
-                    className="w-full h-full object-contain bg-white"
+                    className="w-[5px] h-[10.14px]"
+                    alt="Left stroke"
+                    src="/left--stroke-.svg"
+                    crossOrigin='anonymous'
                   />
-                </div>
-              ))}
-            </div>
-            <div className="flex-1 bg-white rounded-2xl overflow-hidden flex items-center justify-center h-[500px]">
-              {isLoading ? (
-                <div className="w-full h-full flex items-center justify-center animate-pulse bg-gray-100">
-                  <LoaderCircle className="w-8 h-8 text-gray-400 animate-spin" />
-                </div>
-              ) : (
-                <img
-                  src={mainImage || '/placeholder.svg'}
-                  alt={product?.name || 'Sản phẩm'}
-                  className="max-h-full max-w-full object-contain bg-white"
-                />
-              )}
-            </div>
-          </div>
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {isLoading ? (
-                <div className="w-72 h-8 bg-gray-200 rounded animate-pulse" />
-              ) : product?.name}
+                </BreadcrumbSeparator>
+                <BreadcrumbItem>
+                  <BreadcrumbLink className="[font-family:'Causten-Medium',Helvetica] font-medium text-[#807d7e] text-lg capitalize">
+                    {product?.categoryId?.name || 'Category'}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator>
+                  <img
+                    className="w-[5px] h-[10.14px]"
+                    alt="Left stroke"
+                    src="/left--stroke-.svg"
+                    crossOrigin='anonymous'
+                  />
+                </BreadcrumbSeparator>
+                <BreadcrumbItem>
+                  <BreadcrumbLink className="[font-family:'Causten-Medium',Helvetica] font-medium text-[#807d7e] text-lg">
+                    Product
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+
+            {/* Product Title */}
+            <h1 className="mt-[26px] [font-family:'Core_Sans_C-65Bold',Helvetica] font-bold text-[#3c4242] text-[34px] tracking-[0.68px] leading-[47.6px]">
+              {product?.name}
             </h1>
-            <div className="text-sm text-gray-500">
-              {isLoading ? (
-                <div className="w-36 h-4 bg-gray-200 rounded animate-pulse" />
-              ) : `Thương hiệu: ${product?.brandId?.name || 'Không xác định'}`}
-            </div>
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                {availableSizes.map(size => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`w-12 h-12 rounded-lg border-2 font-medium transition-colors ${
-                      selectedSize === size
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {size}
-                  </button>
+
+            {/* Size Selection */}
+            <div className="flex flex-col gap-[25px] mt-[32px]">
+              <div className="flex items-start gap-5">
+                <span className="[font-family:'Causten-SemiBold',Helvetica] font-semibold text-[#3f4646] text-lg">
+                  Chọn dung tích
+                </span>
+              </div>
+
+              <div className="flex items-center gap-5">
+                {capacity && capacity.map((cap, index) => (
+                  <div key={index} className="relative w-[80px] h-[42px]">
+                    <button
+                      onClick={() => handleSelectedScents(cap.id)}
+                      className={`relative w-full h-[38px] rounded-xl transition-colors ${
+                        selectedScents === cap.id
+                          ? 'bg-[#3c4141]'
+                          : 'border-[1.5px] border-solid border-[#bebbbc] hover:border-[#3c4141]'
+                      }`}
+                    >
+                      <div
+                        className={`w-full h-[17px] [font-family:'Causten-Medium',Helvetica] font-medium text-sm text-center ${
+                          selectedScents === cap.id ? 'text-white' : 'text-[#3c4242]'
+                        }`}
+                      >
+                        {`${cap.name} ml`}
+                      </div>
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
 
-            <div className="flex gap-4 pt-4">
-              <button className="flex items-center justify-center px-8 py-3 rounded-lg font-medium bg-[#8B5CF6] hover:bg-[#7C3AED] text-white text-base transition-colors" style={{ minWidth: 140 }}>
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Thêm vào giỏ hàng
-              </button>
-              <div className="flex items-center justify-center px-8 py-3 border border-gray-300 rounded-lg bg-white">
-                <span className="text-xl font-bold text-gray-900">
-                  {isLoading ? (
-                    <div className="w-24 h-6 bg-gray-200 rounded animate-pulse" />
-                  ) : (
-                    `₫${product?.price?.toLocaleString('vi-VN')}`
-                  )}
+            {/* Quantity Selection */}
+            <div className="flex flex-col gap-[25px] mt-[32px]">
+              <span className="[font-family:'Causten-SemiBold',Helvetica] font-semibold text-[#3f4646] text-lg">
+                Số lượng
+              </span>
+              <QuantityInput
+                value={quantity}
+                onChange={setQuantity}
+                min={1}
+                max={10}
+                className="w-fit"
+              />
+            </div>
+
+            {/* Add to Cart and Price */}
+            <div className="flex gap-4 mt-[45px]">
+              <Button
+                onClick={handleAddToCart}
+                className="flex items-center justify-center gap-3 px-10 py-3 bg-[#8a33fd] rounded-lg hover:bg-[#7a2de8] transition-colors"
+              >
+                <ShoppingCartIcon className="w-5 h-5" />
+                <span className="[font-family:'Causten-SemiBold',Helvetica] font-semibold text-white text-lg cursor-pointer">
+                  {addToCartMutation.isPending ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
                 </span>
-              </div>
+              </Button>
+              {
+                selectedScents && (
+                  <Button
+                    variant="outline"
+                    className="flex items-center justify-center px-10 py-3 rounded-lg border border-solid border-[#3c4242]"
+                  >
+                    <span className="[font-family:'Causten-Bold',Helvetica] font-bold text-[#3c4242] text-lg">
+                      {formatCurrencyVND(price)}
+                    </span>
+                  </Button>
+                )
+              }
             </div>
-            <hr className="my-8 border-gray-200" />
-            <div className="grid grid-cols-2 gap-4 pt-6">
-              <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-gray-600" />
-                <span className="text-sm text-gray-700">Chính hãng 100%</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Truck className="w-5 h-5 text-gray-600" />
-                <span className="text-sm text-gray-700">Freeship toàn quốc</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <RotateCcw className="w-5 h-5 text-gray-600" />
-                <span className="text-sm text-gray-700">Đổi trả miễn phí</span>
-              </div>
-            </div>
+
+            <Separator className="mt-[37px]" />
           </div>
         </div>
       </div>
-      <ProductDescription product={product} />
-      <ProductsSimilar />
     </div>
   )
 }

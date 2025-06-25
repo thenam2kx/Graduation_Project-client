@@ -2,30 +2,19 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Minus, Plus, Trash2 } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CART_KEYS } from '@/services/cart-service/cart.keys'
-import { fetchCartByUserAPI, fetchInfoCartAPI, updateCartItemAPI } from '@/services/cart-service/cart.apis'
+import { deleteItemFromCartAPI, fetchInfoCartAPI, updateCartItemAPI } from '@/services/cart-service/cart.apis'
 import { useAppSelector } from '@/redux/hooks'
+import { formatCurrencyVND } from '@/utils/utils'
+import { toast } from 'react-toastify'
 
 export default function ShoppingCartPage() {
-  const userId = useAppSelector((state) => state.auth.user?._id)
   const queryClient = useQueryClient()
-
-
   const [couponCode, setCouponCode] = useState('')
-
-  const { data: cartUser } = useQuery({
-    queryKey: [CART_KEYS.FETCH_USER_CART],
-    queryFn: async () => {
-      const res = await fetchCartByUserAPI(userId as string)
-      if (res && res.data) {
-        return res.data
-      } else {
-        return []
-      }
-    }
-  })
+  const navigate = useNavigate()
+  const cartId = useAppSelector((state) => state.cart.IdCartUser)
 
   const updateQuantityCartMutation = useMutation({
     mutationFn: async ({ cartId, cartItemId, newQuantity }: { cartId: string; cartItemId: string; newQuantity: number }) => {
@@ -33,7 +22,22 @@ export default function ShoppingCartPage() {
       if (res && res.data) {
         return res.data
       } else {
-        throw new Error('Failed to update cart item')
+        toast.error(res.message)
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [CART_KEYS.FETCH_LIST_CART] })
+    }
+  })
+
+  const deleteItemFromCartMutation = useMutation({
+    mutationFn: async ({ cartId, itemId }: { cartId: string; itemId: string }) => {
+      const res = await deleteItemFromCartAPI(cartId, itemId)
+      if (res && res.data) {
+        toast.success('Đã xóa sản phẩm khỏi giỏ hàng')
+        return res.data
+      } else {
+        throw new Error('Failed to delete cart item')
       }
     },
     onSuccess: () => {
@@ -45,7 +49,7 @@ export default function ShoppingCartPage() {
   const { data: listProductsCart } = useQuery({
     queryKey: [CART_KEYS.FETCH_LIST_CART],
     queryFn: async () => {
-      const res = await fetchInfoCartAPI(cartUser?._id || '')
+      const res = await fetchInfoCartAPI(cartId as string)
       if (res && res.data) {
         return res.data
       } else {
@@ -56,11 +60,11 @@ export default function ShoppingCartPage() {
 
   const updateQuantity = (id: string, newQuantity: number) => {
     if (newQuantity < 1) return
-    updateQuantityCartMutation.mutate({ cartId: cartUser?._id || '', cartItemId: id, newQuantity })
+    updateQuantityCartMutation.mutate({ cartId: cartId || '', cartItemId: id, newQuantity })
   }
 
   const removeItem = (id: string) => {
-    console.log('🚀 ~ removeItem ~ id:', id)
+    deleteItemFromCartMutation.mutate({ cartId: cartId || '', itemId: id })
   }
 
 
@@ -106,21 +110,22 @@ export default function ShoppingCartPage() {
             <div className="grid grid-cols-12 gap-4 items-center">
               <div className="col-span-4 flex items-center space-x-4">
                 <img
-                  src={item.variantId.image || '/placeholder.svg'}
+                  src={item.variantId?.image ? `http://localhost:8080${item.variantId?.image}` : `${item.productId.image[0]}`}
                   alt={item.productId.name}
                   width={80}
                   height={80}
                   className="rounded-lg bg-[#f6f6f6]"
+                  crossOrigin='anonymous'
                 />
                 <div>
-                  <h3 className="font-medium text-[#333333]">{item.productId.name}</h3>
-                  <p className="text-sm text-[#807d7e]">Mã sản phẩm: {item.variantId.sku}</p>
-                  <p className="text-sm text-[#807d7e]">Dung tích: {item.variantId.price} ml</p>
+                  <h3 className="font-medium text-[#333333] cursor-pointer" onClick={() => navigate(`/productDetail/${item.productId._id}`)}>{item.productId.name}</h3>
+                  <p className="text-sm text-[#807d7e]">Mã sản phẩm: {item.variantId?.sku}</p>
+                  <p className="text-sm text-[#807d7e]">Dung tích: {item.variantId?.price} ml</p>
                 </div>
               </div>
 
               <div className="col-span-2">
-                <span className="font-medium text-[#333333]">{item.variantId.price} VND</span>
+                <span className="font-medium text-[#333333]">{formatCurrencyVND(item.variantId?.price)}</span>
               </div>
 
               <div className="col-span-2">
@@ -146,7 +151,7 @@ export default function ShoppingCartPage() {
               </div>
 
               <div className="col-span-2">
-                <span className="font-medium text-[#333333]">{(item.variantId.price * item.quantity)} VND</span>
+                <span className="font-medium text-[#333333]">{formatCurrencyVND(item.variantId?.price * item.quantity)}</span>
               </div>
 
               <div className="col-span-2">
@@ -189,19 +194,25 @@ export default function ShoppingCartPage() {
           <div className="space-y-4">
             <div className="flex justify-between">
               <span className="text-[#333333]">Tổng tiền</span>
-              <span className="font-medium text-[#333333]">{listProductsCart?.reduce((acc, item) => acc + (item.variantId.price * item.quantity), 0)} VND</span>
+              <span className="font-medium text-[#333333]">
+                {formatCurrencyVND(listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#333333]">Phí ship</span>
-              <span className="font-medium text-[#333333]">20.00 VND</span>
+              <span className="font-medium text-[#333333]">{formatCurrencyVND(30000)}</span>
             </div>
             <div className="border-t pt-4">
               <div className="flex justify-between">
                 <span className="text-lg font-medium text-[#333333]">Tổng cộng</span>
-                <span className="text-lg font-medium text-[#333333]">{listProductsCart?.reduce((acc, item) => acc + (item.variantId.price * item.quantity), 0) as number - 20} VND</span>
+                <span className="text-lg font-medium text-[#333333]">
+                  {formatCurrencyVND(listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) as number + 30000)}
+                </span>
               </div>
             </div>
-            <Button className="w-full bg-[#8a33fd] hover:bg-[#6639a6] text-white py-3">Thanh toán</Button>
+            <Button className="w-full bg-[#8a33fd] hover:bg-[#6639a6] text-white py-3" onClick={() => navigate('/checkout')}>
+              Thanh toán
+            </Button>
           </div>
         </div>
       </div>
