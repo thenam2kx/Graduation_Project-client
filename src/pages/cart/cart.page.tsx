@@ -5,7 +5,7 @@ import { Minus, Plus, Trash2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CART_KEYS } from '@/services/cart-service/cart.keys'
-import { deleteItemFromCartAPI, fetchInfoCartAPI, updateCartItemAPI } from '@/services/cart-service/cart.apis'
+import { deleteItemFromCartAPI, fetchInfoCartAPI, ICartItem, updateCartItemAPI } from '@/services/cart-service/cart.apis'
 import { useAppSelector } from '@/redux/hooks'
 import { formatCurrencyVND } from '@/utils/utils'
 import { toast } from 'react-toastify'
@@ -80,19 +80,6 @@ export default function ShoppingCartPage() {
         </div>
       </div>
 
-      {/* Login prompt */}
-      <div className="max-w-7xl mx-auto px-4 mb-6">
-        <p className="text-[#807d7e] text-sm">
-          Please fill in the fields below and click place order to complete your purchase!
-        </p>
-        <p className="text-[#807d7e] text-sm">
-          Already registered?{' '}
-          <Link to="/login" className="text-[#8a33fd] hover:underline">
-            Please login here
-          </Link>
-        </p>
-      </div>
-
       {/* Cart Table */}
       <div className="max-w-7xl mx-auto px-4 mb-8">
         <div className="bg-[#3c4242] text-white">
@@ -105,7 +92,7 @@ export default function ShoppingCartPage() {
           </div>
         </div>
 
-        {listProductsCart && listProductsCart.map((item) => (
+        {listProductsCart && listProductsCart.map((item: ICartItem) => (
           <div key={item._id} className="border-b border-[#f3f3f3] p-4">
             <div className="grid grid-cols-12 gap-4 items-center">
               <div className="col-span-4 flex items-center space-x-4">
@@ -120,12 +107,12 @@ export default function ShoppingCartPage() {
                 <div>
                   <h3 className="font-medium text-[#333333] cursor-pointer" onClick={() => navigate(`/productDetail/${item.productId._id}`)}>{item.productId.name}</h3>
                   <p className="text-sm text-[#807d7e]">Mã sản phẩm: {item.variantId?.sku}</p>
-                  <p className="text-sm text-[#807d7e]">Dung tích: {item.variantId?.price} ml</p>
+                  <p className="text-sm text-[#807d7e]">Dung tích: {item.value} ml</p>
                 </div>
               </div>
 
               <div className="col-span-2">
-                <span className="font-medium text-[#333333]">{formatCurrencyVND(item.variantId?.price)}</span>
+                <span className="font-medium text-[#333333]">{formatCurrencyVND(item.variantId?.price || 0)}</span>
               </div>
 
               <div className="col-span-2">

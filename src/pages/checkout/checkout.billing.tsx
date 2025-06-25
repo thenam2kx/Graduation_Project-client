@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CART_KEYS } from '@/services/cart-service/cart.keys'
-import { fetchInfoCartAPI } from '@/services/cart-service/cart.apis'
+import { deleteCartItemAPI, fetchInfoCartAPI } from '@/services/cart-service/cart.apis'
 import { useAppSelector } from '@/redux/hooks'
 import { formatCurrencyVND } from '@/utils/utils'
 import { z } from 'zod'
@@ -20,6 +20,8 @@ import { toast } from 'react-toastify'
 import { createOrderAPI } from '@/services/order-service/order.apis'
 import { createVNPayPaymentAPI } from '@/services/vnpay-service/vnpay.apis'
 import PaymentLoading from '@/components/payment/payment-loading'
+import { useNavigate } from 'react-router'
+import { USER_KEYS } from '@/services/user-service/user.keys'
 
 
 const formSchema = z.object({
@@ -49,6 +51,8 @@ const CheckoutForm = () => {
   })
   const cartId = useAppSelector((state) => state.cart.IdCartUser)
   const userId = useAppSelector((state) => state.auth.user?._id)
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const { data: listProductsCart } = useQuery({
     queryKey: [CART_KEYS.FETCH_LIST_CART],
@@ -63,7 +67,7 @@ const CheckoutForm = () => {
   })
 
   const { data: listAddresses } = useQuery({
-    queryKey: ['fetchAllAddressByUser'],
+    queryKey: [USER_KEYS.FETCH_ALL_ADDRESS_BY_USER, userId],
     queryFn: async () => {
       if (!userId) return []
       const res = await fetchAllAddressByUserAPI(userId)
@@ -81,6 +85,20 @@ const CheckoutForm = () => {
     enabled: !!cartId
   })
 
+  const clearCartMutation = useMutation({
+    mutationFn: async () => {
+      const res = await deleteCartItemAPI(cartId as string)
+      return res.data || res
+    },
+    onSuccess: () => {
+      console.log('Cart cleared successfully')
+    },
+    onError: (error) => {
+      console.error('Error clearing cart:', error)
+      toast.error('Không thể làm sạch giỏ hàng!')
+    }
+  })
+
   const createOrderMutation = useMutation({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mutationFn: async (data: any) => {
@@ -95,6 +113,9 @@ const CheckoutForm = () => {
       } else {
         toast.success('Đặt hàng thành công!')
       }
+      clearCartMutation.mutate()
+      queryClient.invalidateQueries({ queryKey: [CART_KEYS.FETCH_LIST_CART] })
+      navigate('/', { replace: true })
     },
     onError: (error) => {
       // eslint-disable-next-line no-console

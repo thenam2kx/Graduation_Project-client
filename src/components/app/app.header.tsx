@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { CART_KEYS } from '@/services/cart-service/cart.keys'
 import { fetchCartByUserAPI, fetchInfoCartAPI } from '@/services/cart-service/cart.apis'
 import { setIdCartUser } from '@/redux/slices/cart.slice'
+import SearchBox from '@/components/search-box'
 
 const AppHeader = () => {
   const [open, setOpen] = useState(false)
@@ -19,7 +20,7 @@ const AppHeader = () => {
 
   useEffect(() => {
     (async () => {
-      const res = await fetchCartByUserAPI(user?._id || localStorage.getItem('userId') || '')
+      const res = await fetchCartByUserAPI(user?._id || '')
       if (res && res.data) {
         dispatch(setIdCartUser(res.data._id))
         return res.data
@@ -161,14 +162,7 @@ const AppHeader = () => {
         {/* Search and Icons */}
         <div className="flex items-center gap-1 md:gap-3 ml-auto">
           {/* Search - Desktop */}
-          <div className="hidden md:block relative">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              className="w-48 lg:w-64 h-10 px-4 pr-10 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-            />
-            <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
+          <SearchBox className="hidden md:block w-48 lg:w-64" />
 
           {/* Search - Mobile */}
           <button
@@ -205,15 +199,10 @@ const AppHeader = () => {
       {/* Mobile Search Bar - Conditional */}
       {searchOpen && (
         <div className="md:hidden px-4 py-3 border-b border-gray-100 bg-white">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              className="w-full h-10 px-4 pr-10 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              autoFocus
-            />
-            <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
+          <SearchBox 
+            autoFocus 
+            onClose={() => setSearchOpen(false)}
+          />
         </div>
       )}
 
