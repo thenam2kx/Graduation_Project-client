@@ -18,6 +18,7 @@ export interface VNPayReturnResponse {
   message: string
   data?: any
   code?: string
+  verified?: boolean
 }
 
 export const createVNPayPaymentAPI = async (data: VNPayPaymentRequest): Promise<VNPayPaymentResponse> => {
@@ -39,5 +40,10 @@ export const createVNPayPaymentAPI = async (data: VNPayPaymentRequest): Promise<
 
 export const verifyVNPayReturnAPI = async (params: URLSearchParams): Promise<VNPayReturnResponse> => {
   const response = await axiosInstance.get(`/api/v1/vnpay/return?${params.toString()}`)
+  return response.data
+}
+
+export const checkOrderStatusAPI = async (orderId: string): Promise<any> => {
+  const response = await axiosInstance.get(`/api/v1/orders/${orderId}`)
   return response.data
 }

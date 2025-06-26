@@ -108,14 +108,19 @@ const CheckoutForm = () => {
     onSuccess: (response) => {
       console.log('🚀 ~ CheckoutForm ~ response:', response)
       const orderData = response.data || response
-      if (paymentMethod === 'vnpay') {
-        handleVNPayPayment(orderData._id, orderData.totalPrice)
-      } else {
-        toast.success('Đặt hàng thành công!')
-      }
+      
+      // Xóa giỏ hàng sau khi đặt hàng thành công
       clearCartMutation.mutate()
       queryClient.invalidateQueries({ queryKey: [CART_KEYS.FETCH_LIST_CART] })
-      navigate('/', { replace: true })
+      
+      if (paymentMethod === 'vnpay') {
+        // Chuyển hướng đến trang thanh toán VNPay
+        handleVNPayPayment(orderData._id, orderData.totalPrice)
+      } else {
+        // Hiển thị thông báo và chuyển hướng về trang chủ
+        toast.success('Đặt hàng thành công!')
+        navigate('/', { replace: true })
+      }
     },
     onError: (error) => {
       // eslint-disable-next-line no-console
@@ -130,6 +135,15 @@ const CheckoutForm = () => {
       console.log('VNPay response:', response)
       const paymentUrl = response?.paymentUrl || response?.data?.paymentUrl
       if (paymentUrl) {
+        // Lưu thông tin đơn hàng vào localStorage để theo dõi
+        try {
+          localStorage.setItem('lastOrderId', response?.data?.orderId || '')
+          localStorage.setItem('lastOrderTime', new Date().toISOString())
+        } catch (e) {
+          console.error('Error saving order info to localStorage:', e)
+        }
+        
+        // Chuyển hướng đến trang thanh toán VNPay
         window.location.href = paymentUrl
       } else {
         toast.error('Không nhận được URL thanh toán từ VNPay!')
@@ -189,6 +203,7 @@ const CheckoutForm = () => {
       }))
     }
 
+    console.log('Submitting order data:', dataSubmit)
     createOrderMutation.mutate(dataSubmit)
   }
 
