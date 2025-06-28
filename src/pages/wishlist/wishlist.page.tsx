@@ -13,16 +13,16 @@ const WishlistPage = () => {
 
   useEffect(() => {
     if (isSignin && user) {
-      fetchWishlist(user._id);
+      fetchWishlist();
     }
   }, [isSignin, user]);
 
-  const fetchWishlist = async (userId: string, page = 1) => {
+  const fetchWishlist = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await getWishlist(userId, page, 12);
-      setWishlistItems(response.data.data.results);
-      setMeta(response.data.data.meta);
+      const response = await getWishlist(page, 12);
+      setWishlistItems(response.data.results);
+      setMeta(response.data.meta);
     } catch (error) {
       toast.error('Không thể tải danh sách yêu thích');
     } finally {
@@ -91,7 +91,7 @@ const WishlistPage = () => {
               <div key={item._id} className="bg-white rounded-lg shadow-md overflow-hidden group">
                 <div className="relative">
                   <img
-                    src={item.productId?.image || item.productId?.img || 'https://via.placeholder.com/300x400?text=No+Image'}
+                    src={item.productId?.image?.[0] || item.productId?.img || 'https://via.placeholder.com/300x400?text=No+Image'}
                     alt={item.productId?.name}
                     className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-200"
                   />
@@ -128,7 +128,7 @@ const WishlistPage = () => {
               {Array.from({ length: meta.pages }, (_, i) => i + 1).map((page) => (
                 <button
                   key={page}
-                  onClick={() => fetchWishlist(user._id, page)}
+                  onClick={() => fetchWishlist(page)}
                   className={`px-4 py-2 rounded-md ${
                     page === meta.current
                       ? 'bg-purple-600 text-white'
