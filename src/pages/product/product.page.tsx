@@ -8,7 +8,7 @@ import {
   Heart
 } from 'lucide-react'
 import { useSelector } from 'react-redux';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useNavigate } from 'react-router';
 import { addToWishlist, removeFromWishlist, checkProductInWishlist } from '@/services/wishlist-service/wishlist.apis';
 import { RootState } from '@/redux/store';
 import { toast } from 'react-toastify';
@@ -56,17 +56,7 @@ const ProductPage = () => {
   const [wishlistStatus, setWishlistStatus] = useState<Record<string, boolean>>({});
 
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { isSignin, user } = useSelector((state: RootState) => state.auth);
-
-  // Lấy tham số tìm kiếm từ URL
-  useEffect(() => {
-    const searchFromUrl = searchParams.get('search');
-    if (searchFromUrl) {
-      setSearch(searchFromUrl);
-      setSearchInput(searchFromUrl);
-    }
-  }, [searchParams]);
 
   // Reset to page 1 when filters/search change
   useEffect(() => {
@@ -114,7 +104,7 @@ const ProductPage = () => {
       if (qsArr.length > 0) params.qs = qsArr.join('&');
       const res = await axios.get('http://localhost:8080/api/v1/products', { params });
       if (res.data && res.data.data) {
-        const productResults = res.data?.data?.results || res.data?.results || [];
+        const productResults = res.data.data.results || [];
         setProducts(productResults);
         // Check wishlist status for all products
         if (productResults.length > 0) {
@@ -124,8 +114,8 @@ const ProductPage = () => {
         setMeta({
           current: page,
           pageSize: PAGE_SIZE,
-          pages: res.data?.data?.meta?.pages || res.data?.meta?.pages || 1,
-          total: res.data?.data?.meta?.total || res.data?.meta?.total || 0,
+          pages: res.data.data.meta?.pages || 1,
+          total: res.data.data.meta?.total || 0,
         });
       } else {
         setProducts([]);
@@ -216,7 +206,7 @@ const ProductPage = () => {
         toast.success('Đã xóa khỏi danh sách yêu thích!');
         setWishlistStatus(prev => ({ ...prev, [productId]: false }));
       } else {
-        await addToWishlist({ userId: user._id, productId });
+        await addToWishlist(productId);
         toast.success('Đã thêm vào danh sách yêu thích!');
         setWishlistStatus(prev => ({ ...prev, [productId]: true }));
         navigate(`/account/${user._id}/wishlist`);
@@ -412,7 +402,7 @@ const ProductPage = () => {
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium text-gray-700">
                     Tìm thấy <span className="text-purple-700 font-bold">{meta.total}</span> sản phẩm
-                    {search && <span className="ml-1 text-gray-500">cho từ khóa "<span className="italic font-semibold text-purple-600">{search}</span>"</span>}
+                    {search && <span className="ml-1 text-gray-500">cho từ khóa "<span className="italic">{search}</span>"</span>}
                   </span>
                   {(selectedPriceRange !== null || selectedVolumes.length > 0 || selectedBrands.length > 0 ||
                     selectedFragrances.length > 0 || selectedRating !== null) && (
@@ -537,24 +527,8 @@ const ProductPage = () => {
                   </div>
                 ) : (
                   <div className="bg-white rounded-xl shadow p-10 text-center">
-                    <div className="text-gray-500 text-lg mb-2">
-                      {search ? `Không tìm thấy sản phẩm nào cho "${search}"` : 'Không tìm thấy sản phẩm nào phù hợp'}
-                    </div>
-                    <p className="text-gray-400">
-                      {search ? 'Vui lòng thử từ khóa khác hoặc điều chỉnh bộ lọc' : 'Vui lòng thử lại với các bộ lọc khác'}
-                    </p>
-                    {search && (
-                      <button
-                        onClick={() => {
-                          setSearch('');
-                          setSearchInput('');
-                          navigate('/shops', { replace: true });
-                        }}
-                        className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-                      >
-                        Xem tất cả sản phẩm
-                      </button>
-                    )}
+                    <div className="text-gray-500 text-lg mb-2">Không tìm thấy sản phẩm nào phù hợp</div>
+                    <p className="text-gray-400">Vui lòng thử lại với các bộ lọc khác</p>
                   </div>
                 )}
                 {/* Pagination */}
