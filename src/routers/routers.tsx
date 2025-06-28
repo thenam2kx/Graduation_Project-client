@@ -23,6 +23,8 @@ import AboutPage from '@/pages/introduce/introduce.page'
 import VNPayReturnPage from '@/pages/payment/vnpay-return.page'
 import { ContactForm } from '@/pages/contact/contact.pages'
 import ProductDetail from '@/pages/productDetail/product.detail'
+import MyOrders from '@/pages/order/order.pages'
+import OrderDetails from '@/pages/order/order.detail.pages'
 
 const Routers = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
@@ -42,6 +44,10 @@ const Routers = () => {
             <Route path='wishlist' element={<WishlistPage />} />
             <Route index element={<AccountPage />} />
             <Route path='add-address' element={<AddressForm />} />
+            <Route path='order' element={<MyOrders />} />
+            <Route path='order/detail/:orderId' element={<OrderDetails />} />
+
+
           </Route>
           <Route path='cart' element={<CartPage />} />
           <Route path='about' element={<AboutPage />} />
