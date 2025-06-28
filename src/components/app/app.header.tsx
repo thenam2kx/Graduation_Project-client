@@ -154,6 +154,9 @@ const AppHeader = () => {
           <Link to="/about" className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition">
             Giới thiệu
           </Link>
+          <Link to="/contact" className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition">
+            Liên hệ
+          </Link>
         </nav>
 
         {/* Search and Icons */}
