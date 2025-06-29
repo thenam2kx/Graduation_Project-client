@@ -4,12 +4,16 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { getWishlist, removeFromWishlist } from '@/services/wishlist-service/wishlist.apis';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router';
+import { useQueryClient } from '@tanstack/react-query';
 
 const WishlistPage = () => {
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [meta, setMeta] = useState({ current: 1, pageSize: 12, pages: 1, total: 0 });
   const { isSignin, user } = useSelector((state: RootState) => state.auth);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (isSignin && user) {
@@ -21,9 +25,35 @@ const WishlistPage = () => {
     try {
       setLoading(true);
       const response = await getWishlist(page, 12);
-      setWishlistItems(response.data.results);
-      setMeta(response.data.meta);
+      
+      const wishlistResults = response.data?.data?.results || response.data?.results || [];
+      
+      // Fetch thêm thông tin variants cho mỗi sản phẩm
+      const enrichedResults = await Promise.all(
+        wishlistResults.map(async (item: any) => {
+          try {
+            const productResponse = await fetch(`http://localhost:8080/api/v1/products/${item.productId._id}`);
+            if (productResponse.ok) {
+              const productData = await productResponse.json();
+              return {
+                ...item,
+                productId: {
+                  ...item.productId,
+                  variants: productData.data?.variants || []
+                }
+              };
+            }
+          } catch (error) {
+            console.error('Error fetching product details:', error);
+          }
+          return item;
+        })
+      );
+      
+      setWishlistItems(enrichedResults);
+      setMeta(response.data?.data?.meta || response.data?.meta || { current: 1, pageSize: 12, pages: 1, total: 0 });
     } catch (error) {
+      console.error('Wishlist error:', error);
       toast.error('Không thể tải danh sách yêu thích');
     } finally {
       setLoading(false);
@@ -34,6 +64,7 @@ const WishlistPage = () => {
     try {
       await removeFromWishlist(productId);
       toast.success('Đã xóa khỏi danh sách yêu thích!');
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
       fetchWishlist(meta.current);
     } catch (error) {
       toast.error('Không thể xóa sản phẩm');
@@ -86,42 +117,70 @@ const WishlistPage = () => {
             </a>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {wishlistItems.map((item) => (
-              <div key={item._id} className="bg-white rounded-lg shadow-md overflow-hidden group">
-                <div className="relative">
-                  <img
-                    src={item.productId?.image?.[0] || item.productId?.img || 'https://via.placeholder.com/300x400?text=No+Image'}
-                    alt={item.productId?.name}
-                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                  <button
-                    onClick={() => handleRemoveFromWishlist(item.productId._id)}
-                    className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 size={18} className="text-red-500" />
-                  </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {wishlistItems.map((item) => {
+              const product = item.productId;
+              let price;
+
+              if (
+                product?.variants &&
+                Array.isArray(product.variants) &&
+                product.variants.length > 0 &&
+                product.variants[0]?.price !== null &&
+                product.variants[0]?.price !== undefined &&
+                product.variants[0]?.price !== ''
+              ) {
+                price = product.variants[0].price;
+              } else {
+                price = product?.price;
+              }
+
+              const displayPrice = (() => {
+                if (price === null || price === undefined || price === '') {
+                  return 'Liên hệ';
+                }
+                if (typeof price === 'number') {
+                  return price.toLocaleString() + '₫';
+                }
+                return price + '₫';
+              })();
+
+              return (
+                <div key={item._id} className="bg-white rounded-lg shadow-md overflow-hidden group flex flex-col h-full">
+                  <div className="relative">
+                    <img
+                      src={item.productId?.image?.[0] || item.productId?.img || 'https://via.placeholder.com/300x400?text=No+Image'}
+                      alt={item.productId?.name}
+                      className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                    <button
+                      onClick={() => handleRemoveFromWishlist(item.productId._id)}
+                      className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 size={18} className="text-red-500" />
+                    </button>
+                  </div>
+                  <div className="p-4 flex flex-col flex-1">
+                    <div 
+                      className="font-semibold text-lg mb-2 line-clamp-2 h-14 flex items-start"
+                      dangerouslySetInnerHTML={{ __html: item.productId?.name || '' }}
+                    />
+                    <div className="bg-neutral-100 rounded-lg px-4 py-2 font-bold text-purple-700 mb-3 text-center">
+                      {displayPrice}
+                    </div>
+                    <button
+                      onClick={() => navigate(`/productDetail/${item.productId?._id}`)}
+                      className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors mt-auto"
+                    >
+                      Xem chi tiết
+                    </button>
+                  </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-                    {item.productId?.name}
-                  </h3>
-                  <p className="text-purple-600 font-bold text-xl mb-3">
-                    {item.productId?.price?.toLocaleString('vi-VN')}đ
-                  </p>
-                  <button
-                    onClick={() => window.location.href = `/product/${item.productId?.slug || item.productId?._id}`}
-                    className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors"
-                  >
-                    Xem chi tiết
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        {/* Pagination */}
         {meta.pages > 1 && (
           <div className="flex justify-center mt-8">
             <div className="flex space-x-2">

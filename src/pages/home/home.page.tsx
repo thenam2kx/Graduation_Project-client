@@ -5,9 +5,14 @@ import { ChevronLeft, ChevronRight, Star, ShoppingBag, Heart, TrendingUp, Award,
 import { PRODUCT_KEYS } from '@/services/product-service/product.keys'
 import { useQuery } from '@tanstack/react-query'
 import { fetchListBrand, fetchListCategory, fetchListProduct } from '@/services/product-service/product.apis'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Eye } from 'lucide-react'
 import { useNavigate } from 'react-router'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/redux/store'
+import { addToWishlist, removeFromWishlist, checkProductInWishlist } from '@/services/wishlist-service/wishlist.apis'
+import { toast } from 'react-toastify'
+import { useQueryClient } from '@tanstack/react-query'
 import 'swiper/css/effect-coverflow'
 import 'swiper/css/effect-fade'
 import 'swiper/css/navigation'
@@ -93,17 +98,61 @@ const fadeInUp = {
 
 const HomePage = () => {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [favorites, setFavorites] = useState<string[]>([])
+  const [wishlistStatus, setWishlistStatus] = useState<Record<string, boolean>>({})
   const navigate = useNavigate()
+  const { isSignin, user } = useSelector((state: RootState) => state.auth)
+  const queryClient = useQueryClient()
 
-  // Handle favorite toggle
-  const toggleFavorite = (productId: string) => {
-    setFavorites(prev =>
-      prev.includes(productId)
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    )
-  }
+  // Kiểm tra trạng thái wishlist cho tất cả sản phẩm (batch request)
+  const checkWishlistStatus = async (productIds: string[]) => {
+    if (!isSignin || !user || productIds.length === 0) return;
+    try {
+      // Gọi 1 request duy nhất thay vì nhiều requests
+      const batchSize = 10; // Giới hạn số lượng check mỗi lần
+      const limitedIds = productIds.slice(0, batchSize);
+      const statusPromises = limitedIds.map(async (productId) => {
+        try {
+          const response = await checkProductInWishlist(productId);
+          return { productId, isInWishlist: response.data.data.isInWishlist };
+        } catch (error) {
+          return { productId, isInWishlist: false };
+        }
+      });
+      const results = await Promise.all(statusPromises);
+      const statusMap = results.reduce((acc, { productId, isInWishlist }) => {
+        acc[productId] = isInWishlist;
+        return acc;
+      }, {} as Record<string, boolean>);
+      setWishlistStatus(statusMap);
+    } catch (error) {
+      console.error('Error checking wishlist status:', error);
+    }
+  };
+
+  // Toggle wishlist
+  const handleToggleWishlist = async (productId: string) => {
+    if (!isSignin || !user) {
+      toast.error('Vui lòng đăng nhập để thêm vào yêu thích');
+      navigate('/auth/signin');
+      return;
+    }
+    try {
+      const isCurrentlyInWishlist = wishlistStatus[productId];
+      if (isCurrentlyInWishlist) {
+        await removeFromWishlist(productId);
+        toast.success('Đã xóa khỏi danh sách yêu thích!');
+        setWishlistStatus(prev => ({ ...prev, [productId]: false }));
+      } else {
+        await addToWishlist(productId);
+        toast.success('Đã thêm vào danh sách yêu thích!');
+        setWishlistStatus(prev => ({ ...prev, [productId]: true }));
+        // Invalidate wishlist query để update số lượng ở header
+        queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      }
+    } catch (error) {
+      toast.error('Có lỗi xảy ra, vui lòng thử lại');
+    }
+  };
   // Sản phẩm (dùng chung cho cả sản phẩm đang giảm giá và sản phẩm nổi bật)
   const {
     data: dataProducts,
@@ -141,6 +190,21 @@ const HomePage = () => {
   const products = Array.isArray(dataProducts?.results) ? dataProducts.results : []
   const brands = Array.isArray(dataBrand?.results) ? dataBrand.results : []
   const categories = Array.isArray(dataCategory?.results) ? dataCategory.results : []
+
+  // Chỉ check wishlist khi user đăng nhập lần đầu tiên hoặc khi có sản phẩm mới
+  useEffect(() => {
+    if (!isSignin || !user || products.length === 0) return;
+    
+    const productIds = products.map(product => product._id).filter(Boolean);
+    const hasNewProducts = productIds.some(id => !(id in wishlistStatus));
+    
+    if (hasNewProducts) {
+      const timer = setTimeout(() => {
+        checkWishlistStatus(productIds);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [products, isSignin]);
 
   // Sử dụng cùng dữ liệu sản phẩm cho cả hai phần
   const discountProducts = products
@@ -300,12 +364,12 @@ const HomePage = () => {
                     className='absolute top-3 right-3 bg-white rounded-full p-1.5 shadow-md z-10 transition-all duration-200 hover:bg-pink-50'
                     onClick={(e) => {
                       e.stopPropagation()
-                      toggleFavorite(product._id || idx.toString())
+                      handleToggleWishlist(product._id)
                     }}
                   >
                     <Heart
                       size={18}
-                      className={favorites.includes(product._id || idx.toString()) ? 'fill-pink-500 text-pink-500' : 'text-gray-400'}
+                      className={wishlistStatus[product._id] ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'}
                     />
                   </button>
 
@@ -329,9 +393,10 @@ const HomePage = () => {
                   </div>
 
                   <div className='flex-1 flex flex-col'>
-                    <div className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 h-12 flex items-center justify-center'>
-                      {product.name}
-                    </div>
+                    <div 
+                      className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 h-12 flex items-center justify-center'
+                      dangerouslySetInnerHTML={{ __html: product.name || '' }}
+                    />
 
                     <div className='flex items-center justify-center mb-2'>
                       {[...Array(5)].map((_, i) => (
@@ -419,9 +484,10 @@ const HomePage = () => {
                     {category.name}
                   </div>
 
-                  <div className='text-teal-600 font-medium text-sm group-hover:underline transition cursor-pointer line-clamp-2 h-10 flex items-center justify-center text-center max-w-[180px]'>
-                    {category.desc || 'Khám phá ngay!'}
-                  </div>
+                  <div 
+                    className='text-teal-600 font-medium text-sm group-hover:underline transition cursor-pointer line-clamp-2 h-10 flex items-center justify-center text-center max-w-[180px]'
+                    dangerouslySetInnerHTML={{ __html: category.desc || 'Khám phá ngay!' }}
+                  />
 
                   <button className='mt-2 px-4 py-1.5 bg-teal-50 text-teal-700 rounded-full text-sm font-medium hover:bg-teal-100 transition-colors'>
                     Xem thêm
@@ -561,9 +627,10 @@ const HomePage = () => {
               </div>
 
               <div className="flex-1 flex flex-col">
-                <div className='font-bold text-sm sm:text-base mb-1 cursor-pointer line-clamp-2 h-10 sm:h-12'>
-                  {product.name}
-                </div>
+                <div 
+                  className='font-bold text-sm sm:text-base mb-1 cursor-pointer line-clamp-2 h-10 sm:h-12'
+                  dangerouslySetInnerHTML={{ __html: product.name || '' }}
+                />
 
                 <div className='text-indigo-500 text-xs sm:text-sm mb-1 sm:mb-2 cursor-pointer line-clamp-1'>
                   {product.brand || 'Thương hiệu cao cấp'}
@@ -623,19 +690,20 @@ const HomePage = () => {
                       className='absolute top-2 right-2 bg-white rounded-full p-1.5 shadow-md z-10 transition-all duration-200 hover:bg-pink-50'
                       onClick={(e) => {
                         e.stopPropagation()
-                        toggleFavorite(product._id || idx.toString())
+                        handleToggleWishlist(product._id)
                       }}
                     >
                       <Heart
                         size={16}
-                        className={favorites.includes(product._id || idx.toString()) ? 'fill-pink-500 text-pink-500' : 'text-gray-400'}
+                        className={wishlistStatus[product._id] ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'}
                       />
                     </button>
                   </div>
 
-                  <div className='font-bold text-base mb-1 cursor-pointer line-clamp-2 h-12'>
-                    {product.name}
-                  </div>
+                  <div 
+                    className='font-bold text-base mb-1 cursor-pointer line-clamp-2 h-12'
+                    dangerouslySetInnerHTML={{ __html: product.name || '' }}
+                  />
 
                   <div className='text-gray-500 text-sm mb-2 cursor-pointer line-clamp-1'>
                     {product.brand || 'Thương hiệu cao cấp'}

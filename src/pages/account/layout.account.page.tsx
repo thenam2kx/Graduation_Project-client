@@ -45,7 +45,7 @@ const LayoutAccountPage = () => {
     },
     {
       key: 'favorite',
-      to: `/account/${id}/favorite`,
+      to: `/account/${id}/wishlist`,
       icon: <HeartIcon className="w-5 h-5 text-purple-700" />,
       label: 'Sản phẩm yêu thích'
     },
