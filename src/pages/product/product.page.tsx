@@ -12,13 +12,12 @@ import { useNavigate } from 'react-router';
 import { addToWishlist, removeFromWishlist, checkProductInWishlist } from '@/services/wishlist-service/wishlist.apis';
 import { RootState } from '@/redux/store';
 import { toast } from 'react-toastify';
+import { useQueryClient } from '@tanstack/react-query';
 
 const BRANDS = [
   'Dior', 'Chanel', 'Gucci', 'Versace', 'Calvin Klein', 'Jo Malone', 'Le Labo', 'Hermès', 'Tom Ford'
 ]
-const FRAGRANCE_FAMILIES = [
-  'Hương hoa', 'Hương gỗ', 'Hương phương Đông', 'Hương biển', 'Hương trái cây', 'Hương da thuộc', 'Hương gia vị'
-];
+
 const VOLUMES = ['10ml', '30ml', '50ml', '100ml', '150ml+'];
 const RATINGS = [4, 3, 2, 1];
 
@@ -37,14 +36,14 @@ const ProductPage = () => {
   const [showPrice, setShowPrice] = useState(true);
   const [showVolume, setShowVolume] = useState(true);
   const [showBrand, setShowBrand] = useState(true);
-  const [showFragrance, setShowFragrance] = useState(true);
+
   const [showRating, setShowRating] = useState(true);
 
   // Filter state
   const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
   const [selectedVolumes, setSelectedVolumes] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedFragrances, setSelectedFragrances] = useState<string[]>([]);
+
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
 
   // Data state
@@ -57,6 +56,7 @@ const ProductPage = () => {
 
   const navigate = useNavigate();
   const { isSignin, user } = useSelector((state: RootState) => state.auth);
+  const queryClient = useQueryClient();
 
   // Reset to page 1 when filters/search change
   useEffect(() => {
@@ -71,7 +71,7 @@ const ProductPage = () => {
     selectedPriceRange,
     selectedVolumes,
     selectedBrands,
-    selectedFragrances,
+
     selectedRating
   ]);
 
@@ -99,17 +99,20 @@ const ProductPage = () => {
       }
       if (selectedVolumes.length > 0) qsArr.push(`volume=${selectedVolumes.join('|')}`);
       if (selectedBrands.length > 0) qsArr.push(`brand=${selectedBrands.join('|')}`);
-      if (selectedFragrances.length > 0) qsArr.push(`fragranceFamily=${selectedFragrances.join('|')}`);
+
       if (selectedRating !== null) qsArr.push(`rating>=${selectedRating}`);
       if (qsArr.length > 0) params.qs = qsArr.join('&');
       const res = await axios.get('http://localhost:8080/api/v1/products', { params });
       if (res.data && res.data.data) {
         const productResults = res.data.data.results || [];
         setProducts(productResults);
-        // Check wishlist status for all products
-        if (productResults.length > 0) {
-          const productIds = productResults.map(product => product._id);
-          checkWishlistStatus(productIds);
+        // Chỉ check wishlist khi có sản phẩm mới và user đã đăng nhập
+        if (productResults.length > 0 && isSignin && user) {
+          const productIds = productResults.map(product => product._id).filter(Boolean);
+          const hasNewProducts = productIds.some(id => !(id in wishlistStatus));
+          if (hasNewProducts) {
+            checkWishlistStatus(productIds);
+          }
         }
         setMeta({
           current: page,
@@ -162,34 +165,38 @@ const ProductPage = () => {
     setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
     setMeta((prev) => ({ ...prev, current: 1 }));
   };
-  // Xử lý lọc theo nhóm hương
-  const handleFragranceChange = (fragrance: string) => {
-    setSelectedFragrances(prev => prev.includes(fragrance) ? prev.filter(f => f !== fragrance) : [...prev, fragrance]);
-    setMeta((prev) => ({ ...prev, current: 1 }));
-  };
+
   // Xử lý lọc theo đánh giá
   const handleRatingChange = (rating: number) => {
     setSelectedRating(selectedRating === rating ? null : rating);
     setMeta((prev) => ({ ...prev, current: 1 }));
   };
 
-  // Kiểm tra trạng thái wishlist cho tất cả sản phẩm
+  // Kiểm tra trạng thái wishlist cho tất cả sản phẩm (tối ưu hóa)
   const checkWishlistStatus = async (productIds: string[]) => {
-    if (!isSignin || !user) return;
-    const statusPromises = productIds.map(async (productId) => {
-      try {
-        const response = await checkProductInWishlist(productId);
-        return { productId, isInWishlist: response.data.data.isInWishlist };
-      } catch (error) {
-        return { productId, isInWishlist: false };
-      }
-    });
-    const results = await Promise.all(statusPromises);
-    const statusMap = results.reduce((acc, { productId, isInWishlist }) => {
-      acc[productId] = isInWishlist;
-      return acc;
-    }, {} as Record<string, boolean>);
-    setWishlistStatus(statusMap);
+    if (!isSignin || !user || productIds.length === 0) return;
+    try {
+      // Chỉ check những sản phẩm chưa được check
+      const uncheckedIds = productIds.filter(id => !(id in wishlistStatus));
+      if (uncheckedIds.length === 0) return;
+      
+      const statusPromises = uncheckedIds.map(async (productId) => {
+        try {
+          const response = await checkProductInWishlist(productId);
+          return { productId, isInWishlist: response.data.data.isInWishlist };
+        } catch (error) {
+          return { productId, isInWishlist: false };
+        }
+      });
+      const results = await Promise.all(statusPromises);
+      const statusMap = results.reduce((acc, { productId, isInWishlist }) => {
+        acc[productId] = isInWishlist;
+        return acc;
+      }, {} as Record<string, boolean>);
+      setWishlistStatus(prev => ({ ...prev, ...statusMap }));
+    } catch (error) {
+      console.error('Error checking wishlist status:', error);
+    }
   };
 
   // Toggle wishlist
@@ -209,6 +216,8 @@ const ProductPage = () => {
         await addToWishlist(productId);
         toast.success('Đã thêm vào danh sách yêu thích!');
         setWishlistStatus(prev => ({ ...prev, [productId]: true }));
+        // Invalidate wishlist query để update số lượng ở header
+        queryClient.invalidateQueries({ queryKey: ['wishlist'] });
         navigate(`/account/${user._id}/wishlist`);
       }
     } catch (error) {
@@ -221,7 +230,7 @@ const ProductPage = () => {
     setSelectedPriceRange(null);
     setSelectedVolumes([]);
     setSelectedBrands([]);
-    setSelectedFragrances([]);
+
     setSelectedRating(null);
     setMeta(prev => ({ ...prev, current: 1 }));
   };
@@ -251,7 +260,7 @@ const ProductPage = () => {
             <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
               <h2 className="text-xl font-bold tracking-wide text-purple-700">Bộ lọc</h2>
               {(selectedPriceRange !== null || selectedVolumes.length > 0 || selectedBrands.length > 0 ||
-                selectedFragrances.length > 0 || selectedRating !== null) && (
+                selectedRating !== null) && (
                 <button
                   onClick={handleClearFilters}
                   className="text-sm text-purple-600 hover:text-purple-800 font-medium"
@@ -341,29 +350,7 @@ const ProductPage = () => {
                 </div>
               )}
             </section>
-            {/* Fragrance Family */}
-            <section className="mb-5">
-              <button type="button" className="flex justify-between items-center w-full font-semibold text-gray-900 mb-3"
-                onClick={() => setShowFragrance(v => !v)}>
-                Nhóm hương
-                {showFragrance ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-              </button>
-              {showFragrance && (
-                <div className="flex flex-col gap-2">
-                  {FRAGRANCE_FAMILIES.map(f => (
-                    <label key={f} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="accent-purple-600 cursor-pointer"
-                        checked={selectedFragrances.includes(f)}
-                        onChange={() => handleFragranceChange(f)}
-                      />
-                      {f}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </section>
+
             {/* Rating */}
             <section className="mb-5">
               <button type="button" className="flex justify-between items-center w-full font-semibold text-gray-900 mb-3"
@@ -397,7 +384,7 @@ const ProductPage = () => {
           <section className="flex-1 product-section">
             {/* Product Count and Active Filters */}
             {(!loading || meta.total > 0 || selectedPriceRange !== null || selectedVolumes.length > 0 ||
-              selectedBrands.length > 0 || selectedFragrances.length > 0 || selectedRating !== null || search) && (
+              selectedBrands.length > 0 || selectedRating !== null || search) && (
               <div className="bg-white rounded-xl shadow p-4 mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium text-gray-700">
@@ -405,12 +392,12 @@ const ProductPage = () => {
                     {search && <span className="ml-1 text-gray-500">cho từ khóa "<span className="italic">{search}</span>"</span>}
                   </span>
                   {(selectedPriceRange !== null || selectedVolumes.length > 0 || selectedBrands.length > 0 ||
-                    selectedFragrances.length > 0 || selectedRating !== null) && (
-                    <span className="text-sm text-gray-500">Đang lọc theo {(selectedPriceRange !== null ? 1 : 0) + selectedVolumes.length + selectedBrands.length + selectedFragrances.length + (selectedRating !== null ? 1 : 0)} tiêu chí</span>
+                    selectedRating !== null) && (
+                    <span className="text-sm text-gray-500">Đang lọc theo {(selectedPriceRange !== null ? 1 : 0) + selectedVolumes.length + selectedBrands.length + (selectedRating !== null ? 1 : 0)} tiêu chí</span>
                   )}
                 </div>
                 {(selectedPriceRange !== null || selectedVolumes.length > 0 || selectedBrands.length > 0 ||
-                  selectedFragrances.length > 0 || selectedRating !== null) && (
+                  selectedRating !== null) && (
                   <div className="flex flex-wrap gap-2 items-center">
                     <span className="font-medium text-gray-700">Bộ lọc đang áp dụng:</span>
                     {selectedPriceRange !== null && (
@@ -446,17 +433,7 @@ const ProductPage = () => {
                         </button>
                       </span>
                     ))}
-                    {selectedFragrances.map(fragrance => (
-                      <span key={fragrance} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                        {fragrance}
-                        <button
-                          onClick={() => handleFragranceChange(fragrance)}
-                          className="ml-1 hover:text-purple-600"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
+
                     {selectedRating !== null && (
                       <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
                         {selectedRating} sao trở lên
@@ -488,7 +465,7 @@ const ProductPage = () => {
                       <div
                         key={product._id}
                         className="relative bg-white rounded-xl border-2 border-gray-200 shadow hover:shadow-xl transition p-4 flex flex-col items-center group cursor-pointer"
-                        onClick={() => window.location.href = `/product/${product.slug || product._id}`}
+                        onClick={() => navigate(`/productDetail/${product._id}`)}
                       >
                         {/* Heart icon ở góc trên phải */}
                         <button
@@ -504,7 +481,7 @@ const ProductPage = () => {
                             className={`transition-colors ${
                               wishlistStatus[product._id]
                                 ? 'text-red-500 fill-red-500'
-                                : 'text-purple-600 hover:text-red-500'
+                                : 'text-gray-400 hover:text-red-500'
                             }`}
                           />
                         </button>
@@ -513,12 +490,14 @@ const ProductPage = () => {
                           alt={product.name}
                           className="w-full h-60 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform duration-200"
                         />
-                        <div className="font-bold text-lg mb-1 text-center line-clamp-2 h-12 flex items-center justify-center">
-                          {product.name}
-                        </div>
-                        <div className="text-purple-600 font-medium text-sm group-hover:underline transition text-center line-clamp-2 h-10">
-                          {product.desc || product.description || 'Khám phá ngay!'}
-                        </div>
+                        <div 
+                          className="font-bold text-lg mb-1 text-center line-clamp-2 min-h-[3rem] flex items-center justify-center leading-tight"
+                          dangerouslySetInnerHTML={{ __html: product.name || '' }}
+                        />
+                        <div 
+                          className="text-purple-600 font-medium text-sm group-hover:underline transition text-center line-clamp-2 h-10"
+                          dangerouslySetInnerHTML={{ __html: product.desc || product.description || 'Khám phá ngay!' }}
+                        />
                         <div className="bg-neutral-100 rounded-lg px-4 py-2 font-bold text-purple-700 group-hover:bg-purple-600 group-hover:text-white transition mt-2">
                           {typeof product.price === 'number' ? product.price.toLocaleString() : product.price}₫
                         </div>
