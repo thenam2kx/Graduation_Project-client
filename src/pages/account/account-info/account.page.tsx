@@ -9,13 +9,14 @@ import { toast } from 'react-toastify'
 import * as Dialog from '@radix-ui/react-dialog'
 import UpdateAccount from './update.account'
 import AddressForm from './address.form'
-
 import { useState } from 'react'
+import ChangePasswordForm from './change-password.form'
 
 const AccountPage = () => {
   const { id } = useParams<{ id: string }>()
   const [open, setOpen] = useState(false)
   const [openAddAddress, setOpenAddAddress] = useState(false)
+  const [openChangePassword, setOpenChangePassword] = useState(false)
 
   const { data: userInfo, refetch } = useQuery({
     queryKey: ['user'],
@@ -36,7 +37,6 @@ const AccountPage = () => {
       </h2>
 
       <div className="space-y-4 lg:space-y-6">
-        {/* Full Name Section */}
         <section className="w-full py-3 lg:py-4">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2 sm:gap-0">
             <div className="flex flex-col gap-2">
@@ -59,7 +59,6 @@ const AccountPage = () => {
 
         <Separator className="my-2" />
 
-        {/* Modal cập nhật thông tin người dùng */}
         <Dialog.Root open={open} onOpenChange={setOpen}>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-fadeIn" />
@@ -86,7 +85,20 @@ const AccountPage = () => {
           </Dialog.Portal>
         </Dialog.Root>
 
-        {/* Phone Section */}
+        <section className="w-full py-3 lg:py-4">
+          <div className="flex justify-between items-center">
+            <h2 className="font-bold text-[#3c4242] text-base md:text-lg tracking-tight leading-6">
+              Đổi mật khẩu
+            </h2>
+
+            <Button variant="link" className="text-[#3c4242] font-semibold text-sm p-0 h-auto" onClick={() => setOpenChangePassword(true)}>
+              Đổi
+            </Button>
+          </div>
+        </section>
+
+        <Separator className="my-2" />
+
         <section className="w-full py-3 lg:py-4">
           <Card className="border-none shadow-none">
             <CardContent className="p-0">
@@ -106,7 +118,6 @@ const AccountPage = () => {
 
         <Separator className="my-2" />
 
-        {/* Email Section */}
         <div className="w-full py-3 lg:py-4">
           <div className="flex flex-col space-y-2">
             <span className="font-semibold text-[#807d7e] text-base lg:text-lg">
@@ -122,20 +133,18 @@ const AccountPage = () => {
 
         <Separator className="my-2" />
 
-        {/* Address Section Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
           <h2 className="font-bold text-[#3c4242] text-lg md:text-[22px] tracking-[0.44px] leading-[33.5px]">
             Địa chỉ
           </h2>
         </div>
 
-        {/* Address List */}
         <div className="w-full">
           <AccountAddress />
         </div>
+
       </div>
 
-      {/* Modal thêm địa chỉ mới */}
       <Dialog.Root open={openAddAddress} onOpenChange={setOpenAddAddress}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-fadeIn" />
@@ -146,6 +155,26 @@ const AccountPage = () => {
                 refetch()
               }}
               onCancel={() => setOpenAddAddress(false)}
+            />
+            <Dialog.Close asChild>
+              <button
+                aria-label="Close"
+                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </Dialog.Close>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <Dialog.Root open={openChangePassword} onOpenChange={setOpenChangePassword}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-fadeIn" />
+          <Dialog.Content className="fixed top-[50%] left-[50%] max-w-xl w-[90vw] max-h-[85vh] overflow-auto rounded-md bg-white p-6 shadow-lg transform -translate-x-1/2 -translate-y-1/2 focus:outline-none data-[state=open]:animate-slideIn">
+            <ChangePasswordForm
+              onSuccess={() => setOpenChangePassword(false)}
+              onCancel={() => setOpenChangePassword(false)}
             />
             <Dialog.Close asChild>
               <button
