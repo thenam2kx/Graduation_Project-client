@@ -35,3 +35,7 @@ export const resetPasswordAPI = (data: { email: string; password: string; code: 
   return axios.post<IBackendResponse<null>>(url, data)
 }
 
+export const changePasswordAPI = (data: { currentPassword: string; newPassword: string }) => {
+  const url = '/api/v1/auth/change-password'
+  return axios.post<IBackendResponse<null>>(url, data)
+}
