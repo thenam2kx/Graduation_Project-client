@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import type { IOrder, OrderItem } from '@/types/order'
 import { getPaymentMethodLabel, ORDER_STATUS, CANCEL_REASONS, REFUND_REASONS } from './order.constant.pages'
+import { confirmReceivedOrderAPI } from '@/services/order-service/order.apis'
 import { toast } from 'react-toastify'
 import Modal from './order.modal.pages'
 import ReasonSelector from './order.reason.selector.pages'
@@ -56,6 +57,18 @@ const OrdersPages = () => {
       setActiveTab(variables.status as TabType)
       setShowReasonModal(false)
       resetModal()
+    }
+  })
+
+  const confirmReceived = useMutation({
+    mutationFn: confirmReceivedOrderAPI,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      toast.success('Xác nhận đã nhận hàng thành công!')
+      setActiveTab('completed')
+    },
+    onError: () => {
+      toast.error('Có lỗi xảy ra khi xác nhận đã nhận hàng')
     }
   })
 
@@ -206,12 +219,21 @@ const OrdersPages = () => {
                             </Button>
                           )}
                           {['delivered'].includes(order.status) && (
-                            <Button
-                              onClick={() => openReasonModal(order.id, 'refunded')}
-                              className='bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg'
-                            >
-                              Hoàn tiền
-                            </Button>
+                            <>
+                              <Button
+                                onClick={() => confirmReceived.mutate(order.id)}
+                                disabled={confirmReceived.isPending}
+                                className='bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg'
+                              >
+                                {confirmReceived.isPending ? 'Đang xử lý...' : 'Đã nhận được hàng'}
+                              </Button>
+                              <Button
+                                onClick={() => openReasonModal(order.id, 'refunded')}
+                                className='bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg'
+                              >
+                                Hoàn tiền
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
