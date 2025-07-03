@@ -14,3 +14,15 @@ export const createOrderAPI = async (data: any) => {
     throw error
   }
 }
+
+export const confirmReceivedOrderAPI = async (orderId: string) => {
+  try {
+    const response = await axios.patch(`/api/v1/orders/${orderId}/status`, { 
+      status: 'completed' 
+    })
+    return response
+  } catch (error) {
+    console.error('Error confirming received order:', error)
+    throw error
+  }
+}
