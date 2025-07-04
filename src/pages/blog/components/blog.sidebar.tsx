@@ -21,6 +21,15 @@ interface BlogSidebarProps {
   onSelectCategory: (categoryId: string | null) => void
 }
 
+interface Product {
+  _id: string
+  name: string
+  price?: number
+  img?: string
+  image?: string
+  // Thêm các trường khác nếu cần
+}
+
 export const BlogSidebar: React.FC<BlogSidebarProps> = ({
   dataIframe,
   searchTerm,
@@ -40,7 +49,7 @@ export const BlogSidebar: React.FC<BlogSidebarProps> = ({
   })
 
   // Xử lý dữ liệu
-  const products = Array.isArray(dataProducts?.results) ? dataProducts.results : []
+  const products: Product[] = Array.isArray(dataProducts?.results) ? dataProducts.results : []
   return (
     <>
       {/* Search box */}
@@ -117,10 +126,10 @@ export const BlogSidebar: React.FC<BlogSidebarProps> = ({
               modules={[Navigation]}
               className='product-swiper h-[220px] md:h-[400px]'
             >
-              {products.map((product: any) => (
+              {products.map((product) => (
                 <SwiperSlide key={product._id}>
                   <div className='transform transition-all duration-300 hover:scale-[1.02]'>
-                    <a href={`/products/${product._id}`} className='block'>
+                    <a href={`/productDetail/${product._id}`} className='block'>
                       <div className='bg-white p-2 rounded-lg shadow-sm border border-gray-100 flex items-center'>
                         <div className='rounded overflow-hidden w-16 h-16 flex-shrink-0'>
                           <img

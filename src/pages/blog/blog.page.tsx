@@ -18,6 +18,16 @@ const fadeInUp = {
     transition: { duration: 0.5 }
   }
 }
+interface Blog {
+  _id: string
+  title: string
+  description: string
+  image?: string
+  categoryBlogName?: string
+  createdAt: string
+  isPublic?: boolean
+  // Thêm các trường khác nếu cần
+}
 
 // Số lượng bài viết trên mỗi trang - điều chỉnh theo kích thước màn hình
 const PAGE_SIZE = window.innerWidth < 640 ? 3 : 6
@@ -88,13 +98,13 @@ const BlogPage = () => {
 
   // Filter out blogs where isPublic is false
   let blogs = Array.isArray(data?.results)
-    ? data.results.filter((blog: any) => blog.isPublic !== false)
+    ? data.results.filter((blog: Blog) => blog.isPublic !== false)
     : []
 
   // Nếu có từ khóa tìm kiếm, lọc bài viết client-side
   if (searchQuery && allBlogsData) {
     blogs = allBlogsData
-      .filter((blog: any) =>
+      .filter((blog: Blog) =>
         blog.isPublic !== false &&
         blog.title.toLowerCase().includes(searchQuery.toLowerCase())
       )
@@ -102,7 +112,7 @@ const BlogPage = () => {
   }
 
   const total = searchQuery
-    ? allBlogsData?.filter((blog: any) =>
+    ? allBlogsData?.filter((blog: Blog) =>
       blog.isPublic !== false &&
       blog.title.toLowerCase().includes(searchQuery.toLowerCase())
     ).length || 0
