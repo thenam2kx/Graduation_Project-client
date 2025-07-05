@@ -96,6 +96,35 @@ const fadeInUp = {
   })
 }
 
+// Thêm ở đầu file hoặc import nếu đã có
+interface Product {
+  _id: string
+  name: string
+  price?: number
+  img?: string
+  image?: string
+  brand?: string
+  desc?: string
+  description?: string
+  // Thêm các trường khác nếu cần
+}
+
+interface Category {
+  _id: string
+  name: string
+  img?: string
+  image?: string
+  desc?: string
+}
+
+interface Brand {
+  _id: string
+  name: string
+  img?: string
+  logo?: string
+  image?: string
+}
+
 const HomePage = () => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [wishlistStatus, setWishlistStatus] = useState<Record<string, boolean>>({})
@@ -105,54 +134,56 @@ const HomePage = () => {
 
   // Kiểm tra trạng thái wishlist cho tất cả sản phẩm (batch request)
   const checkWishlistStatus = async (productIds: string[]) => {
-    if (!isSignin || !user || productIds.length === 0) return;
+    if (!isSignin || !user || productIds.length === 0) return
     try {
       // Gọi 1 request duy nhất thay vì nhiều requests
-      const batchSize = 10; // Giới hạn số lượng check mỗi lần
-      const limitedIds = productIds.slice(0, batchSize);
+      const batchSize = 10 // Giới hạn số lượng check mỗi lần
+      const limitedIds = productIds.slice(0, batchSize)
       const statusPromises = limitedIds.map(async (productId) => {
         try {
-          const response = await checkProductInWishlist(productId);
-          return { productId, isInWishlist: response.data.data.isInWishlist };
+          const response = await checkProductInWishlist(productId)
+          return { productId, isInWishlist: response.data.data.isInWishlist }
         } catch (error) {
-          return { productId, isInWishlist: false };
+          console.error(`Error checking wishlist for product ${productId}:`, error)
+          return { productId, isInWishlist: false }
         }
-      });
-      const results = await Promise.all(statusPromises);
+      })
+      const results = await Promise.all(statusPromises)
       const statusMap = results.reduce((acc, { productId, isInWishlist }) => {
-        acc[productId] = isInWishlist;
-        return acc;
-      }, {} as Record<string, boolean>);
-      setWishlistStatus(statusMap);
+        acc[productId] = isInWishlist
+        return acc
+      }, {} as Record<string, boolean>)
+      setWishlistStatus(statusMap)
     } catch (error) {
-      console.error('Error checking wishlist status:', error);
+      console.error('Error checking wishlist status:', error)
     }
-  };
+  }
 
   // Toggle wishlist
   const handleToggleWishlist = async (productId: string) => {
     if (!isSignin || !user) {
-      toast.error('Vui lòng đăng nhập để thêm vào yêu thích');
-      navigate('/auth/signin');
-      return;
+      toast.error('Vui lòng đăng nhập để thêm vào yêu thích')
+      navigate('/auth/signin')
+      return
     }
     try {
-      const isCurrentlyInWishlist = wishlistStatus[productId];
+      const isCurrentlyInWishlist = wishlistStatus[productId]
       if (isCurrentlyInWishlist) {
-        await removeFromWishlist(productId);
-        toast.success('Đã xóa khỏi danh sách yêu thích!');
-        setWishlistStatus(prev => ({ ...prev, [productId]: false }));
+        await removeFromWishlist(productId)
+        toast.success('Đã xóa khỏi danh sách yêu thích!')
+        setWishlistStatus(prev => ({ ...prev, [productId]: false }))
       } else {
-        await addToWishlist(productId);
-        toast.success('Đã thêm vào danh sách yêu thích!');
-        setWishlistStatus(prev => ({ ...prev, [productId]: true }));
+        await addToWishlist(productId)
+        toast.success('Đã thêm vào danh sách yêu thích!')
+        setWishlistStatus(prev => ({ ...prev, [productId]: true }))
         // Invalidate wishlist query để update số lượng ở header
-        queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+        queryClient.invalidateQueries({ queryKey: ['wishlist'] })
       }
     } catch (error) {
-      toast.error('Có lỗi xảy ra, vui lòng thử lại');
+      console.error('Error toggling wishlist:', error)
+      toast.error('Có lỗi xảy ra, vui lòng thử lại')
     }
-  };
+  }
   // Sản phẩm (dùng chung cho cả sản phẩm đang giảm giá và sản phẩm nổi bật)
   const {
     data: dataProducts,
@@ -193,18 +224,18 @@ const HomePage = () => {
 
   // Chỉ check wishlist khi user đăng nhập lần đầu tiên hoặc khi có sản phẩm mới
   useEffect(() => {
-    if (!isSignin || !user || products.length === 0) return;
-    
-    const productIds = products.map(product => product._id).filter(Boolean);
-    const hasNewProducts = productIds.some(id => !(id in wishlistStatus));
-    
+    if (!isSignin || !user || products.length === 0) return
+
+    const productIds = products.map(product => product._id).filter(Boolean)
+    const hasNewProducts = productIds.some(id => !(id in wishlistStatus))
+
     if (hasNewProducts) {
       const timer = setTimeout(() => {
-        checkWishlistStatus(productIds);
-      }, 300);
-      return () => clearTimeout(timer);
+        checkWishlistStatus(productIds)
+      }, 300)
+      return () => clearTimeout(timer)
     }
-  }, [products, isSignin]);
+  }, [products, isSignin])
 
   // Sử dụng cùng dữ liệu sản phẩm cho cả hai phần
   const discountProducts = products
@@ -215,12 +246,13 @@ const HomePage = () => {
     ? products
       .sort(() => 0.5 - Math.random())
       .slice(0, 3)
-      .map(product => ({
+      .map((product: Product) => ({
         left: {
           bg: product.img || product.image || 'https://placehold.co/400x400?text=Product',
           title: product.name?.toUpperCase() || 'SẢN PHẨM NỔI BẬT',
           desc: product.desc || product.description || 'Khám phá ngay những sản phẩm nước hoa cao cấp với mùi hương độc đáo.',
-          btn: 'Mua ngay'
+          btn: 'Mua ngay',
+          id: product._id
         }
       }))
     : defaultFashionSlides
@@ -255,7 +287,7 @@ const HomePage = () => {
           className='rounded-xl shadow-2xl'
           onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
         >
-          {bannerSlides.map((slide, idx) => (
+          {bannerSlides.map((slide, idx: number) => (
             <SwiperSlide key={idx}>
               <div className={`flex flex-col md:flex-row items-stretch justify-between bg-gradient-to-r ${slide.bgColor} rounded-xl p-5 md:p-16 h-auto min-h-[400px] md:h-[450px] overflow-hidden relative`}>
                 {/* Decorative elements - hidden on smallest screens */}
@@ -278,7 +310,10 @@ const HomePage = () => {
                   </div>
                   <h2 className='text-white text-xl sm:text-3xl md:text-5xl font-extrabold mb-3 md:mb-4 drop-shadow-md'>{slide.title}</h2>
                   <p className='text-white text-sm sm:text-base md:text-xl mb-4 md:mb-6 drop-shadow-sm'>{slide.desc}</p>
-                  <button className='px-3 py-1.5 sm:px-4 sm:py-2 md:px-8 md:py-3 bg-white text-purple-700 font-bold rounded-lg shadow-lg hover:bg-purple-700 hover:text-white transition duration-300 transform hover:scale-105 cursor-pointer flex items-center justify-center w-fit'>
+                  <button
+                    className='px-3 py-1.5 sm:px-4 sm:py-2 md:px-8 md:py-3 bg-white text-purple-700 font-bold rounded-lg shadow-lg hover:bg-purple-700 hover:text-white transition duration-300 transform hover:scale-105 cursor-pointer flex items-center justify-center w-fit'
+                    onClick={() => navigate('/products')}
+                  >
                     <ShoppingBag size={16} className='mr-1.5 md:mr-2' />
                     {slide.btn}
                   </button>
@@ -322,7 +357,10 @@ const HomePage = () => {
             <div className='w-1.5 h-8 bg-purple-600 rounded-full mr-3'></div>
             <h3 className='text-3xl font-bold'>Sản phẩm đang giảm giá</h3>
           </div>
-          <button className='text-purple-600 font-medium hover:underline flex items-center'>
+          <button
+            className='text-purple-600 font-medium hover:underline flex items-center'
+            onClick={() => navigate('/products?discount=true')}
+          >
             Xem tất cả <ChevronRight size={16} className='ml-1' />
           </button>
         </div>
@@ -342,7 +380,7 @@ const HomePage = () => {
             modules={[Navigation]}
             className='category-women-swiper relative'
           >
-            {discountProducts.map((product: any, idx: number) => (
+            {discountProducts.map((product: Product, idx: number) => (
               <SwiperSlide key={idx}>
                 <motion.div
                   className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 md:p-4 flex flex-col group cursor-pointer relative overflow-hidden'
@@ -393,7 +431,7 @@ const HomePage = () => {
                   </div>
 
                   <div className='flex-1 flex flex-col'>
-                    <div 
+                    <div
                       className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 h-12 flex items-center justify-center'
                       dangerouslySetInnerHTML={{ __html: product.name || '' }}
                     />
@@ -460,8 +498,8 @@ const HomePage = () => {
             modules={[Navigation, EffectCoverflow]}
             className='category-men-swiper relative'
           >
-            {categories.map((category: any, idx: number) => (
-              <SwiperSlide key={idx}>
+            {categories.map((category: Category, idx: number) => (
+              <SwiperSlide key={category._id || idx}>
                 <motion.div
                   className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 md:p-4 flex flex-col items-center group cursor-pointer'
                   custom={idx}
@@ -469,6 +507,7 @@ const HomePage = () => {
                   whileInView='visible'
                   viewport={{ once: true }}
                   variants={fadeInUp}
+                  onClick={() => navigate(`/category/${category._id}`)}
                 >
                   <div className='relative overflow-hidden rounded-lg mb-4'>
                     <img
@@ -484,12 +523,18 @@ const HomePage = () => {
                     {category.name}
                   </div>
 
-                  <div 
+                  <div
                     className='text-teal-600 font-medium text-sm group-hover:underline transition cursor-pointer line-clamp-2 h-10 flex items-center justify-center text-center max-w-[180px]'
                     dangerouslySetInnerHTML={{ __html: category.desc || 'Khám phá ngay!' }}
                   />
 
-                  <button className='mt-2 px-4 py-1.5 bg-teal-50 text-teal-700 rounded-full text-sm font-medium hover:bg-teal-100 transition-colors'>
+                  <button
+                    className='mt-2 px-4 py-1.5 bg-teal-50 text-teal-700 rounded-full text-sm font-medium hover:bg-teal-100 transition-colors'
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigate(`/category/${category._id}`)
+                    }}
+                  >
                     Xem thêm
                   </button>
                 </motion.div>
@@ -523,7 +568,7 @@ const HomePage = () => {
             modules={[Autoplay, Pagination]}
             className='rounded-xl overflow-hidden shadow-xl'
           >
-            {fashionSlides.map((slide: any, idx: any) => (
+            {fashionSlides.map((slide: { left: { bg: string; title: string; desc: string; btn: string; id?: string } }, idx: number) => (
               <SwiperSlide key={idx}>
                 <div className='flex flex-col md:flex-row rounded-xl overflow-hidden bg-white h-auto md:h-[400px]'>
                   {/* Left side with image */}
@@ -560,12 +605,18 @@ const HomePage = () => {
                       </p>
 
                       <div className='flex flex-wrap gap-4'>
-                        <button className='px-6 py-3 bg-amber-500 text-white font-bold rounded-lg shadow-lg hover:bg-amber-600 transition duration-300 flex items-center'>
+                        <button
+                          className='px-6 py-3 bg-amber-500 text-white font-bold rounded-lg shadow-lg hover:bg-amber-600 transition duration-300 flex items-center'
+                          onClick={() => slide.left.id && navigate(`/productDetail/${slide.left.id}`)}
+                        >
                           <ShoppingBag size={18} className='mr-2' />
                           {slide.left.btn}
                         </button>
 
-                        <button className='px-6 py-3 bg-white text-amber-500 font-bold rounded-lg shadow border border-amber-200 hover:bg-amber-50 transition duration-300'>
+                        <button
+                          className='px-6 py-3 bg-white text-amber-500 font-bold rounded-lg shadow border border-amber-200 hover:bg-amber-50 transition duration-300'
+                          onClick={() => slide.left.id && navigate(`/productDetail/${slide.left.id}`)}
+                        >
                           Xem chi tiết
                         </button>
                       </div>
@@ -585,15 +636,18 @@ const HomePage = () => {
             <div className='w-1.5 h-8 bg-indigo-600 rounded-full mr-3'></div>
             <h3 className='text-2xl sm:text-3xl font-bold'>Sản phẩm nổi bật</h3>
           </div>
-          <button className='text-indigo-600 text-sm sm:text-base font-medium hover:underline flex items-center'>
+          <button
+            className='text-indigo-600 text-sm sm:text-base font-medium hover:underline flex items-center'
+            onClick={() => navigate('/products?featured=true')}
+          >
             Xem tất cả <ChevronRight size={14} className='ml-1' />
           </button>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6 mb-8">
-          {featuredProducts.slice(0, 5).map((product: any, idx: number) => (
+          {featuredProducts.slice(0, 5).map((product: Product, idx: number) => (
             <motion.div
-              key={idx}
+              key={product._id || idx}
               className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-2 sm:p-3 flex flex-col group cursor-pointer relative overflow-hidden'
               custom={idx}
               initial='hidden'
@@ -601,6 +655,7 @@ const HomePage = () => {
               viewport={{ once: true }}
               variants={fadeInUp}
               whileHover={{ y: -5 }}
+              onClick={() => navigate(`/productDetail/${product._id}`)}
             >
               {/* Featured badge - smaller on mobile */}
               <div className="absolute top-2 sm:top-3 right-2 sm:right-3 bg-indigo-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded z-10 flex items-center">
@@ -627,7 +682,7 @@ const HomePage = () => {
               </div>
 
               <div className="flex-1 flex flex-col">
-                <div 
+                <div
                   className='font-bold text-sm sm:text-base mb-1 cursor-pointer line-clamp-2 h-10 sm:h-12'
                   dangerouslySetInnerHTML={{ __html: product.name || '' }}
                 />
@@ -667,7 +722,7 @@ const HomePage = () => {
             modules={[Navigation]}
             className='product-swiper relative'
           >
-            {featuredProducts.map((product: any, idx: number) => (
+            {featuredProducts.map((product: Product, idx: number) => (
               <SwiperSlide key={idx}>
                 <motion.div
                   className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 flex flex-col group cursor-pointer'
@@ -700,7 +755,7 @@ const HomePage = () => {
                     </button>
                   </div>
 
-                  <div 
+                  <div
                     className='font-bold text-base mb-1 cursor-pointer line-clamp-2 h-12'
                     dangerouslySetInnerHTML={{ __html: product.name || '' }}
                   />
@@ -751,7 +806,7 @@ const HomePage = () => {
             modules={[Navigation]}
             className='feedback-swiper relative'
           >
-            {feedbacks.map((fb, idx) => (
+            {feedbacks.map((fb: { name: string; content: string; img: string }, idx: number) => (
               <SwiperSlide key={idx}>
                 <motion.div
                   className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-4 sm:p-6 flex flex-col group cursor-pointer relative'
@@ -846,8 +901,8 @@ const HomePage = () => {
             modules={[Autoplay]}
             className='brand-swiper'
           >
-            {brands.map((brand: any, idx: number) => (
-              <SwiperSlide key={idx}>
+            {brands.map((brand: Brand, idx: number) => (
+              <SwiperSlide key={brand._id || idx}>
                 <motion.div
                   className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 sm:p-5 flex flex-col items-center group cursor-pointer'
                   custom={idx}
@@ -856,6 +911,7 @@ const HomePage = () => {
                   viewport={{ once: true }}
                   variants={fadeInUp}
                   whileHover={{ y: -5 }}
+                  onClick={() => navigate(`/brand/${brand._id}`)}
                 >
                   <div className='h-12 sm:h-16 flex items-center justify-center mb-2 sm:mb-3'>
                     <img
@@ -877,7 +933,10 @@ const HomePage = () => {
           </Swiper>
 
           <div className='flex justify-center mt-6 sm:mt-8'>
-            <button className='px-4 sm:px-6 py-1.5 sm:py-2 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors flex items-center'>
+            <button
+              className='px-4 sm:px-6 py-1.5 sm:py-2 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors flex items-center'
+              onClick={() => navigate('/brands')}
+            >
               Xem tất cả thương hiệu <ChevronRight size={14} className='ml-1' />
             </button>
           </div>

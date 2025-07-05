@@ -15,7 +15,16 @@ const fadeIn = {
     transition: { duration: 0.6 }
   }
 }
-
+interface Blog {
+  _id: string
+  title: string
+  description: string
+  image?: string
+  categoryBlogName?: string
+  createdAt: string
+  categoryBlogId?: string
+  content?: string
+}
 // Dữ liệu iframe mẫu
 const dataIframe = [
   {
@@ -53,7 +62,7 @@ const BlogDetailPage = () => {
       categoryId: blogDetail?.categoryBlogId, // Sửa từ categoryBlogId thành categoryId
       exclude: blogId
     }),
-    select: (res) => res.data?.results?.filter((blog: any) => blog._id !== blogId) || [],
+    select: (res) => res.data?.results?.filter((blog: Blog) => blog._id !== blogId) || [],
     enabled: !!blogDetail?.categoryBlogId
   })
 
@@ -191,7 +200,7 @@ const BlogDetailPage = () => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {relatedBlogs.map((blog: any) => (
+            {relatedBlogs.map((blog: Blog) => (
               <div
                 key={blog._id}
                 className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
