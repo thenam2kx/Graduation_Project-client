@@ -1,11 +1,14 @@
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router'
+import {  Link, useNavigate } from 'react-router'
 import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown, Bell } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { CART_KEYS } from '@/services/cart-service/cart.keys'
 import { fetchCartByUserAPI, fetchInfoCartAPI } from '@/services/cart-service/cart.apis'
 import { setIdCartUser } from '@/redux/slices/cart.slice'
+import SearchBox from '@/components/search-box'
+import { getWishlist } from '@/services/wishlist-service/wishlist.apis'
+
 
 const AppHeader = () => {
   const [open, setOpen] = useState(false)
@@ -19,7 +22,7 @@ const AppHeader = () => {
 
   useEffect(() => {
     (async () => {
-      const res = await fetchCartByUserAPI(user?._id || localStorage.getItem('userId') || '')
+      const res = await fetchCartByUserAPI(user?._id || '')
       if (res && res.data) {
         dispatch(setIdCartUser(res.data._id))
         return res.data
@@ -39,6 +42,23 @@ const AppHeader = () => {
     },
     enabled: !!cartId
   })
+
+  // Fetch wishlist count
+  const { data: wishlistData } = useQuery({
+    queryKey: ['wishlist', user?._id],
+    queryFn: async () => {
+      try {
+        const response = await getWishlist()
+        return response.data || { results: [] }
+      } catch (error) {
+        return { results: [] }
+      }
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 phút
+    refetchOnWindowFocus: false // Tắt auto refetch
+  })
+
 
 
   // Handle scroll effect
@@ -153,19 +173,15 @@ const AppHeader = () => {
           <Link to="/about" className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition">
             Giới thiệu
           </Link>
+          <Link to="/contact" className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition">
+            Liên hệ
+          </Link>
         </nav>
 
         {/* Search and Icons */}
         <div className="flex items-center gap-1 md:gap-3 ml-auto">
           {/* Search - Desktop */}
-          <div className="hidden md:block relative">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              className="w-48 lg:w-64 h-10 px-4 pr-10 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-            />
-            <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
+          <SearchBox className="hidden md:block w-48 lg:w-64" />
 
           {/* Search - Mobile */}
           <button
@@ -176,9 +192,22 @@ const AppHeader = () => {
           </button>
 
           {/* Wishlist */}
-          <button className="p-2 rounded-full hover:bg-gray-100 relative">
+          <button 
+            onClick={() => {
+              if (user) {
+                navigate(`/account/${user._id}/wishlist`)
+              } else {
+                navigate('/auth/signin')
+              }
+            }}
+            className="p-2 rounded-full hover:bg-gray-100 relative"
+          >
             <Heart size={20} className="text-gray-700" />
-            <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">2</span>
+            {user && (
+              <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                {wishlistData?.results?.length || 0}
+              </span>
+            )}
           </button>
 
           {/* Cart */}
@@ -202,15 +231,10 @@ const AppHeader = () => {
       {/* Mobile Search Bar - Conditional */}
       {searchOpen && (
         <div className="md:hidden px-4 py-3 border-b border-gray-100 bg-white">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              className="w-full h-10 px-4 pr-10 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              autoFocus
-            />
-            <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
+          <SearchBox 
+            autoFocus 
+            onClose={() => setSearchOpen(false)}
+          />
         </div>
       )}
 

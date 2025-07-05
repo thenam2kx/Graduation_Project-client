@@ -1,9 +1,19 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import { Variants } from 'framer-motion'
+
+interface Blog {
+  _id: string
+  title: string
+  description: string
+  image?: string
+  categoryBlogName?: string
+  createdAt: string
+}
 
 interface BlogListProps {
-  blogs: any[]
-  fadeInUp: any
+  blogs: Blog[]
+  fadeInUp: Variants
   navigate: (path: string) => void
 }
 

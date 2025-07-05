@@ -46,7 +46,7 @@ const VerificationPage = () => {
     },
     onError: (error) => {
       setIsResend(true)
-      toast.error(error.message)
+      toast.error(error.message || 'Xác thực không thành công. Vui lòng thử lại.')
     }
   })
 

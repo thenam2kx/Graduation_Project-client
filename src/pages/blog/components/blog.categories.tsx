@@ -4,21 +4,35 @@ import { useQuery } from '@tanstack/react-query'
 import { BLOG_KEYS } from '@/services/blog-service/blog.keys'
 import { fetchListCateBlog } from '@/services/blog-service/blog.apis'
 
+interface BlogCategory {
+  _id: string
+  name: string
+  // Thêm các trường khác nếu cần
+}
+
 interface BlogCategoriesProps {
   onSelectCategory: (categoryId: string | null) => void
   selectedCategory?: string | null
+}
+
+// Định nghĩa kiểu dữ liệu trả về từ API
+interface BlogCategoryResponse {
+  data?: {
+    results: BlogCategory[]
+  }
 }
 
 export const BlogCategories: React.FC<BlogCategoriesProps> = ({
   onSelectCategory,
   selectedCategory
 }) => {
-  // Lấy danh sách danh mục
-  const { data: cateData, isLoading } = useQuery({
+  // Sửa lại generic cho useQuery
+  const { data: cateData, isLoading } = useQuery<BlogCategoryResponse>({
     queryKey: [BLOG_KEYS.FETCH_LIST_CATE_BLOG],
     queryFn: fetchListCateBlog,
-    select: (res) => res.data?.results || []
   })
+
+  const categories = cateData?.data?.results || []
 
   if (isLoading) {
     return (
@@ -48,7 +62,7 @@ export const BlogCategories: React.FC<BlogCategoriesProps> = ({
               Tất cả bài viết
             </button>
           </li>
-          {cateData?.map((category: any) => (
+          {categories.map((category) => (
             <li key={category._id}>
               <button
                 onClick={() => onSelectCategory(category._id)}

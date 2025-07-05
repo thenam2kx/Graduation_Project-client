@@ -2,8 +2,17 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
+interface Blog {
+  _id: string
+  title: string
+  description: string
+  image?: string
+  categoryBlogName?: string
+  createdAt: string
+}
+
 interface SlideshowBlogProps {
-  blogs: any[]
+  blogs: Blog[]
   navigate: (path: string) => void
 }
 

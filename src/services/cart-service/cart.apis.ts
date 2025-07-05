@@ -7,7 +7,7 @@ interface ICart {
   totalPrice: number
 }
 
-interface ICartItem {
+export interface ICartItem {
   _id: string
   productId: {
     _id: string
@@ -21,6 +21,7 @@ interface ICartItem {
     stock: number
     image: string
   }
+  value: string
   cartId: string
   quantity: number
 }

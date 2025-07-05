@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router'
 import '@/styles/vnpay-return.css'
+import { checkOrderStatusAPI, verifyVNPayReturnAPI } from '@/services/vnpay-service/vnpay.apis'
+import { toast } from 'react-toastify'
 
 const VNPayReturnPage = () => {
   const [searchParams] = useSearchParams()
@@ -8,18 +10,81 @@ const VNPayReturnPage = () => {
   const [result, setResult] = useState<any>(null)
 
   useEffect(() => {
-    const responseCode = searchParams.get('vnp_ResponseCode')
-    const isSuccess = responseCode === '00'
+    const verifyPayment = async () => {
+      try {
+        // Gọi API xác thực kết quả thanh toán
+        const response = await verifyVNPayReturnAPI(searchParams)
+        console.log('VNPay verification response:', response)
+        
+        const responseCode = searchParams.get('vnp_ResponseCode')
+        const isSuccess = responseCode === '00'
+        const orderId = searchParams.get('vnp_TxnRef')
 
-    setResult({
-      success: isSuccess,
-      message: isSuccess ? 'Thanh toán thành công!' : 'Thanh toán thất bại!',
-      orderId: searchParams.get('vnp_TxnRef'),
-      amount: searchParams.get('vnp_Amount') ? parseInt(searchParams.get('vnp_Amount')!) / 100 : 0,
-      transactionNo: searchParams.get('vnp_TransactionNo'),
-      bankCode: searchParams.get('vnp_BankCode'),
-      payDate: searchParams.get('vnp_PayDate')
-    })
+        // Không hiển thị thông báo lỗi nếu thanh toán đã thành công (responseCode = 00)
+        // Chỉ hiển thị thông báo lỗi khi thanh toán thất bại và xác thực cũng thất bại
+        if (!isSuccess && !response.success) {
+          toast.error('Có lỗi xảy ra khi xác thực thanh toán!')
+        }
+
+        // Nếu thanh toán thành công, kiểm tra trạng thái đơn hàng
+        if (isSuccess && orderId) {
+          try {
+            // Đợi 1 giây để đảm bảo server đã cập nhật trạng thái đơn hàng
+            setTimeout(async () => {
+              try {
+                const orderResponse = await checkOrderStatusAPI(orderId)
+                console.log('Order status response:', orderResponse)
+                
+                if (orderResponse?.data?.paymentStatus !== 'paid') {
+                  console.warn('Order payment status not updated:', orderResponse?.data?.paymentStatus)
+                  // Thử lại API verify để đảm bảo đơn hàng được cập nhật
+                  await verifyVNPayReturnAPI(searchParams)
+                }
+              } catch (orderError) {
+                console.error('Error checking order status:', orderError)
+              }
+            }, 1000)
+          } catch (orderError) {
+            console.error('Error checking order status:', orderError)
+          }
+        }
+
+        setResult({
+          success: isSuccess,
+          message: isSuccess ? 'Thanh toán thành công!' : 'Thanh toán thất bại!',
+          orderId: orderId,
+          amount: searchParams.get('vnp_Amount') ? parseInt(searchParams.get('vnp_Amount')!) / 100 : 0,
+          transactionNo: searchParams.get('vnp_TransactionNo'),
+          bankCode: searchParams.get('vnp_BankCode'),
+          payDate: searchParams.get('vnp_PayDate')
+        })
+      } catch (error) {
+        console.error('Error verifying payment:', error)
+        
+        // Vẫn hiển thị kết quả dựa trên URL params nếu API lỗi
+        const responseCode = searchParams.get('vnp_ResponseCode')
+        const isSuccess = responseCode === '00'
+        
+        // Chỉ hiển thị thông báo lỗi khi thanh toán thất bại
+        if (!isSuccess) {
+          toast.error('Không thể xác thực kết quả thanh toán!')
+        }
+        
+        setResult({
+          success: isSuccess,
+          message: isSuccess ? 'Thanh toán thành công!' : 'Thanh toán thất bại!',
+          orderId: searchParams.get('vnp_TxnRef'),
+          amount: searchParams.get('vnp_Amount') ? parseInt(searchParams.get('vnp_Amount')!) / 100 : 0,
+          transactionNo: searchParams.get('vnp_TransactionNo'),
+          bankCode: searchParams.get('vnp_BankCode'),
+          payDate: searchParams.get('vnp_PayDate')
+        })
+      }
+    }
+    
+    if (searchParams.get('vnp_ResponseCode')) {
+      verifyPayment()
+    }
   }, [searchParams])
 
   if (!result) {
