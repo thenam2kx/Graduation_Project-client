@@ -25,6 +25,12 @@ import { USER_KEYS } from '@/services/user-service/user.keys'
 
 
 const formSchema = z.object({
+  receiverName: z.string().min(2, {
+    message: 'Tên người nhận không được để trống.'
+  }),
+  receiverPhone: z.string().min(10, {
+    message: 'Số điện thoại không hợp lệ.'
+  }),
   province: z.string().min(2, {
     message: 'Thông tin không được để trống.'
   }),
@@ -44,6 +50,8 @@ const CheckoutForm = () => {
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [selectedAddress, setSelectedAddress] = useState<IAddress | null>(null)
   const [addressFormData, setAddressFormData] = useState({
+    receiverName: '',
+    receiverPhone: '',
     province: '',
     district: '',
     ward: '',
@@ -158,6 +166,8 @@ const CheckoutForm = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      receiverName: '',
+      receiverPhone: '',
       province: '',
       district: '',
       ward: '',
@@ -168,6 +178,8 @@ const CheckoutForm = () => {
 
   const handleSubmitAddress = (values: z.infer<typeof formSchema>) => {
     setAddressFormData({
+      receiverName: values.receiverName,
+      receiverPhone: values.receiverPhone,
       province: values.province,
       district: values.district,
       ward: values.ward,
@@ -185,10 +197,36 @@ const CheckoutForm = () => {
   }
 
   const handleCreateOrder = () => {
+    console.log('Selected address:', selectedAddress)
+    console.log('Address form data:', addressFormData)
+    console.log('Shipping address type:', shippingAddress)
+    console.log('Form values:', form.getValues())
+    
+    // Kiểm tra xem đã nhập đủ thông tin địa chỉ chưa nếu chọn địa chỉ khác
+    if (shippingAddress === 'different') {
+      // Lấy dữ liệu trực tiếp từ form thay vì addressFormData
+      const formValues = form.getValues()
+      const { receiverName, receiverPhone, province, district, ward, address } = formValues
+      
+      if (!receiverName || !receiverPhone || !province || !district || !ward || !address) {
+        toast.error('Vui lòng nhập đầy đủ thông tin địa chỉ giao hàng')
+        return
+      }
+      
+      // Cập nhật addressFormData với giá trị mới nhất từ form
+      setAddressFormData(formValues)
+    } else if (shippingAddress === 'same' && !selectedAddress) {
+      toast.error('Vui lòng chọn địa chỉ giao hàng')
+      return
+    }
+    
+    // Lấy dữ liệu địa chỉ mới nhất
+    const currentAddressData = shippingAddress === 'different' ? form.getValues() : null
+    
     const dataSubmit = {
       userId: userId,
-      addressId: selectedAddress?._id || null,
-      addressFree: shippingAddress === 'different' ? addressFormData : {},
+      addressId: shippingAddress === 'same' ? selectedAddress?._id || null : null,
+      addressFree: shippingAddress === 'different' ? currentAddressData : null,
       totalPrice: listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) as number + 30000 || 0,
       shippingPrice: 30000,
       status: 'pending',
@@ -236,7 +274,7 @@ const CheckoutForm = () => {
                       <h3 className='text-sm font-medium text-gray-900'>
                         {item.productId?.name} x {item.quantity}
                       </h3>
-                      <p className='text-sm text-gray-500'>Dung tích: {item.variantId?.sku}</p>
+                      <p className='text-sm text-gray-500'>Dung tích: {item.value} ml | Mã: {item.variantId?.sku}</p>
                     </div>
                     <div className='text-sm font-medium text-gray-900'>{formatCurrencyVND(item.variantId?.price * item.quantity)}</div>
                   </div>
@@ -327,7 +365,35 @@ const CheckoutForm = () => {
                       {
                         shippingAddress === 'different' && (
                           <Form {...form}>
-                            <form onSubmit={form.handleSubmit(handleSubmitAddress)} className="space-y-8">
+                            <div className="space-y-8">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                  control={form.control}
+                                  name="receiverName"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Tên người nhận</FormLabel>
+                                      <FormControl>
+                                        <Input placeholder="Nhập tên người nhận" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name="receiverPhone"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Số điện thoại người nhận</FormLabel>
+                                      <FormControl>
+                                        <Input placeholder="Nhập số điện thoại" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <FormField
                                   control={form.control}
@@ -368,22 +434,36 @@ const CheckoutForm = () => {
                                     </FormItem>
                                   )}
                                 />
-                                <FormField
-                                  control={form.control}
-                                  name="address"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Địa chỉ nhà</FormLabel>
-                                      <FormControl>
-                                        <Input placeholder="Địa chỉ nhà" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
                               </div>
-                              <Button type="submit" className='cursor-pointer'>Lưu</Button>
-                            </form>
+                              <FormField
+                                control={form.control}
+                                name="address"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Địa chỉ nhà</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Địa chỉ nhà" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <Button 
+                                type="button" 
+                                className='cursor-pointer'
+                                onClick={() => {
+                                  form.trigger().then(isValid => {
+                                    if (isValid) {
+                                      const values = form.getValues()
+                                      setAddressFormData(values)
+                                      toast.success('Địa chỉ đã được lưu thành công!')
+                                    }
+                                  })
+                                }}
+                              >
+                                Lưu
+                              </Button>
+                            </div>
                           </Form>
                         )
                       }
