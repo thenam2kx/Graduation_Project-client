@@ -2,6 +2,7 @@ import Routers from './routers/routers'
 import { fetchAccountAPI } from './services/user-service/user.apis'
 import { useNavigate } from 'react-router'
 import { useEffect } from 'react'
+import ScrollToTop from './components/scroll-to-top'
 
 
 const App = () => {
@@ -19,6 +20,7 @@ const App = () => {
 
   return (
     <div>
+      <ScrollToTop />
       <Routers />
     </div>
   )

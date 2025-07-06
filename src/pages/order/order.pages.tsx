@@ -114,6 +114,8 @@ const OrdersPages = () => {
     return orders.map((order) => {
       const items = order.items || []
       const firstItem = items[0]
+      const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+      const totalAmount = order.totalPrice - (order.shippingPrice || 0)
 
       return {
         id: order._id,
@@ -125,9 +127,9 @@ const OrdersPages = () => {
         paymentMethod: order.paymentMethod,
         statusUpdatedAt: new Date(order.updatedAt || order.createdAt).getTime(),
         product: {
-          name: firstItem?.productId?.name || 'N/A',
-          quantity: firstItem?.quantity || 0,
-          total: `${(firstItem?.price || 0).toLocaleString()} đ`,
+          name: `Đơn hàng (${items.length} sản phẩm)`,
+          quantity: totalQuantity,
+          total: `${totalAmount.toLocaleString()} đ`,
           image: firstItem?.productId?.image?.[0] || '/placeholder.svg'
         }
       }
@@ -198,8 +200,8 @@ const OrdersPages = () => {
                           </div>
                           <div className='space-y-1'>
                             <h4 className='font-medium text-gray-900'>{order.product.name}</h4>
-                            <p className='text-sm text-gray-500'>Số lượng: {order.product.quantity}</p>
-                            <p className='text-sm font-medium text-gray-900'>Tổng: {order.product.total}</p>
+                            <p className='text-sm text-gray-500'>Tổng số lượng: {order.product.quantity} sản phẩm</p>
+                            <p className='text-sm font-medium text-gray-900'>Tổng tiền: {order.product.total}</p>
                           </div>
                         </div>
 
