@@ -97,23 +97,24 @@ const ProductDetail = () => {
           originalPrice: originalPrice,
           discount: discount
         })
-        setPrice(finalPrice * quantity)
+        setPrice(finalPrice)
         setCurrentStock(variant.stock || 0)
+        setQuantity(1) // Reset số lượng về 1 khi đổi biến thể
       }
     }
-  }, [selectedScents, product, quantity])
+  }, [selectedScents, product]) // Bỏ quantity khỏi dependency
 
 
   const handleSelectedScents = (id: string, variantId: string, stock: number) => {
     setSelectedScents(id)
     setCurrentStock(stock)
-    
-    // Tìm biến thể tương ứng
+    setQuantity(1) // Reset số lượng về 1 khi chọn biến thể mới
+
     if (product && product.variants) {
       const variant = product.variants.find(v => v._id === variantId)
       if (variant) {
         setSelectedVariant(variant)
-        setPrice(variant.price * quantity)
+        setPrice(variant.price - (variant.discount || 0)) // Không nhân với quantity
       }
     }
   }
@@ -321,20 +322,25 @@ const ProductDetail = () => {
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-gray-900">Số lượng</span>
               </div>
-              <QuantityInput
-                value={quantity}
-                onChange={(value) => {
-                  if (value > currentStock) {
-                    toast.warning(`Chỉ còn ${currentStock} sản phẩm trong kho`)
-                    setQuantity(currentStock)
-                  } else {
-                    setQuantity(value)
-                  }
-                }}
-                min={1}
-                max={currentStock}
-                className="w-32"
-              />
+              <div className="flex items-center border rounded-md w-fit">
+                <button
+                  type="button"
+                  className="px-4 py-2 text-lg font-bold"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                >
+                  -
+                </button>
+                <span className="px-4 select-none">{quantity}</span>
+                <button
+                  type="button"
+                  className="px-4 py-2 text-lg font-bold"
+                  onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
+                  disabled={quantity >= currentStock}
+                >
+                  +
+                </button>
+              </div>
             </div>
 
             {/* Add to Cart */}
@@ -378,9 +384,6 @@ const ProductDetail = () => {
             <div className="flex space-x-8">
               <button className="border-b-2 border-purple-600 text-purple-600 font-medium py-4 px-1 -mb-px">
                 Mô tả sản phẩm
-              </button>
-              <button className="text-gray-500 hover:text-gray-700 font-medium py-4 px-1">
-                Thông tin chi tiết
               </button>
               <button className="text-gray-500 hover:text-gray-700 font-medium py-4 px-1">
                 Đánh giá
