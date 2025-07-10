@@ -1,5 +1,5 @@
 import { ShoppingCartIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import '@/styles/product-detail.css'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
@@ -23,6 +23,7 @@ const ProductDetail = () => {
   const [price, setPrice] = useState<number>(0)
   const [selectedVariant, setSelectedVariant] = useState<any>(null)
   const [currentStock, setCurrentStock] = useState<number>(0)
+  const [selectedImage, setSelectedImage] = useState<string>('')
   const queryClient = useQueryClient()
   const { id } = useParams<{ id: string }>()
   const cartId = useAppSelector((state) => state.cart.IdCartUser)
@@ -65,6 +66,11 @@ const ProductDetail = () => {
 
       setCapacity(Array.from(newCapacity.values()))
       setScents(Array.from(newScents.values()))
+      
+      // Đặt ảnh đầu tiên làm ảnh được chọn mặc định
+      if (product.image && product.image.length > 0) {
+        setSelectedImage(product.image[0])
+      }
     }
   }, [product])
 
@@ -217,7 +223,8 @@ const ProductDetail = () => {
               {product?.image && product?.image.length > 0 && product?.image.map((img: string, index: number) => (
                 <div 
                   key={index} 
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:border-purple-500 transition-colors"
+                  className={`w-16 h-16 md:w-20 md:h-20 rounded-lg border overflow-hidden cursor-pointer transition-colors ${selectedImage === img ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-500'}`}
+                  onClick={() => setSelectedImage(img)}
                 >
                   <img
                     className="w-full h-full object-cover"
@@ -233,7 +240,7 @@ const ProductDetail = () => {
               <img
                 className="w-full h-auto object-cover aspect-square"
                 alt={product?.name}
-                src={product?.image?.[0]}
+                src={selectedImage || product?.image?.[0]}
                 crossOrigin='anonymous'
               />
             </div>
