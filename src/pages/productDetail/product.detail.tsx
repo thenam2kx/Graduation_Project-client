@@ -48,12 +48,11 @@ const ProductDetail = () => {
 
       product.variants.forEach((variant) => {
         let capacityValue = ''
-        
         variant.variant_attributes.forEach((attr) => {
           if (attr.attributeId.slug === 'dung-tich') {
             capacityValue = attr.value
-            newCapacity.set(attr.value, { 
-              id: attr._id || '', 
+            newCapacity.set(attr.value, {
+              id: attr._id || '',
               name: attr.value,
               stock: variant.stock || 0,
               variantId: variant._id || ''
@@ -66,7 +65,6 @@ const ProductDetail = () => {
 
       setCapacity(Array.from(newCapacity.values()))
       setScents(Array.from(newScents.values()))
-      
       // Đặt ảnh đầu tiên làm ảnh được chọn mặc định
       if (product.image && product.image.length > 0) {
         setSelectedImage(product.image[0])
@@ -91,7 +89,7 @@ const ProductDetail = () => {
         const originalPrice = variant.price || 0
         const discount = variant.discount || 0
         const finalPrice = originalPrice - discount
-        
+
         setSelectedVariant({
           ...variant,
           originalPrice: originalPrice,
@@ -145,14 +143,12 @@ const ProductDetail = () => {
           toast.error('Sản phẩm đã hết hàng!')
           return
         }
-        
         // Kiểm tra số lượng
         if (quantity > currentStock) {
           toast.warning(`Chỉ còn ${currentStock} sản phẩm trong kho`)
           setQuantity(currentStock)
           return
         }
-        
         addToCartMutation.mutate({ variantId: selectedVariant._id || '', quantity })
       } else {
         toast.error('Bạn chưa chọn biến thể nào.')
@@ -222,8 +218,8 @@ const ProductDetail = () => {
           <div className="lg:col-span-7 flex flex-col md:flex-row gap-4">
             <div className="flex md:flex-col gap-2 order-2 md:order-1">
               {product?.image && product?.image.length > 0 && product?.image.map((img: string, index: number) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={`w-16 h-16 md:w-20 md:h-20 rounded-lg border overflow-hidden cursor-pointer transition-colors ${selectedImage === img ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-500'}`}
                   onClick={() => setSelectedImage(img)}
                 >
@@ -253,7 +249,6 @@ const ProductDetail = () => {
             <div className="mb-4">
               <div className="text-sm font-medium text-purple-600 mb-2">{product?.brandId?.name || 'Thương hiệu'}</div>
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{product?.name}</h1>
-              
               {/* Price */}
               <div className="flex items-center gap-3 mt-2">
                 <span className="text-2xl font-bold text-gray-900">
@@ -272,8 +267,8 @@ const ProductDetail = () => {
             {/* Product Description */}
             <div className="mb-6">
               {product?.description ? (
-                <div 
-                  className="text-gray-600 text-sm leading-relaxed description-preview" 
+                <div
+                  className="text-gray-600 text-sm leading-relaxed description-preview"
                   dangerouslySetInnerHTML={{ __html: product.description.substring(0, 200) + '...' }}
                 />
               ) : (
@@ -348,14 +343,14 @@ const ProductDetail = () => {
               <Button
                 onClick={handleAddToCart}
                 disabled={currentStock <= 0 || addToCartMutation.isPending}
-                className={`w-full py-3 rounded-lg transition-all ${currentStock <= 0 
-                  ? 'bg-gray-300 cursor-not-allowed' 
+                className={`w-full py-3 rounded-lg transition-all ${currentStock <= 0
+                  ? 'bg-gray-300 cursor-not-allowed'
                   : 'bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-purple-200'}`}
               >
                 <ShoppingCartIcon className="w-5 h-5 mr-2" />
                 <span className="font-medium">
-                  {addToCartMutation.isPending ? 'Đang thêm...' : 
-                   currentStock <= 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
+                  {addToCartMutation.isPending ? 'Đang thêm...' :
+                    currentStock <= 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
                 </span>
               </Button>
             </div>
@@ -390,12 +385,11 @@ const ProductDetail = () => {
               </button>
             </div>
           </div>
-          
           <div className="py-6">
             <div className="prose max-w-none">
               {product?.description ? (
-                <div 
-                  className="text-gray-600" 
+                <div
+                  className="text-gray-600"
                   dangerouslySetInnerHTML={{ __html: product.description }}
                 />
               ) : (
