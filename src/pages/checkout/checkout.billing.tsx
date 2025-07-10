@@ -13,15 +13,16 @@ import { useForm } from 'react-hook-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { fetchAllAddressByUserAPI } from '@/services/user-service/user.apis'
 import { toast } from 'react-toastify'
 import { createOrderAPI } from '@/services/order-service/order.apis'
 import { createVNPayPaymentAPI } from '@/services/vnpay-service/vnpay.apis'
 import PaymentLoading from '@/components/payment/payment-loading'
-import { useNavigate } from 'react-router'
+import { useNavigate, useLocation } from 'react-router'
 import { USER_KEYS } from '@/services/user-service/user.keys'
+import DiscountInput from '@/components/DiscountInput'
 
 
 const formSchema = z.object({
@@ -49,6 +50,7 @@ const CheckoutForm = () => {
   const [shippingAddress, setShippingAddress] = useState('same')
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [selectedAddress, setSelectedAddress] = useState<IAddress | null>(null)
+  const [appliedDiscount, setAppliedDiscount] = useState(null)
   const [addressFormData, setAddressFormData] = useState({
     receiverName: '',
     receiverPhone: '',
@@ -61,6 +63,14 @@ const CheckoutForm = () => {
   const userId = useAppSelector((state) => state.auth.user?._id)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Get discount data from cart page if available
+  useEffect(() => {
+    if (location.state?.appliedDiscount) {
+      setAppliedDiscount(location.state.appliedDiscount)
+    }
+  }, [location.state])
 
   const { data: listProductsCart } = useQuery({
     queryKey: [CART_KEYS.FETCH_LIST_CART],
@@ -123,7 +133,7 @@ const CheckoutForm = () => {
       
       if (paymentMethod === 'vnpay') {
         // Chuyển hướng đến trang thanh toán VNPay
-        handleVNPayPayment(orderData._id, orderData.totalPrice)
+        handleVNPayPayment(orderData._id, totalPrice)
       } else {
         // Hiển thị thông báo và chuyển hướng về trang chủ
         toast.success('Đặt hàng thành công!')
@@ -223,12 +233,19 @@ const CheckoutForm = () => {
     // Lấy dữ liệu địa chỉ mới nhất
     const currentAddressData = shippingAddress === 'different' ? form.getValues() : null
     
+    const subtotal = listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
+    const shippingPrice = 30000
+    const discountAmount = appliedDiscount?.discountAmount || 0
+    const totalPrice = subtotal + shippingPrice - discountAmount
+
     const dataSubmit = {
       userId: userId,
       addressId: shippingAddress === 'same' ? selectedAddress?._id || null : null,
       addressFree: shippingAddress === 'different' ? currentAddressData : null,
-      totalPrice: listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) as number + 30000 || 0,
-      shippingPrice: 30000,
+      totalPrice: totalPrice,
+      shippingPrice: shippingPrice,
+      discountAmount: discountAmount,
+      discountCode: appliedDiscount?.discount?.code || null,
       status: 'pending',
       shippingMethod: 'standard',
       paymentStatus: paymentMethod === 'cash' ? 'unpaid' : 'pending',
@@ -289,19 +306,31 @@ const CheckoutForm = () => {
                   <span className='font-medium'>{formatCurrencyVND(listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0)}</span>
                 </div>
                 <div className='flex justify-between text-sm'>
-                  <span className='text-gray-600'>Tiết kiệm</span>
-                  <span className='font-medium text-green-600'>{formatCurrencyVND(50000)}</span>
-                </div>
-                <div className='flex justify-between text-sm'>
                   <span className='text-gray-600'>Phí vận chuyển</span>
-                  <span className='font-medium text-green-600'>{formatCurrencyVND(30000)}</span>
+                  <span className='font-medium'>{formatCurrencyVND(30000)}</span>
                 </div>
+                {appliedDiscount && (
+                  <div className='flex justify-between text-sm text-green-600'>
+                    <span>Giảm giá ({appliedDiscount.discount.code})</span>
+                    <span className='font-medium'>-{formatCurrencyVND(appliedDiscount.discountAmount)}</span>
+                  </div>
+                )}
                 <Separator className='my-4' />
                 <div className='flex justify-between text-lg font-semibold'>
                   <span>Tổng cộng</span>
-                  <span>{formatCurrencyVND(listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) as number + 30000)}</span>
+                  <span>{formatCurrencyVND((listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0) + 30000 - (appliedDiscount?.discountAmount || 0))}</span>
                 </div>
               </div>
+              
+              <Separator className='my-6' />
+              
+              {/* Discount Input */}
+              <DiscountInput
+                orderValue={(listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0) + 30000}
+                cartItems={listProductsCart || []}
+                onDiscountApplied={setAppliedDiscount}
+                appliedDiscount={appliedDiscount}
+              />
             </div>
 
             <div className='bg-white p-6 rounded-lg shadow-sm'>
@@ -540,7 +569,7 @@ const CheckoutForm = () => {
                   onClick={handleCreateOrder}
                   disabled={createOrderMutation.isPending || vnpayPaymentMutation.isPending}
                 >
-                  {createOrderMutation.isPending || vnpayPaymentMutation.isPending ? 'Đang xử lý...' : 'Đặt hàng'}
+                  {createOrderMutation.isPending || vnpayPaymentMutation.isPending ? 'Đang xử lý...' : `Đặt hàng - ${formatCurrencyVND((listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0) + 30000 - (appliedDiscount?.discountAmount || 0))}`}
                 </Button>
               </div>
             </div>
