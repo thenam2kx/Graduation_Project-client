@@ -30,3 +30,9 @@ declare global {
     role: string
   }
 }
+
+declare module 'react' {
+  interface CSSProperties {
+    [key: `--${string}`]: string | number
+  }
+}
