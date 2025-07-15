@@ -9,10 +9,12 @@ import { deleteItemFromCartAPI, fetchInfoCartAPI, ICartItem, updateCartItemAPI }
 import { useAppSelector } from '@/redux/hooks'
 import { formatCurrencyVND } from '@/utils/utils'
 import { toast } from 'react-toastify'
+import DiscountInput from '@/components/DiscountInput'
 
 export default function ShoppingCartPage() {
   const queryClient = useQueryClient()
   const [couponCode, setCouponCode] = useState('')
+  const [appliedDiscount, setAppliedDiscount] = useState(null)
   const navigate = useNavigate()
   const cartId = useAppSelector((state) => state.cart.IdCartUser)
 
@@ -66,6 +68,13 @@ export default function ShoppingCartPage() {
   const removeItem = (id: string) => {
     deleteItemFromCartMutation.mutate({ cartId: cartId || '', itemId: id })
   }
+
+  // Calculate totals
+  const cartItems = listProductsCart || []
+  const subtotal = cartItems.reduce((sum: number, item: ICartItem) => sum + (item.variantId?.price || 0) * item.quantity, 0)
+  const shippingFee = 30000 // Fixed shipping fee
+  const discountAmount = appliedDiscount?.discountAmount || 0
+  const total = subtotal + shippingFee - discountAmount
 
 
   return (
@@ -161,17 +170,12 @@ export default function ShoppingCartPage() {
         <div className="grid md:grid-cols-2 gap-8">
           {/* Discount Codes */}
           <div>
-            <h3 className="text-lg font-medium text-[#333333] mb-2">Mã giảm giá</h3>
-            <p className="text-sm text-[#807d7e] mb-4">Nhập mã giảm giá của bạn nếu có</p>
-            <div className="flex space-x-2">
-              <Input
-                placeholder=""
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                className="flex-1"
-              />
-              <Button className="bg-[#8a33fd] hover:bg-[#6639a6] text-white px-6">Áp dụng mã giảm giá</Button>
-            </div>
+            <DiscountInput
+              orderValue={subtotal}
+              cartItems={cartItems}
+              onDiscountApplied={setAppliedDiscount}
+              appliedDiscount={appliedDiscount}
+            />
             <Button variant="outline" className="mt-4">
               Tiếp tục mua sắm
             </Button>
@@ -180,24 +184,33 @@ export default function ShoppingCartPage() {
           {/* Order Summary */}
           <div className="space-y-4">
             <div className="flex justify-between">
-              <span className="text-[#333333]">Tổng tiền</span>
+              <span className="text-[#333333]">Tạm tính</span>
               <span className="font-medium text-[#333333]">
-                {formatCurrencyVND(listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0)}
+                {formatCurrencyVND(subtotal)}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#333333]">Phí ship</span>
-              <span className="font-medium text-[#333333]">{formatCurrencyVND(30000)}</span>
+              <span className="font-medium text-[#333333]">{formatCurrencyVND(shippingFee)}</span>
             </div>
+            {appliedDiscount && (
+              <div className="flex justify-between text-green-600">
+                <span>Giảm giá ({appliedDiscount.discount.code})</span>
+                <span className="font-medium">-{formatCurrencyVND(discountAmount)}</span>
+              </div>
+            )}
             <div className="border-t pt-4">
               <div className="flex justify-between">
                 <span className="text-lg font-medium text-[#333333]">Tổng cộng</span>
                 <span className="text-lg font-medium text-[#333333]">
-                  {formatCurrencyVND(listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) as number + 30000)}
+                  {formatCurrencyVND(total)}
                 </span>
               </div>
             </div>
-            <Button className="w-full bg-[#8a33fd] hover:bg-[#6639a6] text-white py-3" onClick={() => navigate('/checkout')}>
+            <Button 
+              className="w-full bg-[#8a33fd] hover:bg-[#6639a6] text-white py-3" 
+              onClick={() => navigate('/checkout', { state: { appliedDiscount } })}
+            >
               Thanh toán
             </Button>
           </div>

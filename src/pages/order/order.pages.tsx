@@ -115,7 +115,8 @@ const OrdersPages = () => {
       const items = order.items || []
       const firstItem = items[0]
       const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0)
-      const totalAmount = order.totalPrice - (order.shippingPrice || 0)
+      // Hiển thị tổng tiền bao gồm cả phí vận chuyển
+      const totalAmount = order.totalPrice
 
       return {
         id: order._id,
