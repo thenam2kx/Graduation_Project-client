@@ -4,10 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@radix-ui/react-label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@radix-ui/react-separator'
+import { useLocation } from 'react-router'
+import { formatCurrencyVND } from '@/utils/utils'
+import { IApplyDiscountResponse } from '@/services/discount-service/discount.apis'
+import { CheckoutDiscount } from '@/components/discount/checkout-discount'
 
 const CheckoutShipping = () => {
+  const location = useLocation()
+  const { appliedDiscount: initialDiscount, subtotal: initialSubtotal, shippingFee: initialShippingFee } = location.state || {}
+  const [appliedDiscount, setAppliedDiscount] = useState<IApplyDiscountResponse | null>(initialDiscount || null)
   const [shippingAddress, setShippingAddress] = useState('same')
   const [paymentMethod, setPaymentMethod] = useState('credit')
+  
+  const subtotal = initialSubtotal || 0
+  const shippingFee = initialShippingFee || 30000
+  const discountAmount = appliedDiscount?.discountAmount || 0
+  const total = subtotal + shippingFee - discountAmount
 
   return (
     <div className='bg-gray-50 py-8'>
@@ -100,6 +112,42 @@ const CheckoutShipping = () => {
               </RadioGroup>
             </CardContent>
           </Card>
+
+          {/* Discount Section */}
+          <CheckoutDiscount
+            appliedDiscount={appliedDiscount}
+            subtotal={subtotal}
+            onDiscountChange={setAppliedDiscount}
+          />
+
+          {/* Order Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle className='text-lg font-semibold text-gray-900'>Tổng kết đơn hàng</CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-3'>
+              <div className='flex justify-between'>
+                <span>Tạm tính:</span>
+                <span>{formatCurrencyVND(subtotal)}</span>
+              </div>
+              <div className='flex justify-between'>
+                <span>Phí vận chuyển:</span>
+                <span>{formatCurrencyVND(shippingFee)}</span>
+              </div>
+              {appliedDiscount && (
+                <div className='flex justify-between text-green-600'>
+                  <span>Giảm giá ({appliedDiscount.discount.code}):</span>
+                  <span>-{formatCurrencyVND(discountAmount)}</span>
+                </div>
+              )}
+              <Separator className='h-px bg-gray-200' />
+              <div className='flex justify-between font-semibold text-lg'>
+                <span>Tổng cộng:</span>
+                <span>{formatCurrencyVND(total)}</span>
+              </div>
+            </CardContent>
+          </Card>
+
           <Button
             type='submit'
             className='w-full bg-purple-600 hover:bg-purple-700 text-white py-3 text-lg font-semibold h-12'
