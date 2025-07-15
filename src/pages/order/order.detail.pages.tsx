@@ -12,6 +12,7 @@ import {
   Tag,
   Clock
 } from 'lucide-react'
+import ShippingTracker from '@/components/shipping/shipping-tracker'
 import { useQuery } from '@tanstack/react-query'
 import instance from '@/config/axios.customize'
 import type { IOrder, IOrderItem } from '@/types/order'
@@ -198,6 +199,19 @@ const OrderDetails = () => {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Shipping Tracker */}
+            {order.shipping?.orderCode && (
+              <Card className='bg-white/70 backdrop-blur-sm border-0 shadow-lg'>
+                <CardContent className='p-6'>
+                  <h2 className='text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4'>
+                    <Truck className='h-5 w-5 text-blue-600' />
+                    Theo dõi vận chuyển
+                  </h2>
+                  <ShippingTracker orderId={order._id} />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Order Items */}
             <Card className='bg-white/70 backdrop-blur-sm border-0 shadow-lg'>
