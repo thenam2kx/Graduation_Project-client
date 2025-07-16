@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import axios from '../../config/axios.customize'
 import { Loader2 } from 'lucide-react'
+import { refreshShippingStatus } from '@/services/shipping-service/shipping.apis'
 
 interface ShippingTrackerProps {
   orderId: string
@@ -49,8 +49,8 @@ const ShippingTracker: React.FC<ShippingTrackerProps> = ({ orderId }) => {
       setLoading(true)
       setError(null)
 
-      const response = await axios.get(`/ghn/order-status/${orderId}`)
-      setShippingData(response.data.data)
+      const data = await refreshShippingStatus(orderId)
+      setShippingData(data)
       setLoading(false)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Không thể lấy thông tin vận chuyển')
