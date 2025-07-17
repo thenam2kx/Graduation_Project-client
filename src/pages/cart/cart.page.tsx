@@ -15,6 +15,7 @@ export default function ShoppingCartPage() {
   const queryClient = useQueryClient()
   const [couponCode, setCouponCode] = useState('')
   const [appliedDiscount, setAppliedDiscount] = useState(null)
+  const [selectedItems, setSelectedItems] = useState<string[]>([])
   const navigate = useNavigate()
   const cartId = useAppSelector((state) => state.cart.IdCartUser)
 
@@ -47,7 +48,6 @@ export default function ShoppingCartPage() {
     }
   })
 
-
   const { data: listProductsCart } = useQuery({
     queryKey: [CART_KEYS.FETCH_LIST_CART],
     queryFn: async () => {
@@ -69,10 +69,26 @@ export default function ShoppingCartPage() {
     deleteItemFromCartMutation.mutate({ cartId: cartId || '', itemId: id })
   }
 
-  // Calculate totals
+  // Checkbox handlers
   const cartItems = listProductsCart || []
-  const subtotal = cartItems.reduce((sum: number, item: ICartItem) => sum + (item.variantId?.price || 0) * item.quantity, 0)
-  const shippingFee = 30000 // Fixed shipping fee
+  const allSelected = cartItems.length > 0 && selectedItems.length === cartItems.length
+  const handleSelectItem = (id: string) => {
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+    )
+  }
+  const handleSelectAll = () => {
+    if (allSelected) {
+      setSelectedItems([])
+    } else {
+      setSelectedItems(cartItems.map((item) => item._id))
+    }
+  }
+
+  // Tính tổng chỉ cho sản phẩm đã chọn
+  const selectedCartItems = cartItems.filter(item => selectedItems.includes(item._id))
+  const subtotal = selectedCartItems.reduce((sum: number, item: ICartItem) => sum + (item.variantId?.price || 0) * item.quantity, 0)
+  const shippingFee = selectedCartItems.length > 0 ? 30000 : 0 // Chỉ tính phí ship nếu có sản phẩm chọn
   const discountAmount = appliedDiscount?.discountAmount || 0
   const total = subtotal + shippingFee - discountAmount
 
@@ -92,7 +108,16 @@ export default function ShoppingCartPage() {
       {/* Cart Table */}
       <div className="max-w-7xl mx-auto px-4 mb-8">
         <div className="bg-[#3c4242] text-white">
-          <div className="grid grid-cols-12 gap-4 p-4 text-sm font-medium">
+          <div className="grid grid-cols-13 gap-4 p-4 text-sm font-medium">
+            <div className="col-span-1 flex items-center">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={handleSelectAll}
+                className="w-4 h-4"
+                aria-label="Chọn tất cả"
+              />
+            </div>
             <div className="col-span-4">CHI TIẾT</div>
             <div className="col-span-2">GIÁ</div>
             <div className="col-span-2">SỐ LƯỢNG</div>
@@ -101,9 +126,18 @@ export default function ShoppingCartPage() {
           </div>
         </div>
 
-        {listProductsCart && listProductsCart.map((item: ICartItem) => (
+        {cartItems.map((item: ICartItem) => (
           <div key={item._id} className="border-b border-[#f3f3f3] p-4">
-            <div className="grid grid-cols-12 gap-4 items-center">
+            <div className="grid grid-cols-13 gap-4 items-center">
+              <div className="col-span-1 flex items-center">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(item._id)}
+                  onChange={() => handleSelectItem(item._id)}
+                  className="w-4 h-4"
+                  aria-label="Chọn sản phẩm"
+                />
+              </div>
               <div className="col-span-4 flex items-center space-x-4">
                 <img
                   src={item.variantId?.image ? `http://localhost:8080${item.variantId?.image}` : `${item.productId.image[0]}`}
@@ -172,7 +206,7 @@ export default function ShoppingCartPage() {
           <div>
             <DiscountInput
               orderValue={subtotal}
-              cartItems={cartItems}
+              cartItems={selectedCartItems}
               onDiscountApplied={setAppliedDiscount}
               appliedDiscount={appliedDiscount}
             />
@@ -209,7 +243,13 @@ export default function ShoppingCartPage() {
             </div>
             <Button 
               className="w-full bg-[#8a33fd] hover:bg-[#6639a6] text-white py-3" 
-              onClick={() => navigate('/checkout', { state: { appliedDiscount } })}
+              onClick={() => {
+                if (selectedCartItems.length === 0) {
+                  toast.warning('Vui lòng chọn sản phẩm để thanh toán!')
+                  return
+                }
+                navigate('/checkout', { state: { appliedDiscount, selectedCartItems } })
+              }}
             >
               Thanh toán
             </Button>
