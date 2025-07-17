@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CART_KEYS } from '@/services/cart-service/cart.keys'
-import { deleteCartItemAPI, fetchInfoCartAPI } from '@/services/cart-service/cart.apis'
+import { deleteCartItemAPI, deleteItemFromCartAPI } from '@/services/cart-service/cart.apis'
 import { useAppSelector } from '@/redux/hooks'
 import { formatCurrencyVND } from '@/utils/utils'
 import { z } from 'zod'
@@ -59,30 +59,22 @@ const CheckoutForm = () => {
     ward: '',
     address: ''
   })
+  const [selectedCartItems, setSelectedCartItems] = useState<any[]>([])
   const cartId = useAppSelector((state) => state.cart.IdCartUser)
   const userId = useAppSelector((state) => state.auth.user?._id)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Get discount data from cart page if available
+  // Lấy sản phẩm đã chọn từ trang cart
   useEffect(() => {
+    if (location.state?.selectedCartItems) {
+      setSelectedCartItems(location.state.selectedCartItems)
+    }
     if (location.state?.appliedDiscount) {
       setAppliedDiscount(location.state.appliedDiscount)
     }
   }, [location.state])
-
-  const { data: listProductsCart } = useQuery({
-    queryKey: [CART_KEYS.FETCH_LIST_CART],
-    queryFn: async () => {
-      const res = await fetchInfoCartAPI(cartId as string)
-      if (res && res.data) {
-        return res.data
-      } else {
-        return []
-      }
-    }
-  })
 
   const { data: listAddresses } = useQuery({
     queryKey: [USER_KEYS.FETCH_ALL_ADDRESS_BY_USER, userId],
@@ -117,31 +109,40 @@ const CheckoutForm = () => {
     }
   })
 
+  const removeOrderedItems = async () => {
+    if (!cartId || !selectedCartItems.length) return
+    await Promise.all(
+      selectedCartItems.map(item =>
+        deleteItemFromCartAPI(cartId, item._id)
+      )
+    )
+    queryClient.invalidateQueries({ queryKey: [CART_KEYS.FETCH_LIST_CART] })
+  }
+
   const createOrderMutation = useMutation({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mutationFn: async (data: any) => {
       const res = await createOrderAPI(data)
       return res.data || res
     },
-    onSuccess: (response) => {
-      console.log('🚀 ~ CheckoutForm ~ response:', response)
+    onSuccess: async (response) => {
       const orderData = response.data || response
-      
-      // Xóa giỏ hàng sau khi đặt hàng thành công
-      clearCartMutation.mutate()
+      await removeOrderedItems()
       queryClient.invalidateQueries({ queryKey: [CART_KEYS.FETCH_LIST_CART] })
-      
+
+      const subtotal = selectedCartItems?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
+      const shippingPrice = 30000
+      const discountAmount = appliedDiscount?.discountAmount || 0
+      const calculatedTotalPrice = subtotal + shippingPrice - discountAmount
+
       if (paymentMethod === 'vnpay') {
-        // Chuyển hướng đến trang thanh toán VNPay
-        handleVNPayPayment(orderData._id, totalPrice)
+        handleVNPayPayment(orderData._id, calculatedTotalPrice)
       } else {
-        // Hiển thị thông báo và chuyển hướng về trang chủ
         toast.success('Đặt hàng thành công!')
         navigate('/', { replace: true })
       }
     },
     onError: (error) => {
-      // eslint-disable-next-line no-console
       console.error('Error creating order:', error)
       toast.error('Đặt hàng thất bại!')
     }
@@ -150,18 +151,14 @@ const CheckoutForm = () => {
   const vnpayPaymentMutation = useMutation({
     mutationFn: createVNPayPaymentAPI,
     onSuccess: (response) => {
-      console.log('VNPay response:', response)
       const paymentUrl = response?.paymentUrl || response?.data?.paymentUrl
       if (paymentUrl) {
-        // Lưu thông tin đơn hàng vào localStorage để theo dõi
         try {
           localStorage.setItem('lastOrderId', response?.data?.orderId || '')
           localStorage.setItem('lastOrderTime', new Date().toISOString())
         } catch (e) {
           console.error('Error saving order info to localStorage:', e)
         }
-        
-        // Chuyển hướng đến trang thanh toán VNPay
         window.location.href = paymentUrl
       } else {
         toast.error('Không nhận được URL thanh toán từ VNPay!')
@@ -207,33 +204,27 @@ const CheckoutForm = () => {
   }
 
   const handleCreateOrder = () => {
-    console.log('Selected address:', selectedAddress)
-    console.log('Address form data:', addressFormData)
-    console.log('Shipping address type:', shippingAddress)
-    console.log('Form values:', form.getValues())
-    
-    // Kiểm tra xem đã nhập đủ thông tin địa chỉ chưa nếu chọn địa chỉ khác
     if (shippingAddress === 'different') {
-      // Lấy dữ liệu trực tiếp từ form thay vì addressFormData
       const formValues = form.getValues()
       const { receiverName, receiverPhone, province, district, ward, address } = formValues
-      
       if (!receiverName || !receiverPhone || !province || !district || !ward || !address) {
         toast.error('Vui lòng nhập đầy đủ thông tin địa chỉ giao hàng')
         return
       }
-      
-      // Cập nhật addressFormData với giá trị mới nhất từ form
       setAddressFormData(formValues)
     } else if (shippingAddress === 'same' && !selectedAddress) {
       toast.error('Vui lòng chọn địa chỉ giao hàng')
       return
     }
-    
-    // Lấy dữ liệu địa chỉ mới nhất
+
+    if (!selectedCartItems || selectedCartItems.length === 0) {
+      toast.error('Không có sản phẩm nào để đặt hàng!')
+      return
+    }
+
     const currentAddressData = shippingAddress === 'different' ? form.getValues() : null
-    
-    const subtotal = listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
+
+    const subtotal = selectedCartItems?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
     const shippingPrice = 30000
     const discountAmount = appliedDiscount?.discountAmount || 0
     const totalPrice = subtotal + shippingPrice - discountAmount
@@ -244,13 +235,12 @@ const CheckoutForm = () => {
       addressFree: shippingAddress === 'different' ? currentAddressData : null,
       totalPrice: totalPrice,
       shippingPrice: shippingPrice,
-      discountAmount: discountAmount,
-      discountCode: appliedDiscount?.discount?.code || null,
+      discountId: appliedDiscount?.discount?._id || undefined,
       status: 'pending',
       shippingMethod: 'standard',
       paymentStatus: paymentMethod === 'cash' ? 'unpaid' : 'pending',
       paymentMethod: paymentMethod,
-      items: listProductsCart?.map(item => ({
+      items: selectedCartItems?.map(item => ({
         productId: item.productId?._id,
         variantId: item.variantId?._id,
         quantity: item.quantity,
@@ -258,10 +248,14 @@ const CheckoutForm = () => {
       }))
     }
 
-    console.log('Submitting order data:', dataSubmit)
     createOrderMutation.mutate(dataSubmit)
   }
 
+  // Tính toán tổng tiền
+  const subtotal = selectedCartItems?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
+  const shippingFee = selectedCartItems?.length > 0 ? 30000 : 0
+  const discountAmount = appliedDiscount?.discountAmount || 0
+  const total = subtotal + shippingFee - discountAmount
 
   return (
     <>
@@ -276,7 +270,7 @@ const CheckoutForm = () => {
             <div className='bg-white p-6 rounded-lg shadow-sm h-fit lg:sticky lg:top-[80px]'>
               <h2 className='text-lg font-medium text-gray-900 mb-6 scroll-mt-24'> Đơn Hàng</h2>
               <div className='space-y-4'>
-                {listProductsCart && listProductsCart?.map((item) => (
+                {selectedCartItems && selectedCartItems.map((item) => (
                   <div key={item._id} className='flex items-center space-x-4'>
                     <div className='w-16 h-16 bg-gray-100 rounded-md overflow-hidden'>
                       <img
@@ -301,33 +295,31 @@ const CheckoutForm = () => {
               <div className='space-y-3'>
                 <div className='flex justify-between text-sm'>
                   <span className='text-gray-600'>
-                    Tạm tính ({listProductsCart?.reduce((acc, item) => acc + item.quantity, 0)} sản phẩm)
+                    Tạm tính ({selectedCartItems?.reduce((acc, item) => acc + item.quantity, 0)} sản phẩm)
                   </span>
-                  <span className='font-medium'>{formatCurrencyVND(listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0)}</span>
+                  <span className='font-medium'>{formatCurrencyVND(subtotal)}</span>
                 </div>
                 <div className='flex justify-between text-sm'>
                   <span className='text-gray-600'>Phí vận chuyển</span>
-                  <span className='font-medium'>{formatCurrencyVND(30000)}</span>
+                  <span className='font-medium'>{formatCurrencyVND(shippingFee)}</span>
                 </div>
                 {appliedDiscount && (
                   <div className='flex justify-between text-sm text-green-600'>
                     <span>Giảm giá ({appliedDiscount.discount.code})</span>
-                    <span className='font-medium'>-{formatCurrencyVND(appliedDiscount.discountAmount)}</span>
+                    <span className='font-medium'>-{formatCurrencyVND(discountAmount)}</span>
                   </div>
                 )}
                 <Separator className='my-4' />
                 <div className='flex justify-between text-lg font-semibold'>
                   <span>Tổng cộng</span>
-                  <span>{formatCurrencyVND((listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0) + 30000 - (appliedDiscount?.discountAmount || 0))}</span>
+                  <span>{formatCurrencyVND(total)}</span>
                 </div>
               </div>
-              
               <Separator className='my-6' />
-              
               {/* Discount Input */}
               <DiscountInput
-                orderValue={(listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0) + 30000}
-                cartItems={listProductsCart || []}
+                orderValue={subtotal + shippingFee}
+                cartItems={selectedCartItems || []}
                 onDiscountApplied={setAppliedDiscount}
                 appliedDiscount={appliedDiscount}
               />
@@ -477,8 +469,8 @@ const CheckoutForm = () => {
                                   </FormItem>
                                 )}
                               />
-                              <Button 
-                                type="button" 
+                              <Button
+                                type="button"
                                 className='cursor-pointer'
                                 onClick={() => {
                                   form.trigger().then(isValid => {
@@ -516,7 +508,7 @@ const CheckoutForm = () => {
                         <p className='font-medium'>Phí giao hàng</p>
                         <p className='text-sm text-gray-600'>Có thể phát sinh thêm phí</p>
                       </div>
-                      <p className='font-semibold'>{formatCurrencyVND(30000)}</p>
+                      <p className='font-semibold'>{formatCurrencyVND(shippingFee)}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -569,7 +561,7 @@ const CheckoutForm = () => {
                   onClick={handleCreateOrder}
                   disabled={createOrderMutation.isPending || vnpayPaymentMutation.isPending}
                 >
-                  {createOrderMutation.isPending || vnpayPaymentMutation.isPending ? 'Đang xử lý...' : `Đặt hàng - ${formatCurrencyVND((listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0) + 30000 - (appliedDiscount?.discountAmount || 0))}`}
+                  {createOrderMutation.isPending || vnpayPaymentMutation.isPending ? 'Đang xử lý...' : `Đặt hàng - ${formatCurrencyVND(total)}`}
                 </Button>
               </div>
             </div>

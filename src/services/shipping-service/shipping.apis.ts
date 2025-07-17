@@ -73,3 +73,9 @@ export const getShippingStatus = async (orderId: string): Promise<any> => {
   const response = await instance.get(`/api/v1/ghn/order-status/${orderId}`)
   return response.data.data
 }
+
+// Refresh shipping status
+export const refreshShippingStatus = async (orderId: string): Promise<any> => {
+  const response = await instance.get(`/api/v1/ghn/order-status/${orderId}`)
+  return response.data.data
+}

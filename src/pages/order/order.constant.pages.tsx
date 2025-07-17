@@ -2,7 +2,7 @@ export const ORDER_STATUS = [
   { key: 'pending', label: 'Chờ xác nhận' },
   { key: 'confirmed', label: 'Đã xác nhận' },
   { key: 'processing', label: 'Đang xử lý' },
-  { key: 'shipped', label: 'Đã gửi hàng' },
+  { key: 'shipped', label: 'Đang giao hàng' },
   { key: 'delivered', label: 'Đã giao hàng' },
   { key: 'completed', label: 'Đã hoàn thành' },
   { key: 'cancelled', label: 'Đã hủy' },
