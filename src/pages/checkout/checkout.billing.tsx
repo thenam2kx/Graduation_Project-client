@@ -131,9 +131,15 @@ const CheckoutForm = () => {
       clearCartMutation.mutate()
       queryClient.invalidateQueries({ queryKey: [CART_KEYS.FETCH_LIST_CART] })
       
+      // Tính toán tổng tiền cho VNPay
+      const subtotal = listProductsCart?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
+      const shippingPrice = 30000
+      const discountAmount = appliedDiscount?.discountAmount || 0
+      const calculatedTotalPrice = subtotal + shippingPrice - discountAmount
+      
       if (paymentMethod === 'vnpay') {
         // Chuyển hướng đến trang thanh toán VNPay
-        handleVNPayPayment(orderData._id, totalPrice)
+        handleVNPayPayment(orderData._id, calculatedTotalPrice)
       } else {
         // Hiển thị thông báo và chuyển hướng về trang chủ
         toast.success('Đặt hàng thành công!')
@@ -244,8 +250,7 @@ const CheckoutForm = () => {
       addressFree: shippingAddress === 'different' ? currentAddressData : null,
       totalPrice: totalPrice,
       shippingPrice: shippingPrice,
-      discountAmount: discountAmount,
-      discountCode: appliedDiscount?.discount?.code || null,
+      discountId: appliedDiscount?.discount?._id || undefined,
       status: 'pending',
       shippingMethod: 'standard',
       paymentStatus: paymentMethod === 'cash' ? 'unpaid' : 'pending',

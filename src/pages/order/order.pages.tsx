@@ -1,14 +1,16 @@
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/redux/store'
 import instance from '@/config/axios.customize'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import type { IOrder, OrderItem } from '@/types/order'
 import { getPaymentMethodLabel, ORDER_STATUS, CANCEL_REASONS, REFUND_REASONS } from './order.constant.pages'
-import { confirmReceivedOrderAPI } from '@/services/order-service/order.apis'
+import { confirmReceivedOrderAPI, fetchUserOrdersAPI, useRefreshOrders } from '@/services/order-service/order.apis'
 import { toast } from 'react-toastify'
 import Modal from './order.modal.pages'
 import ReasonSelector from './order.reason.selector.pages'
@@ -30,19 +32,31 @@ const OrdersPages = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['orders', pagination.page, pagination.pageSize, activeTab],
+  // Lấy thông tin người dùng từ Redux store
+  const { user } = useSelector((state: RootState) => state.auth)
+  const refreshOrders = useRefreshOrders()
+  
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['orders', pagination.page, pagination.pageSize, activeTab, user?._id],
     queryFn: async () => {
-      const res = await instance.get('/api/v1/orders/by-user/683f11fbc1c5cb3b5e991c17', {
-        params: {
-          page: pagination.page,
-          limit: pagination.pageSize,
-          status: activeTab
-        }
-      })
-      return res.data
-    }
+      if (!user?._id) {
+        return { results: [], meta: { current: 1, pageSize: 10, pages: 0, total: 0 } }
+      }
+      return await fetchUserOrdersAPI(user._id, activeTab, pagination.page, pagination.pageSize)
+    },
+    enabled: !!user?._id
   })
+  
+  // Tự động làm mới danh sách đơn hàng mỗi 30 giây
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (user?._id) {
+        refetch()
+      }
+    }, 30000) // 30 giây
+    
+    return () => clearInterval(intervalId)
+  }, [user?._id, refetch])
 
   const orders: IOrder[] = data?.results || []
 
@@ -145,6 +159,17 @@ const OrdersPages = () => {
   return (
 
     <div className='max-w-4xl mx-auto p-6 bg-white'>
+      <div className='flex justify-between items-center mb-4'>
+        <h2 className='text-xl font-semibold'>Quản lý đơn hàng</h2>
+        <Button 
+          onClick={() => refetch()} 
+          className='bg-purple-600 hover:bg-purple-700 text-white'
+          disabled={isLoading}
+        >
+          {isLoading ? 'Đang tải...' : 'Làm mới'}
+        </Button>
+      </div>
+      
       <div className='flex border-b border-gray-200'>
         {tabs.map((tab) => (
           <button
@@ -213,7 +238,7 @@ const OrdersPages = () => {
                           >
                             Xem chi tiết
                           </Button>
-                          {['pending', 'confirmed', 'processing'].includes(order.status) && (
+                          {order.status === 'pending' && (
                             <Button
                               onClick={() => openReasonModal(order.id, 'cancelled')}
                               className='bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg'

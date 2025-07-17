@@ -1,5 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+interface IUserAuth {
+  _id: string
+  email: string
+  fullName?: string
+  name?: string
+  phone?: string
+  avatar?: string
+  role?: string
+}
+
 interface IState {
   isSignin: boolean
   access_token: string | null
