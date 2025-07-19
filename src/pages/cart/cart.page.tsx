@@ -248,7 +248,21 @@ export default function ShoppingCartPage() {
                   toast.warning('Vui lòng chọn sản phẩm để thanh toán!')
                   return
                 }
-                navigate('/checkout', { state: { appliedDiscount, selectedCartItems } })
+                // Chuyển đổi selectedCartItems thành định dạng phù hợp cho API tính phí ship
+                const cartItems = selectedCartItems.map(item => ({
+                  id: item._id,
+                  quantity: item.quantity,
+                  weight: 200 // Giả sử mỗi sản phẩm nặng 200g
+                }))
+                
+                navigate('/checkout', { 
+                  state: { 
+                    appliedDiscount, 
+                    subtotal, 
+                    cartItems,
+                    selectedCartItems 
+                  } 
+                })
               }}
             >
               Thanh toán

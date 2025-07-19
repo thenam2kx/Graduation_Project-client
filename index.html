@@ -19,10 +19,24 @@
         display: flex;
         align-items: stretch;
       }
+      
+      /* Full width layout styles */
+      html, body {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+      }
+      
+      #root {
+        width: 100%;
+        max-width: 100%;
+      }
     </style>
   </head>
-  <body>
-    <div id="root"></div>
+  <body style="width: 100%; margin: 0; padding: 0; overflow-x: hidden;">
+    <div id="root" style="width: 100%;"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
