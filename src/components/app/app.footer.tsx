@@ -3,7 +3,7 @@ import { Facebook, Instagram, Twitter, Youtube, Mail, MapPin, Phone, ArrowRight 
 const AppFooter = () => {
   return (
     <footer className="w-full bg-gradient-to-b from-neutral-800 to-neutral-900 text-white py-12 md:py-16 mt-8">
-      <div className="container mx-auto px-4 md:px-8">
+      <div className="container-full">
         {/* Newsletter */}
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 md:p-8 mb-12 shadow-xl">
           <div className="flex flex-col md:flex-row items-center justify-between">
