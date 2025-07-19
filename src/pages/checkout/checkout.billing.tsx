@@ -23,6 +23,7 @@ import PaymentLoading from '@/components/payment/payment-loading'
 import { useNavigate, useLocation } from 'react-router'
 import { USER_KEYS } from '@/services/user-service/user.keys'
 import DiscountInput from '@/components/DiscountInput'
+import { getShippingRateByProvince } from '@/services/shipping-service/shipping-rates'
 
 
 const formSchema = z.object({
@@ -267,6 +268,25 @@ const CheckoutForm = () => {
   const getShippingFee = () => {
     if (selectedCartItems?.length === 0) return 0;
     
+    // Nếu địa chỉ là 'same', lấy tỉnh thành từ selectedAddress
+    // Nếu địa chỉ là 'different', lấy tỉnh thành từ addressFormData
+    let provinceName = '';
+    if (shippingAddress === 'same' && selectedAddress) {
+      provinceName = selectedAddress.province;
+    } else if (shippingAddress === 'different' && addressFormData.province) {
+      provinceName = addressFormData.province;
+    }
+    
+    // Nếu có tỉnh thành, tính phí vận chuyển dựa trên khoảng cách
+    if (provinceName) {
+      try {
+        return getShippingRateByProvince(provinceName, shippingMethod);
+      } catch (error) {
+        console.error('Error calculating shipping fee:', error);
+      }
+    }
+    
+    // Giá mặc định nếu không có tỉnh thành hoặc có lỗi
     switch (shippingMethod) {
       case 'standard': return 30000;
       case 'express-ghn': return 45000;
@@ -454,20 +474,9 @@ const CheckoutForm = () => {
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Tỉnh/Thành phố</FormLabel>
-                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="Chọn tỉnh/thành phố" />
-                                          </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                          <SelectItem value="Hà Nội">Hà Nội</SelectItem>
-                                          <SelectItem value="Hồ Chí Minh">Hồ Chí Minh</SelectItem>
-                                          <SelectItem value="Đà Nẵng">Đà Nẵng</SelectItem>
-                                          <SelectItem value="Hải Phòng">Hải Phòng</SelectItem>
-                                          <SelectItem value="Cần Thơ">Cần Thơ</SelectItem>
-                                        </SelectContent>
-                                      </Select>
+                                      <FormControl>
+                                        <Input placeholder="Nhập tỉnh/thành phố" {...field} />
+                                      </FormControl>
                                       <FormMessage />
                                     </FormItem>
                                   )}
@@ -478,20 +487,9 @@ const CheckoutForm = () => {
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Quận/Huyện</FormLabel>
-                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="Chọn quận/huyện" />
-                                          </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                          <SelectItem value="Ba Đình">Ba Đình</SelectItem>
-                                          <SelectItem value="Hoàn Kiếm">Hoàn Kiếm</SelectItem>
-                                          <SelectItem value="Tây Hồ">Tây Hồ</SelectItem>
-                                          <SelectItem value="Long Biên">Long Biên</SelectItem>
-                                          <SelectItem value="Cầu Giấy">Cầu Giấy</SelectItem>
-                                        </SelectContent>
-                                      </Select>
+                                      <FormControl>
+                                        <Input placeholder="Nhập quận/huyện" {...field} />
+                                      </FormControl>
                                       <FormMessage />
                                     </FormItem>
                                   )}
@@ -502,20 +500,9 @@ const CheckoutForm = () => {
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Phường/Xã</FormLabel>
-                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="Chọn phường/xã" />
-                                          </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                          <SelectItem value="Phúc Xá">Phúc Xá</SelectItem>
-                                          <SelectItem value="Trúc Bạch">Trúc Bạch</SelectItem>
-                                          <SelectItem value="Vĩnh Phúc">Vĩnh Phúc</SelectItem>
-                                          <SelectItem value="Cống Vị">Cống Vị</SelectItem>
-                                          <SelectItem value="Liễu Giai">Liễu Giai</SelectItem>
-                                        </SelectContent>
-                                      </Select>
+                                      <FormControl>
+                                        <Input placeholder="Nhập phường/xã" {...field} />
+                                      </FormControl>
                                       <FormMessage />
                                     </FormItem>
                                   )}
@@ -563,26 +550,35 @@ const CheckoutForm = () => {
                     <CardTitle className='text-lg font-semibold text-gray-900'>Phương thức vận chuyển</CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-4'>
-                    <div>
-                      <Label htmlFor="shippingMethod">Chọn phương thức vận chuyển</Label>
-                      <Select value={shippingMethod} onValueChange={setShippingMethod}>
-                        <SelectTrigger id="shippingMethod" className="mt-1 w-full">
-                          <SelectValue placeholder="Chọn phương thức vận chuyển" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="standard">Giao hàng tiêu chuẩn (2-3 ngày) - 30.000đ</SelectItem>
-                          <SelectItem value="express-ghn">Giao hàng nhanh - GHN (1-2 ngày) - 45.000đ</SelectItem>
-                          <SelectItem value="express">Giao hàng hỏa tốc (24h) - 60.000đ</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2'>
-                      <div>
-                        <p className='font-medium'>Phí giao hàng</p>
-                        <p className='text-sm text-gray-600'>Có thể phát sinh thêm phí</p>
+                    {(shippingAddress === 'same' && !selectedAddress) || (shippingAddress === 'different' && !addressFormData.province) ? (
+                      <div className="p-4 bg-yellow-50 text-yellow-700 rounded-md border border-yellow-200">
+                        <p className="font-medium">Vui lòng chọn địa chỉ giao hàng trước</p>
+                        <p className="text-sm mt-1">Các phương thức vận chuyển và phí ship sẽ được hiển thị sau khi bạn chọn địa chỉ.</p>
                       </div>
-                      <p className='font-semibold'>{formatCurrencyVND(shippingFee)}</p>
-                    </div>
+                    ) : (
+                      <>
+                        <div>
+                          <Label htmlFor="shippingMethod">Chọn phương thức vận chuyển</Label>
+                          <Select value={shippingMethod} onValueChange={setShippingMethod}>
+                            <SelectTrigger id="shippingMethod" className="mt-1 w-full">
+                              <SelectValue placeholder="Chọn phương thức vận chuyển" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="standard">Giao hàng tiêu chuẩn (2-3 ngày) - {formatCurrencyVND(getShippingFee())}</SelectItem>
+                              <SelectItem value="express-ghn">Giao hàng nhanh - GHN (1-2 ngày) - {formatCurrencyVND(shippingMethod === 'express-ghn' ? getShippingFee() : Math.round(getShippingFee() * 1.5))}</SelectItem>
+                              <SelectItem value="express">Giao hàng hỏa tốc (24h) - {formatCurrencyVND(shippingMethod === 'express' ? getShippingFee() : Math.round(getShippingFee() * 2))}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2'>
+                          <div>
+                            <p className='font-medium'>Phí giao hàng</p>
+                            <p className='text-sm text-gray-600'>Có thể phát sinh thêm phí</p>
+                          </div>
+                          <p className='font-semibold'>{formatCurrencyVND(shippingFee)}</p>
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -630,9 +626,15 @@ const CheckoutForm = () => {
                 <Button
                   className='w-full mt-4 cursor-pointer'
                   onClick={handleCreateOrder}
-                  disabled={createOrderMutation.isPending || vnpayPaymentMutation.isPending}
+                  disabled={createOrderMutation.isPending || vnpayPaymentMutation.isPending || 
+                    (shippingAddress === 'same' && !selectedAddress) || 
+                    (shippingAddress === 'different' && !addressFormData.province)}
                 >
-                  {createOrderMutation.isPending || vnpayPaymentMutation.isPending ? 'Đang xử lý...' : `Đặt hàng - ${formatCurrencyVND(total)}`}
+                  {createOrderMutation.isPending || vnpayPaymentMutation.isPending ? 'Đang xử lý...' : 
+                   ((shippingAddress === 'same' && !selectedAddress) || 
+                    (shippingAddress === 'different' && !addressFormData.province)) ? 
+                    'Vui lòng chọn địa chỉ giao hàng' : 
+                    `Đặt hàng - ${formatCurrencyVND(total)}`}
                 </Button>
               </div>
             </div>
