@@ -1,7 +1,8 @@
 import { ShoppingCartIcon } from 'lucide-react'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import '@/styles/product-detail.css'
+import ProductReviews from '@/components/review/product-reviews'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { QuantityInput } from '@/components/quantity-input'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ const ProductDetail = () => {
   const [selectedVariant, setSelectedVariant] = useState<any>(null)
   const [currentStock, setCurrentStock] = useState<number>(0)
   const [selectedImage, setSelectedImage] = useState<string>('')
+  const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description')
   const queryClient = useQueryClient()
   const { id } = useParams<{ id: string }>()
   const cartId = useAppSelector((state) => state.cart.IdCartUser)
@@ -373,29 +375,42 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Product Description & Details */}
+        {/* Product Description & Reviews */}
         <div className="mt-12 mb-16">
           <div className="border-b border-gray-200">
             <div className="flex space-x-8">
-              <button className="border-b-2 border-purple-600 text-purple-600 font-medium py-4 px-1 -mb-px">
+              <button 
+                onClick={() => setActiveTab('description')}
+                className={`font-medium py-4 px-1 -mb-px ${activeTab === 'description' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+              >
                 Mô tả sản phẩm
               </button>
-              <button className="text-gray-500 hover:text-gray-700 font-medium py-4 px-1">
+              <button 
+                onClick={() => setActiveTab('reviews')}
+                className={`font-medium py-4 px-1 -mb-px ${activeTab === 'reviews' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+              >
                 Đánh giá
               </button>
             </div>
           </div>
+          
           <div className="py-6">
-            <div className="prose max-w-none">
-              {product?.description ? (
-                <div
-                  className="text-gray-600"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
-                />
-              ) : (
-                <p className="text-gray-600">Chưa có mô tả chi tiết cho sản phẩm này.</p>
-              )}
-            </div>
+            {activeTab === 'description' ? (
+              <div className="prose max-w-none">
+                {product?.description ? (
+                  <div
+                    className="text-gray-600"
+                    dangerouslySetInnerHTML={{ __html: product.description }}
+                  />
+                ) : (
+                  <p className="text-gray-600">Chưa có mô tả chi tiết cho sản phẩm này.</p>
+                )}
+              </div>
+            ) : (
+              <div>
+                <ProductReviews productId={id || ''} />
+              </div>
+            )}
           </div>
         </div>
       </div>
