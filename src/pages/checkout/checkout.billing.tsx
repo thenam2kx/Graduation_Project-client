@@ -23,6 +23,7 @@ import PaymentLoading from '@/components/payment/payment-loading'
 import { useNavigate, useLocation } from 'react-router'
 import { USER_KEYS } from '@/services/user-service/user.keys'
 import DiscountInput from '@/components/DiscountInput'
+import { getShippingRateByProvince } from '@/services/shipping-service/shipping-rates'
 
 
 const formSchema = z.object({
@@ -49,6 +50,7 @@ const formSchema = z.object({
 const CheckoutForm = () => {
   const [shippingAddress, setShippingAddress] = useState('same')
   const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [shippingMethod, setShippingMethod] = useState('standard')
   const [selectedAddress, setSelectedAddress] = useState<IAddress | null>(null)
   const [appliedDiscount, setAppliedDiscount] = useState(null)
   const [addressFormData, setAddressFormData] = useState({
@@ -131,7 +133,7 @@ const CheckoutForm = () => {
       queryClient.invalidateQueries({ queryKey: [CART_KEYS.FETCH_LIST_CART] })
 
       const subtotal = selectedCartItems?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
-      const shippingPrice = 30000
+      const shippingPrice = getShippingFee()
       const discountAmount = appliedDiscount?.discountAmount || 0
       const calculatedTotalPrice = subtotal + shippingPrice - discountAmount
 
@@ -225,10 +227,19 @@ const CheckoutForm = () => {
     const currentAddressData = shippingAddress === 'different' ? form.getValues() : null
 
     const subtotal = selectedCartItems?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
-    const shippingPrice = 30000
+    const shippingPrice = getShippingFee()
     const discountAmount = appliedDiscount?.discountAmount || 0
     const totalPrice = subtotal + shippingPrice - discountAmount
 
+    // Lấy ghi chú hiện tại (nếu có)
+    const currentNote = form.getValues()?.note || '';
+    
+    // Tạo ghi chú mới với tiền tố GHN nếu cần
+    // Đảm bảo note không bao giờ rỗng
+    const noteWithPrefix = needsShippingOrder() 
+      ? `[GHN] ${currentNote || 'Đơn hàng Giao Hàng Nhanh'}` 
+      : (currentNote || 'Đơn hàng mới');
+    
     const dataSubmit = {
       userId: userId,
       addressId: shippingAddress === 'same' ? selectedAddress?._id || null : null,
@@ -237,7 +248,8 @@ const CheckoutForm = () => {
       shippingPrice: shippingPrice,
       discountId: appliedDiscount?.discount?._id || undefined,
       status: 'pending',
-      shippingMethod: 'standard',
+      shippingMethod: getApiShippingMethod(),
+      note: noteWithPrefix,
       paymentStatus: paymentMethod === 'cash' ? 'unpaid' : 'pending',
       paymentMethod: paymentMethod,
       items: selectedCartItems?.map(item => ({
@@ -253,7 +265,47 @@ const CheckoutForm = () => {
 
   // Tính toán tổng tiền
   const subtotal = selectedCartItems?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
-  const shippingFee = selectedCartItems?.length > 0 ? 30000 : 0
+  const getShippingFee = () => {
+    if (selectedCartItems?.length === 0) return 0;
+    
+    // Nếu địa chỉ là 'same', lấy tỉnh thành từ selectedAddress
+    // Nếu địa chỉ là 'different', lấy tỉnh thành từ addressFormData
+    let provinceName = '';
+    if (shippingAddress === 'same' && selectedAddress) {
+      provinceName = selectedAddress.province;
+    } else if (shippingAddress === 'different' && addressFormData.province) {
+      provinceName = addressFormData.province;
+    }
+    
+    // Nếu có tỉnh thành, tính phí vận chuyển dựa trên khoảng cách
+    if (provinceName) {
+      try {
+        return getShippingRateByProvince(provinceName, shippingMethod);
+      } catch (error) {
+        console.error('Error calculating shipping fee:', error);
+      }
+    }
+    
+    // Giá mặc định nếu không có tỉnh thành hoặc có lỗi
+    switch (shippingMethod) {
+      case 'standard': return 30000;
+      case 'express-ghn': return 45000;
+      case 'express': return 60000;
+      default: return 30000;
+    }
+  }
+  
+  // Kiểm tra xem phương thức vận chuyển có cần tạo vận đơn không
+  const needsShippingOrder = () => {
+    return shippingMethod === 'express-ghn';
+  }
+  
+  // Chuyển đổi giá trị phương thức vận chuyển để gửi đến API
+  const getApiShippingMethod = () => {
+    return shippingMethod === 'express-ghn' ? 'express' : shippingMethod;
+  }
+  
+  const shippingFee = getShippingFee()
   const discountAmount = appliedDiscount?.discountAmount || 0
   const total = subtotal + shippingFee - discountAmount
 
@@ -421,9 +473,9 @@ const CheckoutForm = () => {
                                   name="province"
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>Thành phố</FormLabel>
+                                      <FormLabel>Tỉnh/Thành phố</FormLabel>
                                       <FormControl>
-                                        <Input placeholder="Thành phố" {...field} />
+                                        <Input placeholder="Nhập tỉnh/thành phố" {...field} />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -434,9 +486,9 @@ const CheckoutForm = () => {
                                   name="district"
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>Quận / Huyện</FormLabel>
+                                      <FormLabel>Quận/Huyện</FormLabel>
                                       <FormControl>
-                                        <Input placeholder="Quận / Huyện" {...field} />
+                                        <Input placeholder="Nhập quận/huyện" {...field} />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -447,9 +499,9 @@ const CheckoutForm = () => {
                                   name="ward"
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>Phường / Xã</FormLabel>
+                                      <FormLabel>Phường/Xã</FormLabel>
                                       <FormControl>
-                                        <Input placeholder="Phường / Xã" {...field} />
+                                        <Input placeholder="Nhập phường/xã" {...field} />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -461,9 +513,9 @@ const CheckoutForm = () => {
                                 name="address"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Địa chỉ nhà</FormLabel>
+                                    <FormLabel>Địa chỉ cụ thể</FormLabel>
                                     <FormControl>
-                                      <Input placeholder="Địa chỉ nhà" {...field} />
+                                      <Input placeholder="Nhập địa chỉ cụ thể" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -498,18 +550,35 @@ const CheckoutForm = () => {
                     <CardTitle className='text-lg font-semibold text-gray-900'>Phương thức vận chuyển</CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-4'>
-                    <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center py-3 border-b border-gray-200 gap-2'>
-                      <div>
-                        <p className='font-medium'>Thời gian giao hàng từ 3 - 5 ngày</p>
+                    {(shippingAddress === 'same' && !selectedAddress) || (shippingAddress === 'different' && !addressFormData.province) ? (
+                      <div className="p-4 bg-yellow-50 text-yellow-700 rounded-md border border-yellow-200">
+                        <p className="font-medium">Vui lòng chọn địa chỉ giao hàng trước</p>
+                        <p className="text-sm mt-1">Các phương thức vận chuyển và phí ship sẽ được hiển thị sau khi bạn chọn địa chỉ.</p>
                       </div>
-                    </div>
-                    <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2'>
-                      <div>
-                        <p className='font-medium'>Phí giao hàng</p>
-                        <p className='text-sm text-gray-600'>Có thể phát sinh thêm phí</p>
-                      </div>
-                      <p className='font-semibold'>{formatCurrencyVND(shippingFee)}</p>
-                    </div>
+                    ) : (
+                      <>
+                        <div>
+                          <Label htmlFor="shippingMethod">Chọn phương thức vận chuyển</Label>
+                          <Select value={shippingMethod} onValueChange={setShippingMethod}>
+                            <SelectTrigger id="shippingMethod" className="mt-1 w-full">
+                              <SelectValue placeholder="Chọn phương thức vận chuyển" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="standard">Giao hàng tiêu chuẩn (2-3 ngày) - {formatCurrencyVND(getShippingFee())}</SelectItem>
+                              <SelectItem value="express-ghn">Giao hàng nhanh - GHN (1-2 ngày) - {formatCurrencyVND(shippingMethod === 'express-ghn' ? getShippingFee() : Math.round(getShippingFee() * 1.5))}</SelectItem>
+                              <SelectItem value="express">Giao hàng hỏa tốc (24h) - {formatCurrencyVND(shippingMethod === 'express' ? getShippingFee() : Math.round(getShippingFee() * 2))}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2'>
+                          <div>
+                            <p className='font-medium'>Phí giao hàng</p>
+                            <p className='text-sm text-gray-600'>Có thể phát sinh thêm phí</p>
+                          </div>
+                          <p className='font-semibold'>{formatCurrencyVND(shippingFee)}</p>
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -520,48 +589,52 @@ const CheckoutForm = () => {
                     <p className='text-sm text-gray-600'>Tất cả giao dịch đều được bảo mật và mã hóa.</p>
                   </CardHeader>
                   <CardContent className='space-y-6'>
-                    <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className='space-y-6'>
-                      {/* Momo Option */}
-                      <div className='space-y-4'>
-                        <div className='flex items-center space-x-2'>
-                          <RadioGroupItem value='momo' id='momo' />
-                          <Label htmlFor='momo' className='font-medium cursor-pointer'>
-                            Thanh toán MoMo
-                          </Label>
+                    <div>
+                      <Label htmlFor="paymentMethod">Chọn phương thức thanh toán</Label>
+                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                        <SelectTrigger id="paymentMethod" className="mt-1 w-full">
+                          <SelectValue placeholder="Chọn phương thức thanh toán" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="momo">Thanh toán MoMo</SelectItem>
+                          <SelectItem value="vnpay">Thanh toán VNPay</SelectItem>
+                          <SelectItem value="cash">Thanh toán khi nhận hàng</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      {paymentMethod === 'momo' && (
+                        <div className='mt-3 p-3 bg-gray-50 rounded-md'>
+                          <p className='text-sm text-gray-600'>Quét mã QR hoặc đăng nhập MoMo để thanh toán.</p>
                         </div>
-                        {paymentMethod === 'momo' && (
-                          <div className='ml-6 space-y-4'>
-                            <p className='text-sm text-gray-600'>Quét mã QR hoặc đăng nhập MoMo để thanh toán.</p>
-                          </div>
-                        )}
-                      </div>
-                      <Separator className='h-px bg-gray-200' />
-                      <div className='flex items-center space-x-2'>
-                        <RadioGroupItem value='vnpay' id='vnpay' />
-                        <Label htmlFor='vnpay' className='font-medium cursor-pointer'>
-                          Thanh toán VNPay
-                        </Label>
-                      </div>
-                      <Separator className='h-px bg-gray-200' />
-                      <div className='flex items-center space-x-2'>
-                        <RadioGroupItem value='cash' id='cash' />
-                        <div>
-                          <Label htmlFor='cash' className='font-medium cursor-pointer'>
-                            Thanh toán khi nhận hàng
-                          </Label>
+                      )}
+                      
+                      {paymentMethod === 'vnpay' && (
+                        <div className='mt-3 p-3 bg-gray-50 rounded-md'>
+                          <p className='text-sm text-gray-600'>Bạn sẽ được chuyển đến cổng thanh toán VNPay.</p>
+                        </div>
+                      )}
+                      
+                      {paymentMethod === 'cash' && (
+                        <div className='mt-3 p-3 bg-gray-50 rounded-md'>
                           <p className='text-sm text-gray-600'>Thanh toán bằng tiền mặt khi nhận hàng.</p>
                         </div>
-                      </div>
-                    </RadioGroup>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 
                 <Button
                   className='w-full mt-4 cursor-pointer'
                   onClick={handleCreateOrder}
-                  disabled={createOrderMutation.isPending || vnpayPaymentMutation.isPending}
+                  disabled={createOrderMutation.isPending || vnpayPaymentMutation.isPending || 
+                    (shippingAddress === 'same' && !selectedAddress) || 
+                    (shippingAddress === 'different' && !addressFormData.province)}
                 >
-                  {createOrderMutation.isPending || vnpayPaymentMutation.isPending ? 'Đang xử lý...' : `Đặt hàng - ${formatCurrencyVND(total)}`}
+                  {createOrderMutation.isPending || vnpayPaymentMutation.isPending ? 'Đang xử lý...' : 
+                   ((shippingAddress === 'same' && !selectedAddress) || 
+                    (shippingAddress === 'different' && !addressFormData.province)) ? 
+                    'Vui lòng chọn địa chỉ giao hàng' : 
+                    `Đặt hàng - ${formatCurrencyVND(total)}`}
                 </Button>
               </div>
             </div>

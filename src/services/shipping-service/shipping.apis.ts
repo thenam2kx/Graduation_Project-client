@@ -28,6 +28,8 @@ export interface ShippingFeeRequest {
   width?: number
   height?: number
   insurance_value?: number
+  service_id?: number
+  products?: Array<{id: string, quantity: number}>
 }
 
 export interface ShippingFeeResponse {
@@ -42,6 +44,14 @@ export interface ShippingFeeResponse {
   pick_remote_areas_fee: number
   deliver_remote_areas_fee: number
   cod_fee: number
+  service_id?: number
+  estimated_delivery_time?: string
+}
+
+export interface ShippingService {
+  service_id: number
+  short_name: string
+  service_type_id: number
 }
 
 // Get all provinces
@@ -59,6 +69,13 @@ export const getDistricts = async (provinceId: number): Promise<District[]> => {
 // Get wards by district ID
 export const getWards = async (districtId: number): Promise<Ward[]> => {
   const response = await instance.get(`/api/v1/ghn/wards/${districtId}`)
+  return response.data.data
+}
+
+// Get available shipping services
+export const getAvailableServices = async (toDistrictId: number, fromDistrictId?: number): Promise<ShippingService[]> => {
+  const params = { toDistrictId, ...(fromDistrictId && { fromDistrictId }) }
+  const response = await instance.get('/api/v1/ghn/available-services', { params })
   return response.data.data
 }
 
