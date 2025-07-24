@@ -9,46 +9,48 @@ import { useLocation } from 'react-router'
 import { formatCurrencyVND } from '@/utils/utils'
 import { IApplyDiscountResponse } from '@/services/discount-service/discount.apis'
 import { CheckoutDiscount } from '@/components/discount/checkout-discount'
-import { AddressSelector } from '@/components/shipping/address-selector'
-import { useShippingAddress } from '@/hooks/useShippingAddress'
+import { GHNAddressSelector, GHNAddressData } from '@/components/shipping/GHNAddressSelector'
+import { useGHNShipping } from '@/hooks/useGHNShipping'
+import { Loader2 } from 'lucide-react'
+import { SHOP_PROVINCE } from '@/services/shipping-service/shipping-rates'
 
 const CheckoutShipping = () => {
   const location = useLocation()
-  const { appliedDiscount: initialDiscount, subtotal: initialSubtotal, shippingFee: initialShippingFee } = location.state || {}
+  const { appliedDiscount: initialDiscount, subtotal: initialSubtotal, cartItems: initialCartItems = [] } = location.state || {}
   const [appliedDiscount, setAppliedDiscount] = useState<IApplyDiscountResponse | null>(initialDiscount || null)
   const [paymentMethod, setPaymentMethod] = useState('cash')
-  const [shippingMethod, setShippingMethod] = useState('standard')
-  const { 
-    addressType: shippingAddressType, 
-    addressData: shippingAddress,
-    setAddressType: setShippingAddressType,
-    setAddressData: setShippingAddress,
-    isAddressValid
-  } = useShippingAddress()
+  const [addressType, setAddressType] = useState<'same' | 'different'>('same')
+  const [addressData, setAddressData] = useState<GHNAddressData | null>(null)
+  
+  // Sử dụng hook useGHNShipping để tính phí vận chuyển
+  const {
+    shippingMethod,
+    setShippingMethod,
+    shippingFee,
+    loading: loadingShipping,
+    estimatedDeliveryTime
+  } = useGHNShipping({
+    addressData,
+    cartItems: initialCartItems
+  })
   
   const subtotal = initialSubtotal || 0
-  const getShippingFee = () => {
-    switch (shippingMethod) {
-      case 'standard': return 30000;
-      case 'express-ghn': return 45000;
-      case 'express': return 60000;
-      default: return 30000;
-    }
-  }
-  
-  // Kiểm tra xem phương thức vận chuyển có cần tạo vận đơn không
-  const needsShippingOrder = () => {
-    return shippingMethod === 'express-ghn';
-  }
-  
-  // Chuyển đổi giá trị phương thức vận chuyển để gửi đến API
-  const getApiShippingMethod = () => {
-    return shippingMethod === 'express-ghn' ? 'express' : shippingMethod;
-  }
-  
-  const shippingFee = initialShippingFee || getShippingFee()
   const discountAmount = appliedDiscount?.discountAmount || 0
   const total = subtotal + shippingFee - discountAmount
+
+  // Kiểm tra địa chỉ có hợp lệ không
+  const isAddressValid = () => {
+    if (addressType === 'same') return true;
+    
+    return !!(
+      addressData?.fullName &&
+      addressData?.phone &&
+      addressData?.provinceId &&
+      addressData?.districtId &&
+      addressData?.wardCode &&
+      addressData?.address
+    );
+  };
 
   return (
     <div className='bg-gray-50 py-8'>
@@ -62,8 +64,8 @@ const CheckoutShipping = () => {
             </CardHeader>
             <CardContent>
               <RadioGroup 
-                value={shippingAddressType} 
-                onValueChange={(value) => setShippingAddressType(value as 'same' | 'different')} 
+                value={addressType} 
+                onValueChange={(value) => setAddressType(value as 'same' | 'different')} 
                 className='space-y-4'
               >
                 <div className='flex items-center space-x-2'>
@@ -80,34 +82,63 @@ const CheckoutShipping = () => {
                 </div>
               </RadioGroup>
               
-              {shippingAddressType === 'different' && (
+              {addressType === 'different' && (
                 <div className='mt-4 border p-4 rounded-md bg-gray-50'>
                   <h3 className='font-medium mb-3'>Thông tin địa chỉ giao hàng</h3>
-                  <AddressSelector onChange={setShippingAddress} initialData={shippingAddress || undefined} />
+                  <GHNAddressSelector onChange={setAddressData} />
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Shipping Method Section */}
+          {/* Shipping Method Section - Chỉ hiển thị khi đã chọn địa chỉ */}
           <Card>
             <CardHeader>
               <CardTitle className='text-lg font-semibold text-gray-900'>Phương thức vận chuyển</CardTitle>
             </CardHeader>
             <CardContent className='space-y-4'>
-              <div>
-                <Label htmlFor="shippingMethod">Chọn phương thức vận chuyển</Label>
-                <Select value={shippingMethod} onValueChange={setShippingMethod}>
-                  <SelectTrigger id="shippingMethod" className="mt-1 w-full">
-                    <SelectValue placeholder="Chọn phương thức vận chuyển" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="standard">Giao hàng tiêu chuẩn (2-3 ngày) - 30.000đ</SelectItem>
-                    <SelectItem value="express-ghn">Giao hàng nhanh - GHN (1-2 ngày) - 45.000đ</SelectItem>
-                    <SelectItem value="express">Giao hàng hỏa tốc (24h) - 60.000đ</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {!isAddressValid() ? (
+                <div className="p-4 bg-yellow-50 text-yellow-700 rounded-md border border-yellow-200">
+                  <p className="font-medium">Vui lòng chọn địa chỉ giao hàng trước</p>
+                  <p className="text-sm mt-1">Các phương thức vận chuyển và phí ship sẽ được hiển thị sau khi bạn chọn địa chỉ.</p>
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="shippingMethod">Chọn phương thức vận chuyển</Label>
+                  <Select value={shippingMethod} onValueChange={setShippingMethod}>
+                    <SelectTrigger id="shippingMethod" className="mt-1 w-full">
+                      <SelectValue placeholder="Chọn phương thức vận chuyển" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard">
+                        Giao hàng tiêu chuẩn ({estimatedDeliveryTime}) - 
+                        {loadingShipping ? ' Đang tính...' : ` ${formatCurrencyVND(shippingMethod === 'standard' ? shippingFee : Math.round(shippingFee / 1.5))}`}
+                      </SelectItem>
+                      <SelectItem value="express-ghn">
+                        Giao hàng nhanh - GHN ({estimatedDeliveryTime}) - 
+                        {loadingShipping ? ' Đang tính...' : ` ${formatCurrencyVND(shippingMethod === 'express-ghn' ? shippingFee : Math.round(shippingFee * 1.5 / 2))}`}
+                      </SelectItem>
+                      <SelectItem value="express">
+                        Giao hàng hỏa tốc ({estimatedDeliveryTime}) - 
+                        {loadingShipping ? ' Đang tính...' : ` ${formatCurrencyVND(shippingMethod === 'express' ? shippingFee : Math.round(shippingFee * 2 / 1.5))}`}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {loadingShipping && (
+                    <div className="flex items-center mt-2 text-sm text-gray-500">
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Đang tính phí vận chuyển...
+                    </div>
+                  )}
+                  
+                  {addressData?.provinceName && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      Phí vận chuyển được tính dựa trên khoảng cách từ {SHOP_PROVINCE} đến {addressData.provinceName}
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -171,7 +202,18 @@ const CheckoutShipping = () => {
               </div>
               <div className='flex justify-between'>
                 <span>Phí vận chuyển:</span>
-                <span>{formatCurrencyVND(getShippingFee())}</span>
+                <span>
+                  {!isAddressValid() ? (
+                    <span className="text-yellow-600 italic">Chưa xác định</span>
+                  ) : loadingShipping ? (
+                    <span className="flex items-center">
+                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                      Đang tính...
+                    </span>
+                  ) : (
+                    formatCurrencyVND(shippingFee)
+                  )}
+                </span>
               </div>
               {appliedDiscount && (
                 <div className='flex justify-between text-green-600'>
@@ -190,9 +232,9 @@ const CheckoutShipping = () => {
           <Button
             type='submit'
             className='w-full bg-purple-600 hover:bg-purple-700 text-white py-3 text-lg font-semibold h-12'
-            disabled={shippingAddressType === 'different' && !isAddressValid()}
+            disabled={!isAddressValid() || loadingShipping}
           >
-            Thanh toán ngay
+            {!isAddressValid() ? 'Vui lòng chọn địa chỉ giao hàng' : 'Thanh toán ngay'}
           </Button>
         </form>
       </div>

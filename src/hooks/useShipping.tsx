@@ -1,109 +1,66 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import {
-  getProvinces,
-  getDistricts,
-  getWards,
-  calculateShippingFee,
-  type Province,
-  type District,
-  type Ward,
-  type ShippingFeeRequest
-} from '@/services/shipping-service/shipping.apis'
-import { shippingKeys } from '@/services/shipping-service/shipping.keys'
+import { useState, useEffect } from 'react'
+import { getEstimatedDeliveryTime, getShippingRateByProvince } from '@/services/shipping-service/shipping.utils'
 
-export const useShipping = () => {
-  const [selectedProvince, setSelectedProvince] = useState<Province | null>(null)
-  const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null)
-  const [selectedWard, setSelectedWard] = useState<Ward | null>(null)
-  const [packageInfo, setPackageInfo] = useState({
-    weight: 500,
-    length: 20,
-    width: 20,
-    height: 10
-  })
+interface CartItem {
+  id: string
+  quantity: number
+  weight?: number
+}
 
-  // Query for provinces
-  const {
-    data: provinces = [],
-    isLoading: isLoadingProvinces
-  } = useQuery({
-    queryKey: shippingKeys.provinces(),
-    queryFn: getProvinces
-  })
+// Định nghĩa lại interface AddressData thay vì import từ address-selector
+export interface AddressData {
+  provinceName: string
+  districtName?: string
+  wardName?: string
+  address?: string
+}
 
-  // Query for districts based on selected province
-  const {
-    data: districts = [],
-    isLoading: isLoadingDistricts
-  } = useQuery({
-    queryKey: shippingKeys.districts(selectedProvince?.ProvinceID || 0),
-    queryFn: () => getDistricts(selectedProvince?.ProvinceID || 0),
-    enabled: !!selectedProvince
-  })
+interface UseShippingProps {
+  addressData: AddressData | null
+  cartItems: CartItem[]
+}
 
-  // Query for wards based on selected district
-  const {
-    data: wards = [],
-    isLoading: isLoadingWards
-  } = useQuery({
-    queryKey: shippingKeys.wards(selectedDistrict?.DistrictID || 0),
-    queryFn: () => getWards(selectedDistrict?.DistrictID || 0),
-    enabled: !!selectedDistrict
-  })
+export const useShipping = ({ addressData, cartItems }: UseShippingProps) => {
+  const [shippingMethod, setShippingMethod] = useState('standard')
+  const [shippingFee, setShippingFee] = useState<number>(30000)
+  const [loading, setLoading] = useState(false)
 
-  // Calculate shipping fee
-  const calculateFee = (data: ShippingFeeRequest) => {
-    return useQuery({
-      queryKey: shippingKeys.shippingFee(data),
-      queryFn: () => calculateShippingFee(data),
-      enabled: false // Only run when explicitly called
-    })
-  }
+  // Tính phí vận chuyển khi thay đổi phương thức hoặc tỉnh thành
+  useEffect(() => {
+    setLoading(true)
 
-  // Handle province selection
-  const handleProvinceChange = (province: Province) => {
-    setSelectedProvince(province)
-    setSelectedDistrict(null)
-    setSelectedWard(null)
-  }
+    const timer = setTimeout(() => {
+      if (!addressData?.provinceName) {
+        // Nếu chưa có tỉnh thành, sử dụng giá mặc định
+        setShippingFee(getDefaultShippingFee())
+      } else {
+        // Tính phí vận chuyển dựa trên tỉnh thành
+        const fee = getShippingRateByProvince(addressData.provinceName, shippingMethod)
+        setShippingFee(fee)
+      }
+      setLoading(false)
+    }, 300)
 
-  // Handle district selection
-  const handleDistrictChange = (district: District) => {
-    setSelectedDistrict(district)
-    setSelectedWard(null)
-  }
+    return () => clearTimeout(timer)
+  }, [shippingMethod, addressData?.provinceName])
 
-  // Handle ward selection
-  const handleWardChange = (ward: Ward) => {
-    setSelectedWard(ward)
-  }
-
-  // Update package information
-  const updatePackageInfo = (info: Partial<typeof packageInfo>) => {
-    setPackageInfo(prev => ({ ...prev, ...info }))
+  // Lấy phí vận chuyển mặc định
+  const getDefaultShippingFee = () => {
+    switch (shippingMethod) {
+    case 'standard': return 30000
+    case 'express-ghn': return 45000
+    case 'express': return 60000
+    default: return 30000
+    }
   }
 
   return {
-    // Data
-    provinces,
-    districts,
-    wards,
-    selectedProvince,
-    selectedDistrict,
-    selectedWard,
-    packageInfo,
-
-    // Loading states
-    isLoadingProvinces,
-    isLoadingDistricts,
-    isLoadingWards,
-
-    // Actions
-    handleProvinceChange,
-    handleDistrictChange,
-    handleWardChange,
-    updatePackageInfo,
-    calculateFee
+    shippingMethod,
+    setShippingMethod,
+    shippingFee,
+    loading,
+    estimatedDeliveryTime: addressData?.provinceName
+      ? getEstimatedDeliveryTime(addressData.provinceName, shippingMethod)
+      : getEstimatedDeliveryTime('Hồ Chí Minh', shippingMethod)
   }
 }
