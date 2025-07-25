@@ -35,6 +35,9 @@ const Routers = () => {
         <Route path='/' element={<LayoutPage />}>
           <Route index element={<HomePage />} />
           <Route path='shops' element={<ProductPage />} />
+          <Route path='shops/men' element={<ProductPage />} />
+          <Route path='shops/women' element={<ProductPage />} />
+          <Route path='shops/unisex' element={<ProductPage />} />
           <Route path='blogs' element={<BlogPage />} />
           <Route path='productDetail/:id' element={<ProductDetail />} />
           <Route path='checkout' element={<CheckoutBilling />} />

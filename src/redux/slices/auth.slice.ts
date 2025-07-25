@@ -49,10 +49,18 @@ const authSlice = createSlice({
     setRefreshToken: (state, action: PayloadAction<{ status: boolean, message: string }>) => {
       state.isRefreshToken = action.payload?.status ?? false
       state.errorRefreshToken = action.payload?.message ?? ''
+    },
+    setSignout: (state) => {
+      state.isSignin = false
+      state.access_token = null
+      state.user = null
+      state.isRefreshToken = false
+      state.isLoading = false
+      state.errorRefreshToken = null
     }
   }
 })
 
-export const { setStateSignin, setAccessToken, setRefreshToken } = authSlice.actions
+export const { setStateSignin, setAccessToken, setRefreshToken, setSignout } = authSlice.actions
 
 export default authSlice.reducer

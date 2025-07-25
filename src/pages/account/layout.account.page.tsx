@@ -17,6 +17,9 @@ import {
 import { Outlet, useParams, useNavigate, useLocation } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { fetchUserAPI } from '@/services/user-service/user.apis'
+import { signoutAPI } from '@/services/auth-service/auth.apis'
+import { useAppDispatch } from '@/redux/hooks'
+import { setSignout } from '@/redux/slices/auth.slice'
 import { toast } from 'react-toastify'
 import { useState } from 'react'
 
@@ -25,6 +28,7 @@ const LayoutAccountPage = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const dispatch = useAppDispatch()
 
   // Xác định tiêu đề theo pathname
   const getCurrentTitle = () => {
@@ -61,6 +65,19 @@ const LayoutAccountPage = () => {
       label: 'Đăng xuất'
     }
   ]
+
+  const handleSignout = async () => {
+    try {
+      await signoutAPI()
+      dispatch(setSignout())
+      toast.success('Đăng xuất thành công!')
+      navigate('/auth/signin')
+    } catch (error) {
+      dispatch(setSignout())
+      toast.success('Đăng xuất thành công!')
+      navigate('/auth/signin')
+    }
+  }
 
   const { data: userInfo } = useQuery({
     queryKey: ['user'],
@@ -147,7 +164,11 @@ const LayoutAccountPage = () => {
                       }`}
                       onClick={() => {
                         setIsMobileMenuOpen(false)
-                        if (item.to) navigate(item.to)
+                        if (item.key === 'signout') {
+                          handleSignout()
+                        } else if (item.to) {
+                          navigate(item.to)
+                        }
                       }}
                     >
                       {item.icon}
