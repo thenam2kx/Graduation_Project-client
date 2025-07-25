@@ -17,12 +17,21 @@ const ReviewList = ({ productId }: ReviewListProps) => {
   // Fetch đánh giá theo sản phẩm
   const { data: reviewsData, isLoading } = useQuery({
     queryKey: [REVIEW_QUERY_KEYS.FETCH_BY_PRODUCT, productId, page, limit],
-    queryFn: () => fetchReviewsByProduct(productId, `page=${page}&limit=${limit}&status=approved`),
+    queryFn: () => fetchReviewsByProduct(productId, `page=${page}&limit=${limit}`),
     enabled: !!productId,
   });
 
-  const reviews = reviewsData?.data?.results || [];
-  const total = reviewsData?.data?.meta?.total || 0;
+  console.log('ReviewList - reviewsData:', reviewsData);
+  console.log('ReviewList - reviewsData.data:', reviewsData?.data);
+  console.log('ReviewList - reviewsData.data.results:', reviewsData?.data?.results);
+  console.log('ReviewList - productId:', productId);
+
+  // Kiểm tra cấu trúc response
+  const reviews = reviewsData?.data?.results || reviewsData?.results || [];
+  const total = reviewsData?.data?.meta?.total || reviewsData?.meta?.total || 0;
+  
+  console.log('ReviewList - final reviews:', reviews);
+  console.log('ReviewList - final total:', total);
 
   const handlePageChange = (newPage: number, newPageSize: number) => {
     setPage(newPage);

@@ -246,6 +246,14 @@ const OrdersPages = () => {
                               Hủy đơn
                             </Button>
                           )}
+                          {order.status === 'completed' && (
+                            <Button
+                              onClick={() => navigate(`/review/order/${order.id}`)}
+                              className='bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg'
+                            >
+                              Đánh giá sản phẩm
+                            </Button>
+                          )}
                           {['delivered'].includes(order.status) && (
                             <>
                               <Button

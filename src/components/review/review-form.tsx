@@ -42,7 +42,7 @@ const ReviewForm = ({ productId, orderId, onSuccess }: ReviewFormProps) => {
   const createReviewMutation = useMutation({
     mutationFn: createReview,
     onSuccess: () => {
-      message.success('Đánh giá của bạn đã được gửi và đang chờ duyệt')
+      message.success('Đánh giá của bạn đã được gửi và hiển thị thành công!')
       setRating(5)
       setComment('')
       setFileList([])
@@ -183,7 +183,7 @@ const ReviewForm = ({ productId, orderId, onSuccess }: ReviewFormProps) => {
         Gửi đánh giá
       </Button>
       <p className="text-xs text-gray-500 mt-2">
-        Đánh giá của bạn sẽ được kiểm duyệt trước khi hiển thị.
+        Đánh giá của bạn sẽ được hiển thị ngay sau khi gửi.
       </p>
     </div>
   )
