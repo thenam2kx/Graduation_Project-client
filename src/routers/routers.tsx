@@ -25,6 +25,7 @@ import { ContactForm } from '@/pages/contact/contact.pages'
 import ProductDetail from '@/pages/productDetail/product.detail'
 import MyOrders from '@/pages/order/order.pages'
 import OrderDetails from '@/pages/order/order.detail.pages'
+import OrderReviewPage from '@/pages/review/order-review.pages'
 
 const Routers = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
@@ -35,12 +36,25 @@ const Routers = () => {
       <Route path='/' element={<LayoutPage />}>
         <Route index element={<HomePage />} />
         <Route path='shops' element={<ProductPage />} />
+        <Route path='shops/men' element={<ProductPage />} />
+        <Route path='shops/women' element={<ProductPage />} />
+        <Route path='shops/unisex' element={<ProductPage />} />
         <Route path='blogs' element={<BlogPage />} />
         <Route path='productDetail/:id' element={<ProductDetail />} />
         <Route path='contact' element={<ContactForm />} />
         <Route path='blogs/:blogId' element={<BlogDetailPage />} />
         <Route path='about' element={<AboutPage />} />
-        <Route element={<PrivateRouters isAllowed={isAuthenticated ? true : false} redirectTo='/signin' />}>
+      </Route>
+      <Route element={<PrivateRouters isAllowed={isAuthenticated ? true : false} redirectTo='/signin' />}>
+        <Route path='/' element={<LayoutPage />}>
+          {/* <Route index element={<HomePage />} /> */}
+          {/* <Route path='shops' element={<ProductPage />} />
+          <Route path='shops/men' element={<ProductPage />} />
+          <Route path='shops/women' element={<ProductPage />} />
+          <Route path='shops/unisex' element={<ProductPage />} /> */}
+          {/* <Route path='blogs' element={<BlogPage />} /> */}
+          {/* <Route path='productDetail/:id' element={<ProductDetail />} /> */}
+
           <Route path='checkout' element={<CheckoutBilling />} />
           <Route path='account/:id' element={<LayoutAccountPage />}>
             <Route path='wishlist' element={<WishlistPage />} />
@@ -49,6 +63,7 @@ const Routers = () => {
             <Route path='order' element={<MyOrders />} />
             <Route path='order/detail/:orderId' element={<OrderDetails />} />
           </Route>
+          <Route path='review/order/:orderId' element={<OrderReviewPage />} />
           <Route path='cart' element={<CartPage />} />
           <Route path='payment/vnpay-return' element={<VNPayReturnPage />} />
         </Route>

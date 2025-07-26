@@ -289,7 +289,17 @@ const OrderDetails = () => {
                 </div>
 
                 <div className='mt-6 pt-6 border-t border-400/30'>
-                  <div className='text-center'>
+                  <div className='text-center space-y-3'>
+                    {order.status === 'completed' && (
+                      <Button
+                        onClick={() => nav(`/review/order/${order._id}`)}
+                        variant='secondary'
+                        size='sm'
+                        className='bg-blue-600 hover:bg-blue-700 text-white w-full mb-2'
+                      >
+                        Đánh giá sản phẩm
+                      </Button>
+                    )}
                     <p className='text-blue-100 text-sm mb-2'>Cần hỗ trợ?</p>
                     <Button
                       onClick={() => nav('/contact')}

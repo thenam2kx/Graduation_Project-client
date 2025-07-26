@@ -124,8 +124,8 @@ const AppHeader = () => {
             <button
               className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition flex items-center"
               onClick={() => toggleDropdown('shop')}
-             >
-              <Link to= '/shops'  className="flex items-center">
+            >
+              <Link to= '/shops' className="flex items-center">
               Cửa hàng <ChevronDown size={16} className={`ml-1 transition-transform ${activeDropdown === 'shop' ? 'rotate-180' : ''}`} />
               </Link>
             </button>
@@ -139,33 +139,8 @@ const AppHeader = () => {
               <Link to="/shops/unisex" className="block px-4 py-2 hover:bg-purple-50 hover:text-purple-600 transition">
                 Nước hoa unisex
               </Link>
-              <Link to="/shops/gift-sets" className="block px-4 py-2 hover:bg-purple-50 hover:text-purple-600 transition">
-                Bộ quà tặng
-              </Link>
             </div>
           </div>
-
-          <div className="relative group">
-            <button
-              className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition flex items-center"
-              onClick={() => toggleDropdown('category')}
-            >
-              Danh mục <ChevronDown size={16} className={`ml-1 transition-transform ${activeDropdown === 'category' ? 'rotate-180' : ''}`} />
-            </button>
-
-            <div className={`absolute top-full left-0 bg-white shadow-lg rounded-lg w-56 py-2 transition-all ${activeDropdown === 'category' ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-              <Link to="/category/new-arrivals" className="block px-4 py-2 hover:bg-purple-50 hover:text-purple-600 transition">
-                Sản phẩm mới
-              </Link>
-              <Link to="/category/best-sellers" className="block px-4 py-2 hover:bg-purple-50 hover:text-purple-600 transition">
-                Bán chạy nhất
-              </Link>
-              <Link to="/category/sale" className="block px-4 py-2 hover:bg-purple-50 hover:text-purple-600 transition">
-                Khuyến mãi
-              </Link>
-            </div>
-          </div>
-
           <Link to="/blogs" className="px-3 py-2 text-neutral-700 font-medium hover:text-purple-600 transition">
             Tin tức
           </Link>

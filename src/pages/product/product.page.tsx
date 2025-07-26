@@ -8,7 +8,7 @@ import {
   Heart
 } from 'lucide-react'
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { addToWishlist, removeFromWishlist, checkProductInWishlist } from '@/services/wishlist-service/wishlist.apis';
 import { RootState } from '@/redux/store';
 import { toast } from 'react-toastify';
@@ -55,8 +55,20 @@ const ProductPage = () => {
   const [wishlistStatus, setWishlistStatus] = useState<Record<string, boolean>>({});
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { isSignin, user } = useSelector((state: RootState) => state.auth);
   const queryClient = useQueryClient();
+
+  // Lấy category từ URL
+  const getCategoryFromPath = () => {
+    const path = location.pathname;
+    if (path.includes('/shops/men')) return { id: '6835c1f13cbaf6b9573037c8', name: 'Nước Hoa Nam' };
+    if (path.includes('/shops/women')) return { id: '6882fc7cee387307136c7287', name: 'Nước Hoa Nữ' };
+    if (path.includes('/shops/unisex')) return { id: '6882fc85ee387307136c728a', name: 'Nước Hoa Unisex' };
+    return null;
+  };
+
+  const currentCategory = getCategoryFromPath();
 
   // Reset to page 1 when filters/search change
   useEffect(() => {
@@ -71,8 +83,8 @@ const ProductPage = () => {
     selectedPriceRange,
     selectedVolumes,
     selectedBrands,
-
-    selectedRating
+    selectedRating,
+    currentCategory
   ]);
 
   // Handle pagination changes
@@ -99,7 +111,7 @@ const ProductPage = () => {
       }
       if (selectedVolumes.length > 0) qsArr.push(`volume=${selectedVolumes.join('|')}`);
       if (selectedBrands.length > 0) qsArr.push(`brand=${selectedBrands.join('|')}`);
-
+      if (currentCategory) params.categoryId = currentCategory.id;
       if (selectedRating !== null) qsArr.push(`rating>=${selectedRating}`);
       if (qsArr.length > 0) params.qs = qsArr.join('&');
       const res = await axios.get('http://localhost:8080/api/v1/products', { params });
@@ -235,10 +247,21 @@ const ProductPage = () => {
     setMeta(prev => ({ ...prev, current: 1 }));
   };
 
+  const getCategoryTitle = () => {
+    return currentCategory?.name || 'Tất cả sản phẩm';
+  };
+
   return (
     <div className="bg-white min-h-screen py-4">
       <div className="mx-auto max-w-[1440px] px-2 md:px-8 lg:px-16">
         {/* Breadcrumb & Title */}
+        <div className="py-4">
+          <nav className="text-sm text-gray-500 mb-2">
+            <span>Trang chủ</span> / <span>Cửa hàng</span>
+            {currentCategory && <span> / <span className="text-purple-600">{getCategoryTitle()}</span></span>}
+          </nav>
+          <h1 className="text-2xl font-bold text-gray-900">{getCategoryTitle()}</h1>
+        </div>
 
 
         <div className="flex flex-col md:flex-row gap-8">
@@ -486,7 +509,7 @@ const ProductPage = () => {
                           />
                         </button>
                         <img
-                          src={product.image || product.img || 'https://via.placeholder.com/300x400?text=No+Image'}
+                          src={(product.image && Array.isArray(product.image) ? product.image[0] : product.image) || product.img || 'https://via.placeholder.com/300x400?text=No+Image'}
                           alt={product.name}
                           className="w-full h-60 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform duration-200"
                         />
