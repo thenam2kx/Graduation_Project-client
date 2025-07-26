@@ -25,6 +25,7 @@ import { ContactForm } from '@/pages/contact/contact.pages'
 import ProductDetail from '@/pages/productDetail/product.detail'
 import MyOrders from '@/pages/order/order.pages'
 import OrderDetails from '@/pages/order/order.detail.pages'
+import OrderReviewPage from '@/pages/review/order-review.pages'
 
 const Routers = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
@@ -46,9 +47,8 @@ const Routers = () => {
             <Route path='add-address' element={<AddressForm />} />
             <Route path='order' element={<MyOrders />} />
             <Route path='order/detail/:orderId' element={<OrderDetails />} />
-
-
           </Route>
+          <Route path='review/order/:orderId' element={<OrderReviewPage />} />
           <Route path='cart' element={<CartPage />} />
           <Route path='about' element={<AboutPage />} />
         </Route>
