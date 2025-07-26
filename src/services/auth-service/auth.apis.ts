@@ -39,3 +39,8 @@ export const changePasswordAPI = (data: { currentPassword: string; newPassword: 
   const url = '/api/v1/auth/change-password'
   return axios.post<IBackendResponse<null>>(url, data)
 }
+
+export const signoutAPI = () => {
+  const url = '/api/v1/auth/signout'
+  return axios.post<IBackendResponse<null>>(url)
+}

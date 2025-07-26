@@ -3,8 +3,10 @@ import { Autoplay, Pagination, Navigation, EffectFade, EffectCoverflow } from 's
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Star, ShoppingBag, Heart, TrendingUp, Award, Sparkles } from 'lucide-react'
 import { PRODUCT_KEYS } from '@/services/product-service/product.keys'
+import { FLASH_SALE_KEYS } from '@/services/flash-sale-service/flash-sale.keys'
 import { useQuery } from '@tanstack/react-query'
 import { fetchListBrand, fetchListCategory, fetchListProduct } from '@/services/product-service/product.apis'
+import { getFlashSaleProducts } from '@/services/flash-sale-service/flash-sale.apis'
 import { useState, useEffect } from 'react'
 import { Eye } from 'lucide-react'
 import { useNavigate } from 'react-router'
@@ -142,7 +144,7 @@ const HomePage = () => {
       const statusPromises = limitedIds.map(async (productId) => {
         try {
           const response = await checkProductInWishlist(productId)
-          return { productId, isInWishlist: response.data.data.isInWishlist }
+          return { productId, isInWishlist: response?.data?.data?.isInWishlist || false }
         } catch (error) {
           console.error(`Error checking wishlist for product ${productId}:`, error)
           return { productId, isInWishlist: false }
@@ -184,7 +186,18 @@ const HomePage = () => {
       toast.error('Có lỗi xảy ra, vui lòng thử lại')
     }
   }
-  // Sản phẩm (dùng chung cho cả sản phẩm đang giảm giá và sản phẩm nổi bật)
+  // Sản phẩm Flash Sale
+  const {
+    data: dataFlashSaleProducts,
+    isLoading: isLoadingFlashSale,
+    isError: isErrorFlashSale
+  } = useQuery({
+    queryKey: [FLASH_SALE_KEYS.FETCH_ACTIVE_PRODUCTS],
+    queryFn: getFlashSaleProducts,
+    select: (res) => res.data || []
+  })
+
+  // Sản phẩm (dùng cho sản phẩm nổi bật)
   const {
     data: dataProducts,
     isLoading: isLoadingProducts,
@@ -218,6 +231,7 @@ const HomePage = () => {
   })
 
   // Xử lý dữ liệu
+  const flashSaleProducts = Array.isArray(dataFlashSaleProducts) ? dataFlashSaleProducts : []
   const products = Array.isArray(dataProducts?.results) ? dataProducts.results : []
   const brands = Array.isArray(dataBrand?.results) ? dataBrand.results : []
   const categories = Array.isArray(dataCategory?.results) ? dataCategory.results : []
@@ -237,8 +251,7 @@ const HomePage = () => {
     }
   }, [products, isSignin])
 
-  // Sử dụng cùng dữ liệu sản phẩm cho cả hai phần
-  const discountProducts = products
+  // Sử dụng dữ liệu riêng cho từng phần
   const featuredProducts = products
 
   // Tạo fashion slides từ sản phẩm random
@@ -258,8 +271,8 @@ const HomePage = () => {
     : defaultFashionSlides
 
   // Loading và error chung
-  const isLoading = isLoadingProducts || isLoadingBrand || isLoadingCategory
-  const isError = isErrorProducts || isErrorBrand || isErrorCategory
+  const isLoading = isLoadingProducts || isLoadingBrand || isLoadingCategory || isLoadingFlashSale
+  const isError = isErrorProducts || isErrorBrand || isErrorCategory || isErrorFlashSale
 
   if (isLoading) return (
     <div className='flex justify-center items-center min-h-screen'>
@@ -380,7 +393,89 @@ const HomePage = () => {
             modules={[Navigation]}
             className='category-women-swiper relative'
           >
-            {discountProducts.map((product: Product, idx: number) => (
+            {flashSaleProducts.length > 0 ? flashSaleProducts.map((item: any, idx: number) => {
+              const product = item.productId || item.product;
+              const variant = item.variantId || item.variant;
+              const originalPrice = variant?.price || product?.price || 0;
+              const discountPercent = item.discountPercent || 0;
+              const salePrice = originalPrice - (originalPrice * discountPercent / 100);
+              
+              return (
+                <SwiperSlide key={idx}>
+                  <motion.div
+                    className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 md:p-4 flex flex-col group cursor-pointer relative overflow-hidden'
+                    custom={idx}
+                    initial='hidden'
+                    whileInView='visible'
+                    viewport={{ once: true }}
+                    variants={fadeInUp}
+                    whileHover={{ y: -5 }}
+                    onClick={() => navigate(`productDetail/${product?._id}`)}
+                  >
+                    {/* Sale badge */}
+                    <div className='absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10'>
+                      -{discountPercent}%
+                    </div>
+
+                    {/* Favorite button */}
+                    <button
+                      className='absolute top-3 right-3 bg-white rounded-full p-1.5 shadow-md z-10 transition-all duration-200 hover:bg-pink-50'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleToggleWishlist(product?._id)
+                      }}
+                    >
+                      <Heart
+                        size={18}
+                        className={wishlistStatus[product?._id] ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'}
+                      />
+                    </button>
+
+                    <div className='relative overflow-hidden rounded-lg mb-4'>
+                      <img
+                        src={(product?.image && Array.isArray(product.image) ? product.image[0] : product?.image) || product?.img || 'https://via.placeholder.com/300x400?text=No+Image'}
+                        alt={product?.name}
+                        className='w-full h-60 object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer'
+                        crossOrigin="anonymous"
+                      />
+
+                      {/* Quick action overlay */}
+                      <div className='absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center'>
+                        <button className='bg-white text-purple-700 rounded-full p-2 mx-1 hover:bg-purple-700 hover:text-white transition-colors'>
+                          <ShoppingBag size={18} />
+                        </button>
+                        <button className='bg-white text-purple-700 rounded-full p-2 mx-1 hover:bg-purple-700 hover:text-white transition-colors'>
+                          <Eye size={18} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className='flex-1 flex flex-col'>
+                      <div
+                        className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 h-12 flex items-center justify-center'
+                        dangerouslySetInnerHTML={{ __html: product?.name || '' }}
+                      />
+
+                      <div className='flex items-center justify-center mb-2'>
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={14} className={i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                        ))}
+                        <span className='text-xs text-gray-500 ml-1'>(4.0)</span>
+                      </div>
+
+                      <div className='flex justify-center items-center gap-2 mt-auto'>
+                        <span className='text-gray-400 line-through text-sm'>
+                          {originalPrice.toLocaleString()}₫
+                        </span>
+                        <span className='text-purple-700 font-bold'>
+                          {Math.round(salePrice).toLocaleString()}₫
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </SwiperSlide>
+              )
+            }) : products.slice(0, 8).map((product: Product, idx: number) => (
               <SwiperSlide key={idx}>
                 <motion.div
                   className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 md:p-4 flex flex-col group cursor-pointer relative overflow-hidden'
@@ -392,12 +487,10 @@ const HomePage = () => {
                   whileHover={{ y: -5 }}
                   onClick={() => navigate(`productDetail/${product._id}`)}
                 >
-                  {/* Sale badge */}
-                  <div className='absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10'>
-                    -{Math.floor(Math.random() * 30) + 10}%
+                  <div className='absolute top-3 left-3 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10'>
+                    Sắp có
                   </div>
 
-                  {/* Favorite button */}
                   <button
                     className='absolute top-3 right-3 bg-white rounded-full p-1.5 shadow-md z-10 transition-all duration-200 hover:bg-pink-50'
                     onClick={(e) => {
@@ -413,21 +506,11 @@ const HomePage = () => {
 
                   <div className='relative overflow-hidden rounded-lg mb-4'>
                     <img
-                      src={product.img || product.image}
+                      src={(product.image && Array.isArray(product.image) ? product.image[0] : product.image) || product.img || 'https://via.placeholder.com/300x400?text=No+Image'}
                       alt={product.name}
                       className='w-full h-60 object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer'
                       crossOrigin="anonymous"
                     />
-
-                    {/* Quick action overlay */}
-                    <div className='absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center'>
-                      <button className='bg-white text-purple-700 rounded-full p-2 mx-1 hover:bg-purple-700 hover:text-white transition-colors'>
-                        <ShoppingBag size={18} />
-                      </button>
-                      <button className='bg-white text-purple-700 rounded-full p-2 mx-1 hover:bg-purple-700 hover:text-white transition-colors'>
-                        <Eye size={18} />
-                      </button>
-                    </div>
                   </div>
 
                   <div className='flex-1 flex flex-col'>
@@ -435,18 +518,7 @@ const HomePage = () => {
                       className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 h-12 flex items-center justify-center'
                       dangerouslySetInnerHTML={{ __html: product.name || '' }}
                     />
-
-                    <div className='flex items-center justify-center mb-2'>
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={14} className={i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-                      ))}
-                      <span className='text-xs text-gray-500 ml-1'>(4.0)</span>
-                    </div>
-
                     <div className='flex justify-center items-center gap-2 mt-auto'>
-                      <span className='text-gray-400 line-through text-sm'>
-                        {typeof product.price === 'number' ? (product.price * 1.3).toLocaleString() : product.price}₫
-                      </span>
                       <span className='text-purple-700 font-bold'>
                         {typeof product.price === 'number' ? product.price.toLocaleString() : product.price}₫
                       </span>
