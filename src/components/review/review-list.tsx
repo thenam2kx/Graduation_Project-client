@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchReviewsByProduct } from '@/services/review-service/review.apis';
 import { REVIEW_QUERY_KEYS } from '@/services/review-service/review.keys';
 import { Review } from '@/services/review-service/review.types';
-import { Rate, Image, Pagination, Empty, Spin } from 'antd';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import dayjs from 'dayjs';
 
 interface ReviewListProps {
@@ -13,6 +15,8 @@ interface ReviewListProps {
 const ReviewList = ({ productId }: ReviewListProps) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
+  const [previewImage, setPreviewImage] = useState<string>('');
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // Fetch đánh giá theo sản phẩm
   const { data: reviewsData, isLoading } = useQuery({
@@ -41,16 +45,16 @@ const ReviewList = ({ productId }: ReviewListProps) => {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <Spin />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (reviews.length === 0) {
     return (
-      <div className="py-8">
-        <Empty description="Chưa có đánh giá nào cho sản phẩm này" />
-        <p className="text-center text-sm text-gray-500 mt-2">
+      <div className="py-8 text-center">
+        <div className="text-muted-foreground mb-2">Chưa có đánh giá nào cho sản phẩm này</div>
+        <p className="text-sm text-muted-foreground">
           Hãy là người đầu tiên đánh giá sản phẩm này
         </p>
       </div>
@@ -77,8 +81,17 @@ const ReviewList = ({ productId }: ReviewListProps) => {
                     <div>
                       <p className="font-medium">{user.fullName || 'Khách hàng'}</p>
                       <div className="flex items-center mt-1">
-                        <Rate disabled defaultValue={review.rating} className="text-sm" />
-                        <span className="text-xs text-gray-500 ml-2">
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${
+                                review.rating >= star ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs text-muted-foreground ml-2">
                           {dayjs(review.createdAt).format('DD/MM/YYYY')}
                         </span>
                       </div>
@@ -91,18 +104,18 @@ const ReviewList = ({ productId }: ReviewListProps) => {
                   
                   {review.images && review.images.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Image.PreviewGroup>
-                        {review.images.map((image, index) => (
-                          <Image
-                            key={index}
-                            src={image}
-                            alt={`review-image-${index}`}
-                            width={80}
-                            height={80}
-                            className="object-cover rounded"
-                          />
-                        ))}
-                      </Image.PreviewGroup>
+                      {review.images.map((image, index) => (
+                        <img
+                          key={index}
+                          src={image}
+                          alt={`review-image-${index}`}
+                          className="w-20 h-20 object-cover rounded cursor-pointer hover:opacity-80"
+                          onClick={() => {
+                            setPreviewImage(image)
+                            setPreviewOpen(true)
+                          }}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
@@ -113,17 +126,37 @@ const ReviewList = ({ productId }: ReviewListProps) => {
       </div>
       
       {total > limit && (
-        <div className="mt-6 flex justify-center">
-          <Pagination
-            current={page}
-            pageSize={limit}
-            total={total}
-            onChange={handlePageChange}
-            showSizeChanger
-            pageSizeOptions={['5', '10', '20']}
-          />
+        <div className="mt-6 flex justify-center items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(page - 1, limit)}
+            disabled={page === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Trang {page} / {Math.ceil(total / limit)}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(page + 1, limit)}
+            disabled={page >= Math.ceil(total / limit)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
+      
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xem ảnh</DialogTitle>
+          </DialogHeader>
+          <img src={previewImage} alt="preview" className="w-full" />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
