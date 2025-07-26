@@ -15,20 +15,30 @@ import { RootState } from '@/redux/store'
 import { addToWishlist, removeFromWishlist, checkProductInWishlist } from '@/services/wishlist-service/wishlist.apis'
 import { toast } from 'react-toastify'
 import { useQueryClient } from '@tanstack/react-query'
+import { REVIEW_QUERY_KEYS } from '@/services/review-service/review.keys'
+import { fetchAllReviews } from '@/services/review-service/review.apis'
 import 'swiper/css/effect-coverflow'
 import 'swiper/css/effect-fade'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import 'swiper/css'
 
-const feedbacks = [
-  { name: 'Nguyễn Văn A', content: 'Mùi hương rất sang trọng, lưu hương lâu. Sẽ ủng hộ shop dài dài!', img: 'https://placehold.co/58x58?text=A' },
-  { name: 'Trần Thị B', content: 'Shop tư vấn nhiệt tình, nước hoa chính hãng, rất hài lòng.', img: 'https://placehold.co/58x58?text=B' },
-  { name: 'Lê Văn C', content: 'Đóng gói cẩn thận, giao hàng nhanh, mùi thơm đúng gu!', img: 'https://placehold.co/58x58?text=C' },
-  { name: 'Phạm Thị D', content: 'Sản phẩm chất lượng, giá hợp lý, sẽ giới thiệu bạn bè.', img: 'https://placehold.co/58x58?text=D' },
-  { name: 'Ngô Văn E', content: 'Mua lần đầu nhưng rất ưng ý, sẽ quay lại mua thêm.', img: 'https://placehold.co/58x58?text=E' },
-  { name: 'Đỗ Thị F', content: 'Nước hoa thơm, giá cả phải chăng, giao hàng nhanh chóng.', img: 'https://placehold.co/58x58?text=F' }
-]
+// Interface cho review
+interface Review {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    avatar?: string;
+  };
+  productId: {
+    _id: string;
+    name: string;
+  };
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
 
 const bannerSlides = [
   {
@@ -61,30 +71,26 @@ const bannerSlides = [
   }
 ]
 
-// Fashion slides sẽ được tạo từ dữ liệu sản phẩm
 const defaultFashionSlides = [
   {
     left: {
-      bg: 'https://placehold.co/400x400?text=Gift+Set',
-      title: 'WE MADE YOUR EVERYDAY FASHION BETTER!',
-      desc: 'In our journey to improve everyday fashion, euphoria presents EVERYDAY wear range - Comfortable & Affordable fashion 24/7',
-      btn: 'Shop Now'
+      bg: 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=400',
+      title: 'BỘ SƯU TẬP NƯỚC HOA CAO CẤP',
+      btn: 'Khám phá ngay'
     }
   },
   {
     left: {
-      bg: 'https://placehold.co/400x400?text=Gift+Set',
-      title: 'NEW SUMMER COLLECTION',
-      desc: 'Explore the latest summer trends and stay cool with our new arrivals.',
-      btn: 'Explore Now'
+      bg: 'https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?q=80&w=400',
+      title: 'NƯỚC HOA MÙA HÈ MỚI',
+      btn: 'Xem ngay'
     }
   },
   {
     left: {
-      bg: 'https://placehold.co/400x400?text=Gift+Set',
-      title: 'FASHION FOR EVERY OCCASION',
-      desc: 'From casual to formal, find the perfect outfit for any event.',
-      btn: 'Shop All'
+      bg: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=400',
+      title: 'HƯƠNG THƠM CHO MỌI DỊP',
+      btn: 'Mua ngay'
     }
   }
 ]
@@ -117,6 +123,7 @@ interface Category {
   img?: string
   image?: string
   desc?: string
+  isPublic?: boolean
 }
 
 interface Brand {
@@ -230,11 +237,23 @@ const HomePage = () => {
     select: (res) => res.data
   })
 
+  // Đánh giá (cho phần khách hàng nói gì)
+  const {
+    data: dataReviews,
+    isLoading: isLoadingReviews,
+    isError: isErrorReviews
+  } = useQuery({
+    queryKey: [REVIEW_QUERY_KEYS.FETCH_ALL_REVIEWS],
+    queryFn: () => fetchAllReviews('limit=10&sort=-createdAt'),
+    select: (res) => res.data
+  })
+
   // Xử lý dữ liệu
   const flashSaleProducts = Array.isArray(dataFlashSaleProducts) ? dataFlashSaleProducts : []
   const products = Array.isArray(dataProducts?.results) ? dataProducts.results : []
   const brands = Array.isArray(dataBrand?.results) ? dataBrand.results : []
-  const categories = Array.isArray(dataCategory?.results) ? dataCategory.results : []
+  const categories = Array.isArray(dataCategory?.results) ? dataCategory.results.filter((category: Category) => category.isPublic !== false) : []
+  const reviews: Review[] = Array.isArray(dataReviews?.results) ? dataReviews.results : []
 
   // Chỉ check wishlist khi user đăng nhập lần đầu tiên hoặc khi có sản phẩm mới
   useEffect(() => {
@@ -259,20 +278,26 @@ const HomePage = () => {
     ? products
       .sort(() => 0.5 - Math.random())
       .slice(0, 3)
-      .map((product: Product) => ({
-        left: {
-          bg: product.img || product.image || 'https://placehold.co/400x400?text=Product',
-          title: product.name?.toUpperCase() || 'SẢN PHẨM NỔI BẬT',
-          desc: product.desc || product.description || 'Khám phá ngay những sản phẩm nước hoa cao cấp với mùi hương độc đáo.',
-          btn: 'Mua ngay',
-          id: product._id
-        }
-      }))
+      .map((product: Product) => {
+        const getProductImage = () => {
+          const img = product.img || product.image;
+          if (Array.isArray(img)) return img[0] || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=400';
+          return img || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=400';
+        };
+        return {
+          left: {
+            bg: getProductImage(),
+            title: product.name?.toUpperCase() || 'SẢN PHẨM NỔI BẬT',
+            btn: 'Mua ngay',
+            id: product._id
+          }
+        };
+      })
     : defaultFashionSlides
 
   // Loading và error chung
-  const isLoading = isLoadingProducts || isLoadingBrand || isLoadingCategory || isLoadingFlashSale
-  const isError = isErrorProducts || isErrorBrand || isErrorCategory || isErrorFlashSale
+  const isLoading = isLoadingProducts || isLoadingBrand || isLoadingCategory || isLoadingFlashSale || isLoadingReviews
+  const isError = isErrorProducts || isErrorBrand || isErrorCategory || isErrorFlashSale || isErrorReviews
 
   if (isLoading) return (
     <div className='flex justify-center items-center min-h-screen'>
@@ -325,7 +350,7 @@ const HomePage = () => {
                   <p className='text-white text-sm sm:text-base md:text-xl mb-4 md:mb-6 drop-shadow-sm'>{slide.desc}</p>
                   <button
                     className='px-3 py-1.5 sm:px-4 sm:py-2 md:px-8 md:py-3 bg-white text-purple-700 font-bold rounded-lg shadow-lg hover:bg-purple-700 hover:text-white transition duration-300 transform hover:scale-105 cursor-pointer flex items-center justify-center w-fit'
-                    onClick={() => navigate('/products')}
+                    onClick={() => navigate('/shops')}
                   >
                     <ShoppingBag size={16} className='mr-1.5 md:mr-2' />
                     {slide.btn}
@@ -433,10 +458,16 @@ const HomePage = () => {
 
                     <div className='relative overflow-hidden rounded-lg mb-4'>
                       <img
-                        src={(product?.image && Array.isArray(product.image) ? product.image[0] : product?.image) || product?.img || 'https://via.placeholder.com/300x400?text=No+Image'}
-                        alt={product?.name}
+                        src={(() => {
+                          const img = product?.image || product?.img;
+                          if (Array.isArray(img)) return img[0] || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                          return img || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                        })()} 
+                        alt={product?.name || 'Product'}
                         className='w-full h-60 object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer'
-                        crossOrigin="anonymous"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                        }}
                       />
 
                       {/* Quick action overlay */}
@@ -506,10 +537,16 @@ const HomePage = () => {
 
                   <div className='relative overflow-hidden rounded-lg mb-4'>
                     <img
-                      src={(product.image && Array.isArray(product.image) ? product.image[0] : product.image) || product.img || 'https://via.placeholder.com/300x400?text=No+Image'}
-                      alt={product.name}
+                      src={(() => {
+                        const img = product.image || product.img;
+                        if (Array.isArray(img)) return img[0] || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                        return img || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                      })()} 
+                      alt={product.name || 'Product'}
                       className='w-full h-60 object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer'
-                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                      }}
                     />
                   </div>
 
@@ -573,7 +610,7 @@ const HomePage = () => {
             {categories.map((category: Category, idx: number) => (
               <SwiperSlide key={category._id || idx}>
                 <motion.div
-                  className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 md:p-4 flex flex-col items-center group cursor-pointer'
+                  className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-4 md:p-6 flex flex-col items-center group cursor-pointer min-h-[160px] justify-center'
                   custom={idx}
                   initial='hidden'
                   whileInView='visible'
@@ -581,27 +618,17 @@ const HomePage = () => {
                   variants={fadeInUp}
                   onClick={() => navigate(`/category/${category._id}`)}
                 >
-                  <div className='relative overflow-hidden rounded-lg mb-4'>
-                    <img
-                      src={category.img || category.image || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=500'}
-                      alt={category.name}
-                      className='w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500'
-                      crossOrigin="anonymous"
-                    />
-                    <div className='absolute inset-0 bg-gradient-to-t from-black/30 to-transparent'></div>
-                  </div>
-
-                  <div className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 max-w-[200px] h-12 flex items-center justify-center'>
+                  <div className='font-bold text-xl mb-3 cursor-pointer text-center line-clamp-2 max-w-[200px] flex items-center justify-center'>
                     {category.name}
                   </div>
 
                   <div
-                    className='text-teal-600 font-medium text-sm group-hover:underline transition cursor-pointer line-clamp-2 h-10 flex items-center justify-center text-center max-w-[180px]'
+                    className='text-teal-600 font-medium text-sm group-hover:underline transition cursor-pointer line-clamp-2 mb-4 flex items-center justify-center text-center max-w-[180px]'
                     dangerouslySetInnerHTML={{ __html: category.desc || 'Khám phá ngay!' }}
                   />
 
                   <button
-                    className='mt-2 px-4 py-1.5 bg-teal-50 text-teal-700 rounded-full text-sm font-medium hover:bg-teal-100 transition-colors'
+                    className='px-6 py-2 bg-teal-50 text-teal-700 rounded-full text-sm font-medium hover:bg-teal-100 transition-colors'
                     onClick={(e) => {
                       e.stopPropagation()
                       navigate(`/category/${category._id}`)
@@ -646,10 +673,12 @@ const HomePage = () => {
                   {/* Left side with image */}
                   <div className='flex-1 relative overflow-hidden'>
                     <img
-                      src={slide.left.bg}
-                      alt={slide.left.title}
+                      src={slide.left.bg || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=400'}
+                      alt={slide.left.title || 'Collection'}
                       className='object-cover w-full h-80 md:h-full transition-transform duration-700 hover:scale-110'
-                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=400';
+                      }}
                     />
                     <div className='absolute top-4 left-4 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full'>
                       <span className='text-amber-600 text-sm font-medium flex items-center'>
@@ -668,13 +697,9 @@ const HomePage = () => {
                         Bộ sưu tập mới
                       </span>
 
-                      <h2 className='text-black text-2xl md:text-4xl font-extrabold mb-4 leading-tight'>
+                      <h2 className='text-black text-2xl md:text-4xl font-extrabold mb-8 leading-tight'>
                         {slide.left.title}
                       </h2>
-
-                      <p className='text-zinc-700 text-base md:text-lg mb-8 leading-relaxed'>
-                        {slide.left.desc}
-                      </p>
 
                       <div className='flex flex-wrap gap-4'>
                         <button
@@ -736,10 +761,16 @@ const HomePage = () => {
 
               <div className="relative overflow-hidden rounded-lg mb-2 sm:mb-3">
                 <img
-                  src={product.img || product.image}
-                  alt={product.name}
+                  src={(() => {
+                    const img = product.img || product.image;
+                    if (Array.isArray(img)) return img[0] || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                    return img || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                  })()} 
+                  alt={product.name || 'Product'}
                   className='w-full h-32 sm:h-40 md:h-48 object-cover group-hover:scale-110 transition-transform duration-500'
-                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                  }}
                 />
 
                 {/* Quick action overlay */}
@@ -779,78 +810,7 @@ const HomePage = () => {
           ))}
         </div>
 
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-2xl">
-          <Swiper
-            navigation={{
-              nextEl: '.custom-next-product',
-              prevEl: '.custom-prev-product'
-            }}
-            spaceBetween={24}
-            slidesPerView={2}
-            breakpoints={{
-              640: { slidesPerView: 3 },
-              1024: { slidesPerView: 5 }
-            }}
-            modules={[Navigation]}
-            className='product-swiper relative'
-          >
-            {featuredProducts.map((product: Product, idx: number) => (
-              <SwiperSlide key={idx}>
-                <motion.div
-                  className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 flex flex-col group cursor-pointer'
-                  custom={idx}
-                  initial='hidden'
-                  whileInView='visible'
-                  viewport={{ once: true }}
-                  variants={fadeInUp}
-                >
-                  <div className='relative overflow-hidden rounded-lg mb-3'>
-                    <img
-                      src={product.img || product.image}
-                      alt={product.name}
-                      className='w-full h-40 object-cover group-hover:scale-110 transition-transform duration-500'
-                      crossOrigin="anonymous"
-                    />
 
-                    {/* Favorite button */}
-                    <button
-                      className='absolute top-2 right-2 bg-white rounded-full p-1.5 shadow-md z-10 transition-all duration-200 hover:bg-pink-50'
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleToggleWishlist(product._id)
-                      }}
-                    >
-                      <Heart
-                        size={16}
-                        className={wishlistStatus[product._id] ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'}
-                      />
-                    </button>
-                  </div>
-
-                  <div
-                    className='font-bold text-base mb-1 cursor-pointer line-clamp-2 h-12'
-                    dangerouslySetInnerHTML={{ __html: product.name || '' }}
-                  />
-
-                  <div className='text-gray-500 text-sm mb-2 cursor-pointer line-clamp-1'>
-                    {product.brand || 'Thương hiệu cao cấp'}
-                  </div>
-
-                  <div className='bg-indigo-50 rounded-lg px-3 py-1.5 font-bold text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white transition text-center'>
-                    {typeof product.price === 'number' ? product.price.toLocaleString() : product.price}₫
-                  </div>
-                </motion.div>
-              </SwiperSlide>
-            ))}
-
-            <button className='custom-prev-product absolute top-1/2 -left-4 z-10 bg-white shadow-lg rounded-full p-2.5 flex items-center justify-center hover:bg-indigo-100 transition border border-gray-100 active:scale-90'>
-              <ChevronLeft size={24} className='text-indigo-600' />
-            </button>
-            <button className='custom-next-product absolute top-1/2 -right-4 z-10 bg-white shadow-lg rounded-full p-2.5 flex items-center justify-center hover:bg-indigo-100 transition border border-gray-100 active:scale-90'>
-              <ChevronRight size={24} className='text-indigo-600' />
-            </button>
-          </Swiper>
-        </div>
       </motion.section>
 
       {/* Feedback Section */}
@@ -878,8 +838,8 @@ const HomePage = () => {
             modules={[Navigation]}
             className='feedback-swiper relative'
           >
-            {feedbacks.map((fb: { name: string; content: string; img: string }, idx: number) => (
-              <SwiperSlide key={idx}>
+            {reviews.length > 0 ? reviews.map((review: Review, idx: number) => (
+              <SwiperSlide key={review._id}>
                 <motion.div
                   className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-4 sm:p-6 flex flex-col group cursor-pointer relative'
                   custom={idx}
@@ -895,46 +855,63 @@ const HomePage = () => {
                   <div className='flex items-center mb-3 sm:mb-4'>
                     <div className='relative'>
                       <img
-                        src={fb.img}
-                        alt={fb.name}
-                        crossOrigin="anonymous"
+                        src={review.userId?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.userId?.name || 'User')}&background=f43f5e&color=fff`}
+                        alt={review.userId?.name || 'User'}
                         className='w-12 h-12 sm:w-16 sm:h-16 rounded-full border-3 sm:border-4 border-rose-100 group-hover:border-rose-300 transition object-cover'
+                        onError={(e) => {
+                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.userId?.name || 'User')}&background=f43f5e&color=fff`;
+                        }}
                       />
                       <div className='absolute -bottom-1 -right-1 bg-rose-500 text-white rounded-full p-0.5 sm:p-1'>
                         <Star size={10} className='fill-white' />
                       </div>
                     </div>
                     <div className='ml-3 sm:ml-4'>
-                      <div className='font-bold text-base sm:text-lg'>{fb.name}</div>
+                      <div className='font-bold text-base sm:text-lg'>{review.userId?.name || 'Khách hàng'}</div>
                       <div className='flex'>
                         {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={12} className='text-yellow-400 fill-yellow-400' />
+                          <Star key={i} size={12} className={i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
                         ))}
                       </div>
                     </div>
                   </div>
 
-                  <div className='text-gray-600 text-sm sm:text-base italic mb-3 sm:mb-4 relative z-10 line-clamp-1'>
-                    '{fb.content}'
+                  <div className='text-gray-600 text-sm sm:text-base italic mb-3 sm:mb-4 relative z-10 line-clamp-2'>
+                    '{review.comment}'
                   </div>
 
                   <div className='mt-auto pt-2 sm:pt-3 border-t border-gray-100 flex justify-between items-center'>
-                    <span className='text-xs text-gray-400'>2 ngày trước</span>
+                    <span className='text-xs text-gray-400'>
+                      {new Date(review.createdAt).toLocaleDateString('vi-VN')}
+                    </span>
                     <span className='text-rose-500 text-xs sm:text-sm font-medium hover:underline cursor-pointer'>Đã mua hàng</span>
                   </div>
                 </motion.div>
               </SwiperSlide>
-            ))}
+            )) : (
+              // Fallback khi chưa có review
+              <SwiperSlide>
+                <div className='bg-white rounded-xl border border-gray-100 shadow-lg p-4 sm:p-6 flex flex-col items-center justify-center min-h-[200px]'>
+                  <div className='text-gray-400 text-center'>
+                    <Star size={48} className='mx-auto mb-3 text-gray-300' />
+                    <p>Chưa có đánh giá nào</p>
+                    <p className='text-sm mt-1'>Hãy là người đầu tiên đánh giá!</p>
+                  </div>
+                </div>
+              </SwiperSlide>
+            )}
 
             {/* Navigation buttons - hidden on smallest screens */}
-            <div className='hidden sm:block'>
-              <button className='custom-prev-feedback absolute top-1/2 -left-4 z-10 bg-white shadow-lg rounded-full p-2 sm:p-2.5 flex items-center justify-center hover:bg-rose-100 transition border border-gray-100 active:scale-90'>
-                <ChevronLeft size={20} className='text-rose-500' />
-              </button>
-              <button className='custom-next-feedback absolute top-1/2 -right-4 z-10 bg-white shadow-lg rounded-full p-2 sm:p-2.5 flex items-center justify-center hover:bg-rose-100 transition border border-gray-100 active:scale-90'>
-                <ChevronRight size={20} className='text-rose-500' />
-              </button>
-            </div>
+            {reviews.length > 0 && (
+              <div className='hidden sm:block'>
+                <button className='custom-prev-feedback absolute top-1/2 -left-4 z-10 bg-white shadow-lg rounded-full p-2 sm:p-2.5 flex items-center justify-center hover:bg-rose-100 transition border border-gray-100 active:scale-90'>
+                  <ChevronLeft size={20} className='text-rose-500' />
+                </button>
+                <button className='custom-next-feedback absolute top-1/2 -right-4 z-10 bg-white shadow-lg rounded-full p-2 sm:p-2.5 flex items-center justify-center hover:bg-rose-100 transition border border-gray-100 active:scale-90'>
+                  <ChevronRight size={20} className='text-rose-500' />
+                </button>
+              </div>
+            )}
           </Swiper>
         </div>
       </motion.section>
@@ -987,10 +964,12 @@ const HomePage = () => {
                 >
                   <div className='h-12 sm:h-16 flex items-center justify-center mb-2 sm:mb-3'>
                     <img
-                      src={brand.img || brand.logo || brand.image || `https://placehold.co/200x80?text=${brand.name}`}
-                      alt={brand.name}
+                      src={brand.img || brand.logo || brand.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}&background=3b82f6&color=fff&size=200`}
+                      alt={brand.name || 'Brand'}
                       className='max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-300'
-                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}&background=3b82f6&color=fff&size=200`;
+                      }}
                     />
                   </div>
 
@@ -1004,14 +983,7 @@ const HomePage = () => {
             ))}
           </Swiper>
 
-          <div className='flex justify-center mt-6 sm:mt-8'>
-            <button
-              className='px-4 sm:px-6 py-1.5 sm:py-2 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors flex items-center'
-              onClick={() => navigate('/brands')}
-            >
-              Xem tất cả thương hiệu <ChevronRight size={14} className='ml-1' />
-            </button>
-          </div>
+
         </div>
       </motion.section>
     </div>
