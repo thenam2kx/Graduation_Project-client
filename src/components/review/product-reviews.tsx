@@ -1,7 +1,7 @@
 import ReviewForm from './review-form'
 import ReviewList from './review-list'
 import { useAppSelector } from '@/redux/hooks'
-import { Divider } from 'antd'
+import { Separator } from '@/components/ui/separator'
 
 interface ProductReviewsProps {
   productId: string;
@@ -16,7 +16,7 @@ const ProductReviews = ({ productId, orderId }: ProductReviewsProps) => {
       <h3 className="text-lg font-semibold mb-4">Đánh giá sản phẩm</h3>
       {/* Danh sách đánh giá */}
       <ReviewList productId={productId} />
-      <Divider className="my-6" />
+      <Separator className="my-6" />
       {/* Form đánh giá */}
       <div className="mt-6">
         <h4 className="text-base font-medium mb-4">Viết đánh giá của bạn</h4>

@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useSelector } from 'react-redux'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { RootState } from '@/redux/store'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Textarea } from '@/components/ui/textarea'
 import { ArrowLeft, Star } from 'lucide-react'
 import { getReviewableProducts, createReview } from '@/services/review-service/review.apis'
 import { toast } from 'react-toastify'
@@ -77,11 +78,9 @@ const OrderReviewPage = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-64"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-        </div>
+      <div className="max-w-4xl mx-auto p-6 space-y-4">
+        <div className="h-8 bg-muted rounded w-64 animate-pulse" />
+        <div className="h-32 bg-muted rounded animate-pulse" />
       </div>
     )
   }
@@ -102,7 +101,7 @@ const OrderReviewPage = () => {
       {reviewableProducts.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-gray-500">Không có sản phẩm nào để đánh giá</p>
+            <p className="text-muted-foreground">Không có sản phẩm nào để đánh giá</p>
           </CardContent>
         </Card>
       ) : (
@@ -126,42 +125,43 @@ const OrderReviewPage = () => {
                           <label className="block text-sm font-medium mb-2">Đánh giá sao:</label>
                           <div className="flex gap-1">
                             {[1, 2, 3, 4, 5].map((star) => (
-                              <button
+                              <Button
                                 key={star}
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => handleRatingChange(product.productId, star)}
-                                className={`p-1 ${
-                                  (reviews[product.productId]?.rating || 0) >= star
-                                    ? 'text-yellow-400'
-                                    : 'text-gray-300'
-                                }`}
+                                className="p-1 h-auto"
                               >
-                                <Star className="h-6 w-6 fill-current" />
-                              </button>
+                                <Star className={`h-6 w-6 ${
+                                  (reviews[product.productId]?.rating || 0) >= star
+                                    ? 'fill-yellow-400 text-yellow-400'
+                                    : 'text-muted-foreground'
+                                }`} />
+                              </Button>
                             ))}
                           </div>
                         </div>
 
                         <div>
                           <label className="block text-sm font-medium mb-2">Bình luận:</label>
-                          <textarea
+                          <Textarea
                             value={reviews[product.productId]?.comment || ''}
                             onChange={(e) => handleCommentChange(product.productId, e.target.value)}
                             placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
-                            className="w-full p-3 border border-gray-300 rounded-lg resize-none"
                             rows={4}
+                            className="resize-none"
                           />
                         </div>
 
                         <Button
                           onClick={() => handleSubmitReview(product.productId)}
                           disabled={createReviewMutation.isPending}
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           {createReviewMutation.isPending ? 'Đang gửi...' : 'Gửi đánh giá'}
                         </Button>
                       </div>
                     ) : (
-                      <div className="text-gray-500">
+                      <div className="text-muted-foreground">
                         <p>Bạn đã đánh giá sản phẩm này {product.reviewCount} lần (tối đa 2 lần)</p>
                       </div>
                     )}
