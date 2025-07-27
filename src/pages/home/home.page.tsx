@@ -3,10 +3,8 @@ import { Autoplay, Pagination, Navigation, EffectFade, EffectCoverflow } from 's
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Star, ShoppingBag, Heart, TrendingUp, Award, Sparkles } from 'lucide-react'
 import { PRODUCT_KEYS } from '@/services/product-service/product.keys'
-import { FLASH_SALE_KEYS } from '@/services/flash-sale-service/flash-sale.keys'
 import { useQuery } from '@tanstack/react-query'
 import { fetchListBrand, fetchListCategory, fetchListProduct } from '@/services/product-service/product.apis'
-import { getFlashSaleProducts } from '@/services/flash-sale-service/flash-sale.apis'
 import { useState, useEffect } from 'react'
 import { Eye } from 'lucide-react'
 import { useNavigate } from 'react-router'
@@ -17,6 +15,7 @@ import { toast } from 'react-toastify'
 import { useQueryClient } from '@tanstack/react-query'
 import { REVIEW_QUERY_KEYS } from '@/services/review-service/review.keys'
 import { fetchAllReviews } from '@/services/review-service/review.apis'
+import FlashSaleProducts from '@/components/flash-sale/flash-sale-products'
 import 'swiper/css/effect-coverflow'
 import 'swiper/css/effect-fade'
 import 'swiper/css/navigation'
@@ -193,16 +192,7 @@ const HomePage = () => {
       toast.error('Có lỗi xảy ra, vui lòng thử lại')
     }
   }
-  // Sản phẩm Flash Sale
-  const {
-    data: dataFlashSaleProducts,
-    isLoading: isLoadingFlashSale,
-    isError: isErrorFlashSale
-  } = useQuery({
-    queryKey: [FLASH_SALE_KEYS.FETCH_ACTIVE_PRODUCTS],
-    queryFn: getFlashSaleProducts,
-    select: (res) => res.data || []
-  })
+  // Loại bỏ query flash sale products vì đã chuyển vào component riêng
 
   // Sản phẩm (dùng cho sản phẩm nổi bật)
   const {
@@ -249,7 +239,6 @@ const HomePage = () => {
   })
 
   // Xử lý dữ liệu
-  const flashSaleProducts = Array.isArray(dataFlashSaleProducts) ? dataFlashSaleProducts : []
   const products = Array.isArray(dataProducts?.results) ? dataProducts.results : []
   const brands = Array.isArray(dataBrand?.results) ? dataBrand.results : []
   const categories = Array.isArray(dataCategory?.results) ? dataCategory.results.filter((category: Category) => category.isPublic !== false) : []
@@ -296,8 +285,8 @@ const HomePage = () => {
     : defaultFashionSlides
 
   // Loading và error chung
-  const isLoading = isLoadingProducts || isLoadingBrand || isLoadingCategory || isLoadingFlashSale || isLoadingReviews
-  const isError = isErrorProducts || isErrorBrand || isErrorCategory || isErrorFlashSale || isErrorReviews
+  const isLoading = isLoadingProducts || isLoadingBrand || isLoadingCategory || isLoadingReviews
+  const isError = isErrorProducts || isErrorBrand || isErrorCategory || isErrorReviews
 
   if (isLoading) return (
     <div className='flex justify-center items-center min-h-screen'>
@@ -388,193 +377,8 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Sản phẩm đang giảm giá */}
-      <motion.section className='container mx-auto mb-12' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
-        <div className='flex justify-between items-center mb-6'>
-          <div className='flex items-center'>
-            <div className='w-1.5 h-8 bg-purple-600 rounded-full mr-3'></div>
-            <h3 className='text-3xl font-bold'>Sản phẩm đang giảm giá</h3>
-          </div>
-          <button
-            className='text-purple-600 font-medium hover:underline flex items-center'
-            onClick={() => navigate('/products?discount=true')}
-          >
-            Xem tất cả <ChevronRight size={16} className='ml-1' />
-          </button>
-        </div>
-
-        <div className='bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-2xl mb-6'>
-          <Swiper
-            navigation={{
-              nextEl: '.custom-next-women',
-              prevEl: '.custom-prev-women'
-            }}
-            spaceBetween={24}
-            slidesPerView={2}
-            breakpoints={{
-              640: { slidesPerView: 3 },
-              1024: { slidesPerView: 5 }
-            }}
-            modules={[Navigation]}
-            className='category-women-swiper relative'
-          >
-            {flashSaleProducts.length > 0 ? flashSaleProducts.map((item: any, idx: number) => {
-              const product = item.productId || item.product;
-              const variant = item.variantId || item.variant;
-              const originalPrice = variant?.price || product?.price || 0;
-              const discountPercent = item.discountPercent || 0;
-              const salePrice = originalPrice - (originalPrice * discountPercent / 100);
-              
-              return (
-                <SwiperSlide key={idx}>
-                  <motion.div
-                    className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 md:p-4 flex flex-col group cursor-pointer relative overflow-hidden'
-                    custom={idx}
-                    initial='hidden'
-                    whileInView='visible'
-                    viewport={{ once: true }}
-                    variants={fadeInUp}
-                    whileHover={{ y: -5 }}
-                    onClick={() => navigate(`productDetail/${product?._id}`)}
-                  >
-                    {/* Sale badge */}
-                    <div className='absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10'>
-                      -{discountPercent}%
-                    </div>
-
-                    {/* Favorite button */}
-                    <button
-                      className='absolute top-3 right-3 bg-white rounded-full p-1.5 shadow-md z-10 transition-all duration-200 hover:bg-pink-50'
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleToggleWishlist(product?._id)
-                      }}
-                    >
-                      <Heart
-                        size={18}
-                        className={wishlistStatus[product?._id] ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'}
-                      />
-                    </button>
-
-                    <div className='relative overflow-hidden rounded-lg mb-4'>
-                      <img
-                        src={(() => {
-                          const img = product?.image || product?.img;
-                          if (Array.isArray(img)) return img[0] || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
-                          return img || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
-                        })()} 
-                        alt={product?.name || 'Product'}
-                        className='w-full h-60 object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer'
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
-                        }}
-                      />
-
-                      {/* Quick action overlay */}
-                      <div className='absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center'>
-                        <button className='bg-white text-purple-700 rounded-full p-2 mx-1 hover:bg-purple-700 hover:text-white transition-colors'>
-                          <ShoppingBag size={18} />
-                        </button>
-                        <button className='bg-white text-purple-700 rounded-full p-2 mx-1 hover:bg-purple-700 hover:text-white transition-colors'>
-                          <Eye size={18} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className='flex-1 flex flex-col'>
-                      <div
-                        className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 h-12 flex items-center justify-center'
-                        dangerouslySetInnerHTML={{ __html: product?.name || '' }}
-                      />
-
-                      <div className='flex items-center justify-center mb-2'>
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={14} className={i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-                        ))}
-                        <span className='text-xs text-gray-500 ml-1'>(4.0)</span>
-                      </div>
-
-                      <div className='flex justify-center items-center gap-2 mt-auto'>
-                        <span className='text-gray-400 line-through text-sm'>
-                          {originalPrice.toLocaleString()}₫
-                        </span>
-                        <span className='text-purple-700 font-bold'>
-                          {Math.round(salePrice).toLocaleString()}₫
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                </SwiperSlide>
-              )
-            }) : products.slice(0, 8).map((product: Product, idx: number) => (
-              <SwiperSlide key={idx}>
-                <motion.div
-                  className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 md:p-4 flex flex-col group cursor-pointer relative overflow-hidden'
-                  custom={idx}
-                  initial='hidden'
-                  whileInView='visible'
-                  viewport={{ once: true }}
-                  variants={fadeInUp}
-                  whileHover={{ y: -5 }}
-                  onClick={() => navigate(`productDetail/${product._id}`)}
-                >
-                  <div className='absolute top-3 left-3 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10'>
-                    Sắp có
-                  </div>
-
-                  <button
-                    className='absolute top-3 right-3 bg-white rounded-full p-1.5 shadow-md z-10 transition-all duration-200 hover:bg-pink-50'
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleToggleWishlist(product._id)
-                    }}
-                  >
-                    <Heart
-                      size={18}
-                      className={wishlistStatus[product._id] ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'}
-                    />
-                  </button>
-
-                  <div className='relative overflow-hidden rounded-lg mb-4'>
-                    <img
-                      src={(() => {
-                        const img = product.image || product.img;
-                        if (Array.isArray(img)) return img[0] || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
-                        return img || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
-                      })()} 
-                      alt={product.name || 'Product'}
-                      className='w-full h-60 object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer'
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
-                      }}
-                    />
-                  </div>
-
-                  <div className='flex-1 flex flex-col'>
-                    <div
-                      className='font-bold text-lg mb-1 cursor-pointer text-center line-clamp-2 h-12 flex items-center justify-center'
-                      dangerouslySetInnerHTML={{ __html: product.name || '' }}
-                    />
-                    <div className='flex justify-center items-center gap-2 mt-auto'>
-                      <span className='text-purple-700 font-bold'>
-                        {typeof product.price === 'number' ? product.price.toLocaleString() : product.price}₫
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              </SwiperSlide>
-            ))}
-
-            {/* Custom navigation buttons */}
-            <button className='custom-prev-women absolute top-1/2 -left-4 z-10 bg-white shadow-lg rounded-full p-2.5 flex items-center justify-center hover:bg-purple-100 transition border border-gray-100 active:scale-90'>
-              <ChevronLeft size={24} className='text-purple-600' />
-            </button>
-            <button className='custom-next-women absolute top-1/2 -right-4 z-10 bg-white shadow-lg rounded-full p-2.5 flex items-center justify-center hover:bg-purple-100 transition border border-gray-100 active:scale-90'>
-              <ChevronRight size={24} className='text-purple-600' />
-            </button>
-          </Swiper>
-        </div>
-      </motion.section>
+      {/* Flash Sale Products */}
+      <FlashSaleProducts />
 
       {/* Danh mục nước hoa */}
       <motion.section className='container mx-auto mb-12' initial='hidden' whileInView='visible' viewport={{ once: true }} variants={fadeInUp}>
