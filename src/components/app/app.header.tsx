@@ -8,6 +8,7 @@ import { fetchCartByUserAPI, fetchInfoCartAPI } from '@/services/cart-service/ca
 import { setIdCartUser } from '@/redux/slices/cart.slice'
 import SearchBox from '@/components/search-box'
 import { getWishlist } from '@/services/wishlist-service/wishlist.apis'
+import NotificationBell from '@/components/notification/notification-bell'
 
 
 const AppHeader = () => {
@@ -165,6 +166,9 @@ const AppHeader = () => {
           >
             <Search size={20} />
           </button>
+
+          {/* Notifications */}
+          <NotificationBell />
 
           {/* Wishlist */}
           <button 
