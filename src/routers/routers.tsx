@@ -26,6 +26,7 @@ import ProductDetail from '@/pages/productDetail/product.detail'
 import MyOrders from '@/pages/order/order.pages'
 import OrderDetails from '@/pages/order/order.detail.pages'
 import OrderReviewPage from '@/pages/review/order-review.pages'
+import BrandDetailPage from '@/pages/brand/brand.detail.page'
 
 const Routers = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isSignin)
@@ -41,6 +42,7 @@ const Routers = () => {
           <Route path='shops/unisex' element={<ProductPage />} />
           <Route path='blogs' element={<BlogPage />} />
           <Route path='productDetail/:id' element={<ProductDetail />} />
+          <Route path='brand/:brandId' element={<BrandDetailPage />} />
           <Route path='checkout' element={<CheckoutBilling />} />
           <Route path='contact' element={<ContactForm />} />
           <Route path='blogs/:blogId' element={<BlogDetailPage />} />

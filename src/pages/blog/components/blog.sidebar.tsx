@@ -133,10 +133,16 @@ export const BlogSidebar: React.FC<BlogSidebarProps> = ({
                       <div className='bg-white p-2 rounded-lg shadow-sm border border-gray-100 flex items-center'>
                         <div className='rounded overflow-hidden w-16 h-16 flex-shrink-0'>
                           <img
-                            src={product.img || product.image || 'https://via.placeholder.com/300x180?text=Sản+phẩm'}
-                            alt={product.name}
+                            src={(() => {
+                              const img = product.img || product.image;
+                              if (Array.isArray(img)) return img[0] || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                              return img || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                            })()} 
+                            alt={product.name || 'Product'}
                             className='w-full h-full object-cover'
-                            crossOrigin='anonymous'
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=300';
+                            }}
                           />
                         </div>
                         <div className='ml-2 flex-1'>
