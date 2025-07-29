@@ -1,5 +1,33 @@
 import axiosInstance from '@/config/axios.customize';
 
+// Lấy tất cả đánh giá (cho trang chủ) - chỉ lấy đánh giá đã approved
+export const fetchAllReviews = async (params?: string) => {
+  try {
+    const url = params ? `/api/v1/reviews?${params}` : '/api/v1/reviews?status=approved';
+    const response = await axiosInstance.get(url);
+    return response || {
+      statusCode: 200,
+      success: true,
+      data: {
+        results: [],
+        meta: { total: 0, page: 1, limit: 10, pages: 0 }
+      },
+      message: 'Không có đánh giá'
+    };
+  } catch (error) {
+    console.error('Lỗi khi lấy tất cả đánh giá:', error);
+    return {
+      statusCode: 500,
+      success: false,
+      data: {
+        results: [],
+        meta: { total: 0, page: 1, limit: 10, pages: 0 }
+      },
+      message: 'Lỗi khi lấy đánh giá'
+    };
+  }
+};
+
 // Lấy đánh giá theo ID sản phẩm
 export const fetchReviewsByProduct = async (productId: string, params?: string) => {
   try {
