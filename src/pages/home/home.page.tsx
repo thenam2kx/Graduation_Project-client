@@ -27,7 +27,7 @@ interface Review {
   _id: string;
   userId: {
     _id: string;
-    name: string;
+    fullName: string;
     avatar?: string;
   };
   productId: {
@@ -659,11 +659,11 @@ const HomePage = () => {
                   <div className='flex items-center mb-3 sm:mb-4'>
                     <div className='relative'>
                       <img
-                        src={review.userId?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.userId?.name || 'User')}&background=f43f5e&color=fff`}
-                        alt={review.userId?.name || 'User'}
+                        src={review.userId?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.userId?.fullName || 'User')}&background=f43f5e&color=fff`}
+                        alt={review.userId?.fullName || 'User'}
                         className='w-12 h-12 sm:w-16 sm:h-16 rounded-full border-3 sm:border-4 border-rose-100 group-hover:border-rose-300 transition object-cover'
                         onError={(e) => {
-                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.userId?.name || 'User')}&background=f43f5e&color=fff`;
+                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.userId?.fullName || 'User')}&background=f43f5e&color=fff`;
                         }}
                       />
                       <div className='absolute -bottom-1 -right-1 bg-rose-500 text-white rounded-full p-0.5 sm:p-1'>
@@ -671,7 +671,7 @@ const HomePage = () => {
                       </div>
                     </div>
                     <div className='ml-3 sm:ml-4'>
-                      <div className='font-bold text-base sm:text-lg'>{review.userId?.name || 'Khách hàng'}</div>
+                      <div className='font-bold text-base sm:text-lg'>{review.userId?.fullName || 'Khách hàng'}</div>
                       <div className='flex'>
                         {[...Array(5)].map((_, i) => (
                           <Star key={i} size={12} className={i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />

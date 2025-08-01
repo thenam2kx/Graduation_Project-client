@@ -17,6 +17,7 @@ import { useAppSelector } from '@/redux/hooks'
 import { toast } from 'react-toastify'
 import { getFlashSaleProducts } from '@/services/flash-sale-service/flash-sale.apis'
 import { FLASH_SALE_KEYS } from '@/services/flash-sale-service/flash-sale.keys'
+import { useNavigate } from 'react-router'
 
 const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1)
@@ -30,8 +31,10 @@ const ProductDetail = () => {
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description')
   const [flashSaleInfo, setFlashSaleInfo] = useState<any>(null)
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const cartId = useAppSelector((state) => state.cart.IdCartUser)
+  const isSignin = useAppSelector((state) => state.auth.isSignin)
 
   const { data: product, isLoading, error } = useQuery({
     queryKey: [PRODUCT_KEYS.FETCH_INFO_PRODUCT, id],
@@ -172,6 +175,13 @@ const ProductDetail = () => {
   })
 
   const handleAddToCart = () => {
+    // Kiểm tra đăng nhập trước
+    if (!isSignin) {
+      toast.error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng')
+      navigate('/signin')
+      return
+    }
+    
     if (product && product.variants && selectedScents) {
       if (selectedVariant) {
         // Kiểm tra tồn kho trước khi thêm vào giỏ hàng
@@ -411,7 +421,8 @@ const ProductDetail = () => {
                 <ShoppingCartIcon className="w-5 h-5 mr-2" />
                 <span className="font-medium">
                   {addToCartMutation.isPending ? 'Đang thêm...' :
-                    currentStock <= 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
+                    currentStock <= 0 ? 'Hết hàng' : 
+                    !isSignin ? 'Đăng nhập để mua hàng' : 'Thêm vào giỏ hàng'}
                 </span>
               </Button>
             </div>
