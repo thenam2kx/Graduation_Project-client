@@ -15,6 +15,9 @@ import { addToCartAPI } from '@/services/cart-service/cart.apis'
 import { CART_KEYS } from '@/services/cart-service/cart.keys'
 import { useAppSelector } from '@/redux/hooks'
 import { toast } from 'react-toastify'
+import { getFlashSaleProducts } from '@/services/flash-sale-service/flash-sale.apis'
+import { FLASH_SALE_KEYS } from '@/services/flash-sale-service/flash-sale.keys'
+import { useNavigate } from 'react-router'
 
 const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1)
@@ -26,9 +29,12 @@ const ProductDetail = () => {
   const [currentStock, setCurrentStock] = useState<number>(0)
   const [selectedImage, setSelectedImage] = useState<string>('')
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description')
+  const [flashSaleInfo, setFlashSaleInfo] = useState<any>(null)
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const cartId = useAppSelector((state) => state.cart.IdCartUser)
+  const isSignin = useAppSelector((state) => state.auth.isSignin)
 
   const { data: product, isLoading, error } = useQuery({
     queryKey: [PRODUCT_KEYS.FETCH_INFO_PRODUCT, id],
@@ -42,6 +48,22 @@ const ProductDetail = () => {
       }
     }
   })
+
+  const { data: flashSaleProducts } = useQuery({
+    queryKey: [FLASH_SALE_KEYS.FETCH_ACTIVE_PRODUCTS],
+    queryFn: getFlashSaleProducts,
+    select: (res) => {
+      console.log('Flash Sale API response in product detail:', res)
+      if (res && res.statusCode === 200 && res.data && Array.isArray(res.data)) {
+        console.log('Flash Sale products loaded:', res.data)
+        return res.data
+      }
+      return []
+    }
+  })
+
+  console.log('Current flashSaleProducts:', flashSaleProducts)
+  console.log('Current flashSaleInfo:', flashSaleInfo)
 
   useEffect(() => {
     if (product && product.variants) {
@@ -80,41 +102,56 @@ const ProductDetail = () => {
     }
   }, [capacity, selectedScents])
 
-  // Set initial selected capacity
+  useEffect(() => {
+    if (product && flashSaleProducts && selectedVariant) {
+      console.log('=== FLASH SALE CHECK ===')
+      console.log('Product ID:', product._id)
+      console.log('Selected Variant ID:', selectedVariant._id)
+      console.log('Flash Sale Products:', flashSaleProducts)
+      
+      const flashSaleItem = flashSaleProducts.find((item: any) => {
+        console.log('Checking item:', item)
+        console.log('Item product ID:', item.productId._id)
+        console.log('Item variant ID:', item.variantId?._id)
+        
+        // Chỉ cần khớp product ID vì variantId là object rỗng {}
+        return item.productId._id === product._id
+      })
+      
+      console.log('Found Flash Sale Item:', flashSaleItem)
+      setFlashSaleInfo(flashSaleItem || null)
+    }
+  }, [product, flashSaleProducts, selectedVariant])
+
   useEffect(() => {
     if (product && product.variants && selectedScents) {
       const variant = product.variants.find((variant) =>
         variant.variant_attributes.some((attr) => attr._id === selectedScents)
       )
       if (variant) {
-        // Tính giá gốc và giá sau khi giảm
-        const originalPrice = variant.price || 0
+        setSelectedVariant(variant)
+        const basePrice = variant.price || 0
         const discount = variant.discount || 0
-        const finalPrice = originalPrice - discount
-
-        setSelectedVariant({
-          ...variant,
-          originalPrice: originalPrice,
-          discount: discount
-        })
-        setPrice(finalPrice)
+        setPrice(basePrice - discount)
         setCurrentStock(variant.stock || 0)
-        setQuantity(1) // Reset số lượng về 1 khi đổi biến thể
+        setQuantity(1)
       }
     }
-  }, [selectedScents, product]) // Bỏ quantity khỏi dependency
+  }, [selectedScents, product])
 
 
   const handleSelectedScents = (id: string, variantId: string, stock: number) => {
     setSelectedScents(id)
     setCurrentStock(stock)
-    setQuantity(1) // Reset số lượng về 1 khi chọn biến thể mới
+    setQuantity(1)
 
     if (product && product.variants) {
       const variant = product.variants.find(v => v._id === variantId)
       if (variant) {
         setSelectedVariant(variant)
-        setPrice(variant.price - (variant.discount || 0)) // Không nhân với quantity
+        const basePrice = variant.price || 0
+        const discount = variant.discount || 0
+        setPrice(basePrice - discount)
       }
     }
   }
@@ -138,6 +175,13 @@ const ProductDetail = () => {
   })
 
   const handleAddToCart = () => {
+    // Kiểm tra đăng nhập trước
+    if (!isSignin) {
+      toast.error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng')
+      navigate('/signin')
+      return
+    }
+    
     if (product && product.variants && selectedScents) {
       if (selectedVariant) {
         // Kiểm tra tồn kho trước khi thêm vào giỏ hàng
@@ -253,15 +297,40 @@ const ProductDetail = () => {
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{product?.name}</h1>
               {/* Price */}
               <div className="flex items-center gap-3 mt-2">
-                <span className="text-2xl font-bold text-gray-900">
-                  {formatCurrencyVND(price)}
-                </span>
-                {selectedVariant?.discount > 0 && (
-                  <span className="text-lg text-gray-500 line-through">
-                    {formatCurrencyVND(selectedVariant?.originalPrice || 0)}
-                  </span>
+                {flashSaleInfo ? (
+                  <>
+                    <span className="text-2xl font-bold text-red-600">
+                      {formatCurrencyVND(selectedVariant?.price * (1 - flashSaleInfo.discountPercent / 100) || 0)}
+                    </span>
+                    <span className="text-lg text-gray-500 line-through">
+                      {formatCurrencyVND(selectedVariant?.price || 0)}
+                    </span>
+                    <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium">
+                      -{flashSaleInfo.discountPercent}%
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-2xl font-bold text-gray-900">
+                      {formatCurrencyVND(price)}
+                    </span>
+                    {selectedVariant?.discount > 0 && (
+                      <span className="text-lg text-gray-500 line-through">
+                        {formatCurrencyVND(selectedVariant?.price || 0)}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
+              
+              {flashSaleInfo && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-red-600 text-sm font-medium">⚡ Flash Sale</span>
+                  <span className="text-green-600 text-sm">
+                    Tiết kiệm {formatCurrencyVND((selectedVariant?.price || 0) * flashSaleInfo.discountPercent / 100)}
+                  </span>
+                </div>
+              )}
             </div>
 
             <Separator className="my-4" />
@@ -352,7 +421,8 @@ const ProductDetail = () => {
                 <ShoppingCartIcon className="w-5 h-5 mr-2" />
                 <span className="font-medium">
                   {addToCartMutation.isPending ? 'Đang thêm...' :
-                    currentStock <= 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
+                    currentStock <= 0 ? 'Hết hàng' : 
+                    !isSignin ? 'Đăng nhập để mua hàng' : 'Thêm vào giỏ hàng'}
                 </span>
               </Button>
             </div>

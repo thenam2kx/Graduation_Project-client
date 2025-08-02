@@ -21,3 +21,8 @@ export const fetchInfoProduct = async (id: string) => {
   const response = await axios.get<IBackendResponse<IProduct>>(url)
   return response
 }
+
+export const fetchBrandById = async (id: string) => {
+  const response = await axios.get(`/api/v1/brand/${id}`)
+  return response
+}

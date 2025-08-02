@@ -8,13 +8,14 @@ import {
   Heart
 } from 'lucide-react'
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { addToWishlist, removeFromWishlist, checkProductInWishlist } from '@/services/wishlist-service/wishlist.apis';
 import { RootState } from '@/redux/store';
 import { toast } from 'react-toastify';
 import { useQueryClient } from '@tanstack/react-query';
 
-const BRANDS = [
+// Danh sách thương hiệu mặc định
+const DEFAULT_BRANDS = [
   'Dior', 'Chanel', 'Gucci', 'Versace', 'Calvin Klein', 'Jo Malone', 'Le Labo', 'Hermès', 'Tom Ford'
 ]
 
@@ -48,22 +49,41 @@ const ProductPage = () => {
 
   // Data state
   const [products, setProducts] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [meta, setMeta] = useState({ current: 1, pageSize: PAGE_SIZE, pages: 1, total: 0 });
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [wishlistStatus, setWishlistStatus] = useState<Record<string, boolean>>({});
+  const [availableBrands, setAvailableBrands] = useState<string[]>(DEFAULT_BRANDS);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { isSignin, user } = useSelector((state: RootState) => state.auth);
   const queryClient = useQueryClient();
 
-  // Reset to page 1 when filters/search change
+  // Lấy category từ URL
+  const getCategoryFromPath = () => {
+    const path = location.pathname;
+    if (path.includes('/shops/men')) return { id: '6835c1f13cbaf6b9573037c8', name: 'Nước Hoa Nam' };
+    if (path.includes('/shops/women')) return { id: '6882fc7cee387307136c7287', name: 'Nước Hoa Nữ' };
+    if (path.includes('/shops/unisex')) return { id: '6882fc85ee387307136c728a', name: 'Nước Hoa Unisex' };
+    return null;
+  };
+
+  const currentCategory = getCategoryFromPath();
+
+  // Lấy tất cả sản phẩm khi component mount hoặc category thay đổi
   useEffect(() => {
-    if (meta.current !== 1) {
+    fetchAllProducts();
+  }, [currentCategory]);
+
+  // Lọc và phân trang khi có thay đổi
+  useEffect(() => {
+    if (allProducts.length > 0) {
       setMeta(prev => ({ ...prev, current: 1 }));
-    } else {
-      fetchProducts(1, search);
+      filterAndPaginateProducts();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -71,68 +91,152 @@ const ProductPage = () => {
     selectedPriceRange,
     selectedVolumes,
     selectedBrands,
-
-    selectedRating
+    selectedRating,
+    allProducts
   ]);
 
-  // Handle pagination changes
+  // Xử lý thay đổi trang
   useEffect(() => {
-    fetchProducts(meta.current, search);
+    if (allProducts.length > 0) {
+      filterAndPaginateProducts();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meta.current]);
-  const fetchProducts = async (page = 1, searchValue = '') => {
-    setLoading(true)
+  // Lấy tất cả sản phẩm từ API (theo batch)
+  const fetchAllProducts = async () => {
+    setInitialLoading(true);
     try {
-      const params: any = {
-        current: page,
-        pageSize: PAGE_SIZE,
-      };
-      let qsArr: string[] = [];
-      if (searchValue) qsArr.push(`name=/${searchValue}/i`);
-      if (selectedPriceRange !== null) {
-        const priceRange = PRICE_RANGES[selectedPriceRange];
-        if (priceRange.max) {
-          qsArr.push(`price>=${priceRange.min}&price<=${priceRange.max}`);
+      let allProductsData: any[] = [];
+      let currentPage = 1;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const params: any = { 
+          current: currentPage, 
+          pageSize: 100 // Giới hạn tối đa của API
+        };
+        let qsArr: string[] = [];
+        
+        if (currentCategory) qsArr.push(`categoryId=${currentCategory.id}`);
+        if (qsArr.length > 0) params.qs = qsArr.join('&');
+        
+        const res = await axios.get('http://localhost:8080/api/v1/products', { params });
+        if (res.data?.data?.results) {
+          const products = res.data.data.results;
+          allProductsData = [...allProductsData, ...products];
+          
+          // Kiểm tra còn trang nào không
+          const meta = res.data.data.meta;
+          hasMore = currentPage < (meta?.pages || 1);
+          currentPage++;
         } else {
-          qsArr.push(`price>=${priceRange.min}`);
+          hasMore = false;
         }
       }
-      if (selectedVolumes.length > 0) qsArr.push(`volume=${selectedVolumes.join('|')}`);
-      if (selectedBrands.length > 0) qsArr.push(`brand=${selectedBrands.join('|')}`);
-
-      if (selectedRating !== null) qsArr.push(`rating>=${selectedRating}`);
-      if (qsArr.length > 0) params.qs = qsArr.join('&');
-      const res = await axios.get('http://localhost:8080/api/v1/products', { params });
-      if (res.data && res.data.data) {
-        const productResults = res.data.data.results || [];
-        setProducts(productResults);
-        // Chỉ check wishlist khi có sản phẩm mới và user đã đăng nhập
-        if (productResults.length > 0 && isSignin && user) {
-          const productIds = productResults.map(product => product._id).filter(Boolean);
-          const hasNewProducts = productIds.some(id => !(id in wishlistStatus));
-          if (hasNewProducts) {
-            checkWishlistStatus(productIds);
-          }
-        }
-        setMeta({
-          current: page,
-          pageSize: PAGE_SIZE,
-          pages: res.data.data.meta?.pages || 1,
-          total: res.data.data.meta?.total || 0,
-        });
-      } else {
-        setProducts([]);
+      
+      setAllProducts(allProductsData);
+      
+      // Cập nhật danh sách thương hiệu
+      const brands = [...new Set(allProductsData
+        .map((product: any) => product.brandId?.name)
+        .filter(Boolean)
+      )] as string[];
+      if (brands.length > 0) {
+        setAvailableBrands(brands.sort());
       }
-    } catch (err) {
-      setProducts([]);
-      setMeta(prev => ({
-        ...prev,
-        pages: 1,
-        total: 0,
-      }));
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setAllProducts([]);
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
     }
+  };
+  
+  // Lọc và phân trang sản phẩm
+  const filterAndPaginateProducts = () => {
+    setLoading(true);
+    
+    // Sử dụng setTimeout để cho phép UI cập nhật loading state
+    setTimeout(() => {
+      let filtered = [...allProducts];
+    
+    // Lọc theo tìm kiếm
+    if (search) {
+      filtered = filtered.filter(product => 
+        product.name?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    
+    // Lọc theo giá
+    if (selectedPriceRange !== null) {
+      const priceRange = PRICE_RANGES[selectedPriceRange];
+      filtered = filtered.filter(product => {
+        const price = product.price || 0;
+        if (priceRange.max) {
+          return price >= priceRange.min && price <= priceRange.max;
+        } else {
+          return price >= priceRange.min;
+        }
+      });
+    }
+    
+    // Lọc theo dung tích
+    if (selectedVolumes.length > 0) {
+      filtered = filtered.filter(product => {
+        const capacity = product.capacity || 0;
+        return selectedVolumes.some(volume => {
+          if (volume === '150ml+') {
+            return capacity >= 150;
+          }
+          const volumeNumber = parseInt(volume.replace(/ml/g, ''));
+          return capacity === volumeNumber;
+        });
+      });
+    }
+    
+    // Lọc theo thương hiệu
+    if (selectedBrands.length > 0) {
+      filtered = filtered.filter(product => {
+        const brandName = product.brandId?.name || '';
+        return selectedBrands.some(selectedBrand => 
+          brandName.toLowerCase().includes(selectedBrand.toLowerCase())
+        );
+      });
+    }
+    
+    // Lọc theo đánh giá
+    if (selectedRating !== null) {
+      filtered = filtered.filter(product => {
+        const rating = product.rating || 0;
+        return rating >= selectedRating;
+      });
+    }
+    
+    // Phân trang
+    const total = filtered.length;
+    const pages = Math.ceil(total / PAGE_SIZE);
+    const startIndex = (meta.current - 1) * PAGE_SIZE;
+    const endIndex = startIndex + PAGE_SIZE;
+    const paginatedProducts = filtered.slice(startIndex, endIndex);
+    
+    setProducts(paginatedProducts);
+    setMeta(prev => ({
+      ...prev,
+      pages: pages || 1,
+      total
+    }));
+    
+      // Check wishlist
+      if (paginatedProducts.length > 0 && isSignin && user) {
+        const productIds = paginatedProducts.map(product => product._id).filter(Boolean);
+        const hasNewProducts = productIds.some(id => !(id in wishlistStatus));
+        if (hasNewProducts) {
+          checkWishlistStatus(productIds);
+        }
+      }
+      
+      setLoading(false);
+    }, 100); // Delay ngắn để hiện thị loading
   };
 
   // Xử lý chuyển trang
@@ -147,29 +251,25 @@ const ProductPage = () => {
     clearTimeout((window as any).searchTimeout);
     (window as any).searchTimeout = setTimeout(() => {
       setSearch(e.target.value.trim());
-    }, 500);
+    }, 300); // Giảm thời gian debounce
   };
 
   // Xử lý lọc theo giá
   const handlePriceChange = (index: number) => {
     setSelectedPriceRange(selectedPriceRange === index ? null : index);
-    setMeta((prev) => ({ ...prev, current: 1 }));
   };
   // Xử lý lọc theo dung tích
   const handleVolumeChange = (volume: string) => {
     setSelectedVolumes(prev => prev.includes(volume) ? prev.filter(v => v !== volume) : [...prev, volume]);
-    setMeta((prev) => ({ ...prev, current: 1 }));
   };
   // Xử lý lọc theo thương hiệu
   const handleBrandChange = (brand: string) => {
     setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
-    setMeta((prev) => ({ ...prev, current: 1 }));
   };
 
   // Xử lý lọc theo đánh giá
   const handleRatingChange = (rating: number) => {
     setSelectedRating(selectedRating === rating ? null : rating);
-    setMeta((prev) => ({ ...prev, current: 1 }));
   };
 
   // Kiểm tra trạng thái wishlist cho tất cả sản phẩm (tối ưu hóa)
@@ -203,7 +303,7 @@ const ProductPage = () => {
   const handleToggleWishlist = async (productId: string) => {
     if (!isSignin || !user) {
       toast.error('Vui lòng đăng nhập để thêm vào yêu thích');
-      navigate('/auth/signin');
+      navigate('/signin');
       return;
     }
     try {
@@ -230,15 +330,26 @@ const ProductPage = () => {
     setSelectedPriceRange(null);
     setSelectedVolumes([]);
     setSelectedBrands([]);
-
     setSelectedRating(null);
-    setMeta(prev => ({ ...prev, current: 1 }));
+    setSearch('');
+    setSearchInput('');
+  };
+
+  const getCategoryTitle = () => {
+    return currentCategory?.name || 'Tất cả sản phẩm';
   };
 
   return (
     <div className="bg-white min-h-screen py-4">
       <div className="mx-auto max-w-[1440px] px-2 md:px-8 lg:px-16">
         {/* Breadcrumb & Title */}
+        <div className="py-4">
+          <nav className="text-sm text-gray-500 mb-2">
+            <span>Trang chủ</span> / <span>Cửa hàng</span>
+            {currentCategory && <span> / <span className="text-purple-600">{getCategoryTitle()}</span></span>}
+          </nav>
+          <h1 className="text-2xl font-bold text-gray-900">{getCategoryTitle()}</h1>
+        </div>
 
 
         <div className="flex flex-col md:flex-row gap-8">
@@ -327,7 +438,7 @@ const ProductPage = () => {
               </button>
               {showBrand && (
                 <div className="flex flex-col gap-2">
-                  {(showBrandMore ? BRANDS : BRANDS.slice(0, 5)).map(b => (
+                  {(showBrandMore ? availableBrands : availableBrands.slice(0, 5)).map(b => (
                     <label key={b} className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -338,7 +449,7 @@ const ProductPage = () => {
                       {b}
                     </label>
                   ))}
-                  {BRANDS.length > 5 && (
+                  {availableBrands.length > 5 && (
                     <button
                       type="button"
                       className="text-purple-600 text-sm flex items-center gap-1 mt-1"
@@ -450,7 +561,7 @@ const ProductPage = () => {
               </div>
             )}
 
-            {loading ? (
+            {initialLoading ? (
               <div className="text-center py-10">
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-purple-600 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
                   <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
@@ -460,8 +571,14 @@ const ProductPage = () => {
             ) : (
               <>
                 {products && products.length > 0 ? (
-                  <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-                    {products.map((product) => (
+                  <div className="relative">
+                    {loading && (
+                      <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-xl">
+                        <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-purple-600 border-r-transparent" />
+                      </div>
+                    )}
+                    <div className={`grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${loading ? 'opacity-50' : ''}`}>
+                      {products.map((product) => (
                       <div
                         key={product._id}
                         className="relative bg-white rounded-xl border-2 border-gray-200 shadow hover:shadow-xl transition p-4 flex flex-col items-center group cursor-pointer"
@@ -486,7 +603,7 @@ const ProductPage = () => {
                           />
                         </button>
                         <img
-                          src={product.image || product.img || 'https://via.placeholder.com/300x400?text=No+Image'}
+                          src={(product.image && Array.isArray(product.image) ? product.image[0] : product.image) || product.img || 'https://via.placeholder.com/300x400?text=No+Image'}
                           alt={product.name}
                           className="w-full h-60 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform duration-200"
                         />
@@ -500,14 +617,25 @@ const ProductPage = () => {
                         />
                         <div className="bg-neutral-100 rounded-lg px-4 py-2 font-bold text-purple-700 group-hover:bg-purple-600 group-hover:text-white transition mt-2">
                           {typeof product.price === 'number' ? product.price.toLocaleString() : product.price}₫
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="bg-white rounded-xl shadow p-10 text-center">
-                    <div className="text-gray-500 text-lg mb-2">Không tìm thấy sản phẩm nào phù hợp</div>
-                    <p className="text-gray-400">Vui lòng thử lại với các bộ lọc khác</p>
+                    <div className="text-gray-500 text-lg mb-2">
+                      {allProducts.length === 0 
+                        ? 'Chưa có sản phẩm nào trong danh mục này'
+                        : 'Không tìm thấy sản phẩm nào phù hợp'
+                      }
+                    </div>
+                    <p className="text-gray-400">
+                      {allProducts.length === 0
+                        ? 'Hãy quay lại sau hoặc xem các danh mục khác'
+                        : 'Vui lòng thử lại với các bộ lọc khác'
+                      }
+                    </p>
                   </div>
                 )}
                 {/* Pagination */}

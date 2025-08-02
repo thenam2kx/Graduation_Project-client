@@ -1,4 +1,35 @@
 import axiosInstance from '@/config/axios.customize';
+import axios from 'axios';
+
+// Lấy tất cả đánh giá (cho trang chủ) - chỉ lấy đánh giá đã approved
+export const fetchAllReviews = async (params?: string) => {
+  try {
+    // Sử dụng axios thông thường thay vì axiosInstance để không gửi token
+    const baseURL = 'http://localhost:8080';
+    const url = params ? `${baseURL}/api/v1/reviews/public?${params}` : `${baseURL}/api/v1/reviews/public?limit=10&sort=-createdAt`;
+    const response = await axios.get(url);
+    return response.data || {
+      statusCode: 200,
+      success: true,
+      data: {
+        results: [],
+        meta: { total: 0, page: 1, limit: 10, pages: 0 }
+      },
+      message: 'Không có đánh giá'
+    };
+  } catch (error) {
+    console.error('Lỗi khi lấy tất cả đánh giá:', error);
+    return {
+      statusCode: 500,
+      success: false,
+      data: {
+        results: [],
+        meta: { total: 0, page: 1, limit: 10, pages: 0 }
+      },
+      message: 'Lỗi khi lấy đánh giá'
+    };
+  }
+};
 
 // Lấy đánh giá theo ID sản phẩm
 export const fetchReviewsByProduct = async (productId: string, params?: string) => {
