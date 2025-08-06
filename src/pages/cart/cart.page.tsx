@@ -87,7 +87,7 @@ export default function ShoppingCartPage() {
 
   // Tính tổng chỉ cho sản phẩm đã chọn
   const selectedCartItems = cartItems.filter(item => selectedItems.includes(item._id))
-  const subtotal = selectedCartItems.reduce((sum: number, item: ICartItem) => sum + (item.variantId?.price || 0) * item.quantity, 0)
+  const subtotal = selectedCartItems.reduce((sum: number, item: ICartItem) => sum + (item.price || item.variantId?.price || 0) * item.quantity, 0)
   const shippingFee = selectedCartItems.length > 0 ? 30000 : 0 // Chỉ tính phí ship nếu có sản phẩm chọn
   const discountAmount = appliedDiscount?.discountAmount || 0
   const total = subtotal + shippingFee - discountAmount
@@ -155,7 +155,15 @@ export default function ShoppingCartPage() {
               </div>
 
               <div className="col-span-2">
-                <span className="font-medium text-[#333333]">{formatCurrencyVND(item.variantId?.price || 0)}</span>
+                {item.hasFlashSale ? (
+                  <div className="flex flex-col">
+                    <span className="font-medium text-red-600">{formatCurrencyVND(item.price || 0)}</span>
+                    <span className="text-xs text-gray-500 line-through">{formatCurrencyVND(item.originalPrice || item.variantId?.price || 0)}</span>
+                    <span className="text-xs text-red-600">⚡ -{item.discountPercent}%</span>
+                  </div>
+                ) : (
+                  <span className="font-medium text-[#333333]">{formatCurrencyVND(item.price || item.variantId?.price || 0)}</span>
+                )}
               </div>
 
               <div className="col-span-2">
@@ -181,7 +189,7 @@ export default function ShoppingCartPage() {
               </div>
 
               <div className="col-span-2">
-                <span className="font-medium text-[#333333]">{formatCurrencyVND(item.variantId?.price * item.quantity)}</span>
+                <span className="font-medium text-[#333333]">{formatCurrencyVND((item.price || item.variantId?.price || 0) * item.quantity)}</span>
               </div>
 
               <div className="col-span-2">

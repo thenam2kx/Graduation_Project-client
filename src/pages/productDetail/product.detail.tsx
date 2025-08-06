@@ -114,8 +114,11 @@ const ProductDetail = () => {
         console.log('Item product ID:', item.productId._id)
         console.log('Item variant ID:', item.variantId?._id)
         
-        // Chỉ cần khớp product ID vì variantId là object rỗng {}
-        return item.productId._id === product._id
+        // Kiểm tra khớp cả product ID và variant ID
+        const productMatch = item.productId._id === product._id
+        const variantMatch = item.variantId && item.variantId._id === selectedVariant._id
+        
+        return productMatch && variantMatch
       })
       
       console.log('Found Flash Sale Item:', flashSaleItem)
@@ -297,13 +300,13 @@ const ProductDetail = () => {
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{product?.name}</h1>
               {/* Price */}
               <div className="flex items-center gap-3 mt-2">
-                {flashSaleInfo ? (
+                {flashSaleInfo && selectedVariant ? (
                   <>
                     <span className="text-2xl font-bold text-red-600">
-                      {formatCurrencyVND(selectedVariant?.price * (1 - flashSaleInfo.discountPercent / 100) || 0)}
+                      {formatCurrencyVND(selectedVariant.price * (1 - flashSaleInfo.discountPercent / 100))}
                     </span>
                     <span className="text-lg text-gray-500 line-through">
-                      {formatCurrencyVND(selectedVariant?.price || 0)}
+                      {formatCurrencyVND(selectedVariant.price)}
                     </span>
                     <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium">
                       -{flashSaleInfo.discountPercent}%
@@ -323,11 +326,11 @@ const ProductDetail = () => {
                 )}
               </div>
               
-              {flashSaleInfo && (
+              {flashSaleInfo && selectedVariant && (
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-red-600 text-sm font-medium">⚡ Flash Sale</span>
                   <span className="text-green-600 text-sm">
-                    Tiết kiệm {formatCurrencyVND((selectedVariant?.price || 0) * flashSaleInfo.discountPercent / 100)}
+                    Tiết kiệm {formatCurrencyVND(selectedVariant.price * flashSaleInfo.discountPercent / 100)}
                   </span>
                 </div>
               )}
