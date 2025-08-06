@@ -10,6 +10,7 @@ import {
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router';
 import { addToWishlist, removeFromWishlist, checkProductInWishlist } from '@/services/wishlist-service/wishlist.apis';
+import { getFlashSaleProducts } from '@/services/flash-sale-service/flash-sale.apis';
 import { RootState } from '@/redux/store';
 import { toast } from 'react-toastify';
 import { useQueryClient } from '@tanstack/react-query';
@@ -57,6 +58,7 @@ const ProductPage = () => {
   const [searchInput, setSearchInput] = useState('');
   const [wishlistStatus, setWishlistStatus] = useState<Record<string, boolean>>({});
   const [availableBrands, setAvailableBrands] = useState<string[]>(DEFAULT_BRANDS);
+  const [flashSaleProducts, setFlashSaleProducts] = useState<any[]>([]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -77,7 +79,20 @@ const ProductPage = () => {
   // Lấy tất cả sản phẩm khi component mount hoặc category thay đổi
   useEffect(() => {
     fetchAllProducts();
+    fetchFlashSaleProducts();
   }, [currentCategory]);
+
+  // Lấy danh sách flash sale products
+  const fetchFlashSaleProducts = async () => {
+    try {
+      const res = await getFlashSaleProducts();
+      if (res && res.statusCode === 200 && res.data && Array.isArray(res.data)) {
+        setFlashSaleProducts(res.data);
+      }
+    } catch (error) {
+      console.error('Error fetching flash sale products:', error);
+    }
+  };
 
   // Lọc và phân trang khi có thay đổi
   useEffect(() => {
@@ -339,6 +354,11 @@ const ProductPage = () => {
     return currentCategory?.name || 'Tất cả sản phẩm';
   };
 
+  // Kiểm tra sản phẩm có flash sale không
+  const getProductFlashSale = (productId: string) => {
+    return flashSaleProducts.find(item => item.productId._id === productId);
+  };
+
   return (
     <div className="bg-white min-h-screen py-4">
       <div className="mx-auto max-w-[1440px] px-2 md:px-8 lg:px-16">
@@ -584,6 +604,16 @@ const ProductPage = () => {
                         className="relative bg-white rounded-xl border-2 border-gray-200 shadow hover:shadow-xl transition p-4 flex flex-col items-center group cursor-pointer"
                         onClick={() => navigate(`/productDetail/${product._id}`)}
                       >
+                        {/* Flash Sale Badge */}
+                        {(() => {
+                          const flashSale = getProductFlashSale(product._id);
+                          return flashSale ? (
+                            <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10 animate-pulse">
+                              -{flashSale.discountPercent}%
+                            </div>
+                          ) : null;
+                        })()}
+
                         {/* Heart icon ở góc trên phải */}
                         <button
                           className="absolute top-3 right-3 z-10 bg-white rounded-full p-1 shadow hover:bg-purple-100 transition"
@@ -647,7 +677,7 @@ const ProductPage = () => {
                         disabled={meta.current === 1}
                         onClick={() => handlePageChange(meta.current - 1)}
                       >
-                        &lt
+                        ←
                       </button>
                       {meta.current > 3 && (
                         <button
@@ -688,7 +718,7 @@ const ProductPage = () => {
                         disabled={meta.current === meta.pages}
                         onClick={() => handlePageChange(meta.current + 1)}
                       >
-                        &gt
+                        →
                       </button>
                     </nav>
                   </div>

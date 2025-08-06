@@ -132,7 +132,7 @@ const CheckoutForm = () => {
       await removeOrderedItems()
       queryClient.invalidateQueries({ queryKey: [CART_KEYS.FETCH_LIST_CART] })
 
-      const subtotal = selectedCartItems?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
+      const subtotal = selectedCartItems?.reduce((acc, item) => acc + ((item.price || item.variantId?.price) * item.quantity), 0) || 0
       const shippingPrice = getShippingFee()
       const discountAmount = appliedDiscount?.discountAmount || 0
       const calculatedTotalPrice = subtotal + shippingPrice - discountAmount
@@ -226,7 +226,7 @@ const CheckoutForm = () => {
 
     const currentAddressData = shippingAddress === 'different' ? form.getValues() : null
 
-    const subtotal = selectedCartItems?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
+    const subtotal = selectedCartItems?.reduce((acc, item) => acc + ((item.price || item.variantId?.price) * item.quantity), 0) || 0
     const shippingPrice = getShippingFee()
     const discountAmount = appliedDiscount?.discountAmount || 0
     const totalPrice = subtotal + shippingPrice - discountAmount
@@ -256,7 +256,7 @@ const CheckoutForm = () => {
         productId: item.productId?._id,
         variantId: item.variantId?._id,
         quantity: item.quantity,
-        price: item.variantId?.price
+        price: item.price || item.variantId?.price
       }))
     }
 
@@ -264,7 +264,7 @@ const CheckoutForm = () => {
   }
 
   // Tính toán tổng tiền
-  const subtotal = selectedCartItems?.reduce((acc, item) => acc + (item.variantId?.price * item.quantity), 0) || 0
+  const subtotal = selectedCartItems?.reduce((acc, item) => acc + ((item.price || item.variantId?.price) * item.quantity), 0) || 0
   const getShippingFee = () => {
     if (selectedCartItems?.length === 0) return 0;
     
@@ -339,7 +339,17 @@ const CheckoutForm = () => {
                       </h3>
                       <p className='text-sm text-gray-500'>Dung tích: {item.value} ml | Mã: {item.variantId?.sku}</p>
                     </div>
-                    <div className='text-sm font-medium text-gray-900'>{formatCurrencyVND(item.variantId?.price * item.quantity)}</div>
+                    <div className='text-sm font-medium text-gray-900'>
+                      {item.hasFlashSale ? (
+                        <div className='flex flex-col items-end'>
+                          <span className='text-red-600 font-semibold'>{formatCurrencyVND((item.price || item.variantId?.price) * item.quantity)}</span>
+                          <span className='text-xs text-gray-500 line-through'>{formatCurrencyVND(item.variantId?.price * item.quantity)}</span>
+                          <span className='text-xs text-red-600'>⚡ -{item.discountPercent}%</span>
+                        </div>
+                      ) : (
+                        formatCurrencyVND((item.price || item.variantId?.price) * item.quantity)
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
