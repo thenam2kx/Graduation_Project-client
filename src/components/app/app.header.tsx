@@ -206,50 +206,9 @@ const AppHeader = () => {
                 Trang chủ
               </Link>
 
-              <div className="px-2 py-3 text-neutral-700 font-medium">
-                <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleDropdown("mobileShop")}>
-                  <span>Cửa hàng</span>
-                  <ChevronDown size={18} className={`transition-transform ${activeDropdown === "mobileShop" ? "rotate-180" : ""}`} />
-                </div>
-
-                {activeDropdown === "mobileShop" && (
-                  <div className="mt-2 ml-4 flex flex-col gap-2">
-                    <Link to="/shops/men" className="py-2 hover:text-purple-600" onClick={() => setOpen(false)}>
-                      Nước hoa nam
-                    </Link>
-                    <Link to="/shops/women" className="py-2 hover:text-purple-600" onClick={() => setOpen(false)}>
-                      Nước hoa nữ
-                    </Link>
-                    <Link to="/shops/unisex" className="py-2 hover:text-purple-600" onClick={() => setOpen(false)}>
-                      Nước hoa unisex
-                    </Link>
-                    <Link to="/shops/gift-sets" className="py-2 hover:text-purple-600" onClick={() => setOpen(false)}>
-                      Bộ quà tặng
-                    </Link>
-                  </div>
-                )}
-              </div>
-
-              <div className="px-2 py-3 text-neutral-700 font-medium">
-                <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleDropdown("mobileCategory")}>
-                  <span>Danh mục</span>
-                  <ChevronDown size={18} className={`transition-transform ${activeDropdown === "mobileCategory" ? "rotate-180" : ""}`} />
-                </div>
-
-                {activeDropdown === "mobileCategory" && (
-                  <div className="mt-2 ml-4 flex flex-col gap-2">
-                    <Link to="/category/new-arrivals" className="py-2 hover:text-purple-600" onClick={() => setOpen(false)}>
-                      Sản phẩm mới
-                    </Link>
-                    <Link to="/category/best-sellers" className="py-2 hover:text-purple-600" onClick={() => setOpen(false)}>
-                      Bán chạy nhất
-                    </Link>
-                    <Link to="/category/sale" className="py-2 hover:text-purple-600" onClick={() => setOpen(false)}>
-                      Khuyến mãi
-                    </Link>
-                  </div>
-                )}
-              </div>
+              <Link to="/shops" className="px-2 py-3 text-neutral-700 font-medium hover:bg-purple-50 rounded-lg" onClick={() => setOpen(false)}>
+                Cửa hàng
+              </Link>
 
               <Link to="/blogs" className="px-2 py-3 text-neutral-700 font-medium hover:bg-purple-50 rounded-lg" onClick={() => setOpen(false)}>
                 Tin tức

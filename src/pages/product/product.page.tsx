@@ -360,8 +360,8 @@ const ProductPage = () => {
   };
 
   return (
-    <div className="bg-white min-h-screen py-4">
-      <div className="mx-auto max-w-[1440px] px-2 md:px-8 lg:px-16">
+    <div className="bg-white min-h-screen py-4 mt-[80px]">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8">
         {/* Breadcrumb & Title */}
         <div className="py-4">
           <nav className="text-sm text-gray-500 mb-2">

@@ -24,6 +24,8 @@ import { useNavigate, useLocation } from 'react-router'
 import { USER_KEYS } from '@/services/user-service/user.keys'
 import DiscountInput from '@/components/DiscountInput'
 import { getShippingRateByProvince } from '@/services/shipping-service/shipping-rates'
+import { getFlashSaleProducts, checkFlashSaleLimit } from '@/services/flash-sale-service/flash-sale.apis'
+import { FLASH_SALE_KEYS } from '@/services/flash-sale-service/flash-sale.keys'
 
 
 const formSchema = z.object({
@@ -62,11 +64,18 @@ const CheckoutForm = () => {
     address: ''
   })
   const [selectedCartItems, setSelectedCartItems] = useState<any[]>([])
+  const [flashSaleInfo, setFlashSaleInfo] = useState<{[key: string]: any}>({})
   const cartId = useAppSelector((state) => state.cart.IdCartUser)
   const userId = useAppSelector((state) => state.auth.user?._id)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const location = useLocation()
+
+  const { data: flashSaleProducts } = useQuery({
+    queryKey: [FLASH_SALE_KEYS.FETCH_ACTIVE_PRODUCTS],
+    queryFn: getFlashSaleProducts,
+    select: (res) => res && res.statusCode === 200 && res.data ? res.data : []
+  })
 
   // Lấy sản phẩm đã chọn từ trang cart
   useEffect(() => {
@@ -77,6 +86,40 @@ const CheckoutForm = () => {
       setAppliedDiscount(location.state.appliedDiscount)
     }
   }, [location.state])
+
+  // Kiểm tra flash sale cho từng item
+  useEffect(() => {
+    if (selectedCartItems.length > 0 && flashSaleProducts) {
+      const checkFlashSaleForItems = async () => {
+        const flashSaleData: {[key: string]: any} = {}
+        
+        for (const item of selectedCartItems) {
+          const flashSaleItem = flashSaleProducts.find((fs: any) => 
+            fs.productId._id === item.productId._id && 
+            fs.variantId?._id === item.variantId._id
+          )
+          
+          if (flashSaleItem) {
+            try {
+              const limitRes = await checkFlashSaleLimit(item.productId._id, item.variantId._id, item.quantity)
+              if (limitRes && limitRes.data) {
+                flashSaleData[item._id] = {
+                  ...flashSaleItem,
+                  limitInfo: limitRes.data
+                }
+              }
+            } catch (error) {
+              console.error('Error checking flash sale limit:', error)
+            }
+          }
+        }
+        
+        setFlashSaleInfo(flashSaleData)
+      }
+      
+      checkFlashSaleForItems()
+    }
+  }, [selectedCartItems, flashSaleProducts])
 
   const { data: listAddresses } = useQuery({
     queryKey: [USER_KEYS.FETCH_ALL_ADDRESS_BY_USER, userId],
@@ -132,7 +175,17 @@ const CheckoutForm = () => {
       await removeOrderedItems()
       queryClient.invalidateQueries({ queryKey: [CART_KEYS.FETCH_LIST_CART] })
 
-      const subtotal = selectedCartItems?.reduce((acc, item) => acc + ((item.price || item.variantId?.price) * item.quantity), 0) || 0
+      const subtotal = selectedCartItems?.reduce((acc, item) => {
+        const flashSale = flashSaleInfo[item._id]
+        const originalPrice = item.variantId?.price || 0
+        
+        if (flashSale && item.quantity <= (flashSale.limitInfo?.remainingQuantity || 0)) {
+          const flashSalePrice = originalPrice * (1 - flashSale.discountPercent / 100)
+          return acc + flashSalePrice * item.quantity
+        } else {
+          return acc + originalPrice * item.quantity
+        }
+      }, 0) || 0
       const shippingPrice = getShippingFee()
       const discountAmount = appliedDiscount?.discountAmount || 0
       const calculatedTotalPrice = subtotal + shippingPrice - discountAmount
@@ -226,7 +279,17 @@ const CheckoutForm = () => {
 
     const currentAddressData = shippingAddress === 'different' ? form.getValues() : null
 
-    const subtotal = selectedCartItems?.reduce((acc, item) => acc + ((item.price || item.variantId?.price) * item.quantity), 0) || 0
+    const subtotal = selectedCartItems?.reduce((acc, item) => {
+      const flashSale = flashSaleInfo[item._id]
+      const originalPrice = item.variantId?.price || 0
+      
+      if (flashSale && item.quantity <= (flashSale.limitInfo?.remainingQuantity || 0)) {
+        const flashSalePrice = originalPrice * (1 - flashSale.discountPercent / 100)
+        return acc + flashSalePrice * item.quantity
+      } else {
+        return acc + originalPrice * item.quantity
+      }
+    }, 0) || 0
     const shippingPrice = getShippingFee()
     const discountAmount = appliedDiscount?.discountAmount || 0
     const totalPrice = subtotal + shippingPrice - discountAmount
@@ -256,7 +319,16 @@ const CheckoutForm = () => {
         productId: item.productId?._id,
         variantId: item.variantId?._id,
         quantity: item.quantity,
-        price: item.price || item.variantId?.price
+        price: (() => {
+          const flashSale = flashSaleInfo[item._id]
+          const originalPrice = item.variantId?.price || 0
+          
+          if (flashSale && item.quantity <= (flashSale.limitInfo?.remainingQuantity || 0)) {
+            return originalPrice * (1 - flashSale.discountPercent / 100)
+          } else {
+            return originalPrice
+          }
+        })()
       }))
     }
 
@@ -264,7 +336,17 @@ const CheckoutForm = () => {
   }
 
   // Tính toán tổng tiền
-  const subtotal = selectedCartItems?.reduce((acc, item) => acc + ((item.price || item.variantId?.price) * item.quantity), 0) || 0
+  const subtotal = selectedCartItems?.reduce((acc, item) => {
+    const flashSale = flashSaleInfo[item._id]
+    const originalPrice = item.variantId?.price || 0
+    
+    if (flashSale && item.quantity <= (flashSale.limitInfo?.remainingQuantity || 0)) {
+      const flashSalePrice = originalPrice * (1 - flashSale.discountPercent / 100)
+      return acc + flashSalePrice * item.quantity
+    } else {
+      return acc + originalPrice * item.quantity
+    }
+  }, 0) || 0
   const getShippingFee = () => {
     if (selectedCartItems?.length === 0) return 0;
     
@@ -340,15 +422,25 @@ const CheckoutForm = () => {
                       <p className='text-sm text-gray-500'>Dung tích: {item.value} ml | Mã: {item.variantId?.sku}</p>
                     </div>
                     <div className='text-sm font-medium text-gray-900'>
-                      {item.hasFlashSale ? (
-                        <div className='flex flex-col items-end'>
-                          <span className='text-red-600 font-semibold'>{formatCurrencyVND((item.price || item.variantId?.price) * item.quantity)}</span>
-                          <span className='text-xs text-gray-500 line-through'>{formatCurrencyVND(item.variantId?.price * item.quantity)}</span>
-                          <span className='text-xs text-red-600'>⚡ -{item.discountPercent}%</span>
-                        </div>
-                      ) : (
-                        formatCurrencyVND((item.price || item.variantId?.price) * item.quantity)
-                      )}
+                      {(() => {
+                        const flashSale = flashSaleInfo[item._id]
+                        const originalPrice = item.variantId?.price || 0
+                        
+                        if (flashSale && item.quantity <= (flashSale.limitInfo?.remainingQuantity || 0)) {
+                          const flashSalePrice = originalPrice * (1 - flashSale.discountPercent / 100)
+                          return (
+                            <div className='flex flex-col items-end'>
+                              <span className='text-red-600 font-semibold'>{formatCurrencyVND(flashSalePrice * item.quantity)}</span>
+                              <span className='text-xs text-gray-500 line-through'>{formatCurrencyVND(originalPrice * item.quantity)}</span>
+                              <span className='text-xs text-red-600'>⚡ -{flashSale.discountPercent}%</span>
+                            </div>
+                          )
+                        } else {
+                          return (
+                            <span className='font-semibold'>{formatCurrencyVND(originalPrice * item.quantity)}</span>
+                          )
+                        }
+                      })()}
                     </div>
                   </div>
                 ))}
