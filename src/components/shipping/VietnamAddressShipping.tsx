@@ -1,50 +1,57 @@
 import { useState, useEffect } from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import VietnamAddressAPI from '@/components/address/VietnamAddressAPI'
 
-export interface GHNAddressData {
+export interface VietnamAddressData {
   fullName: string
   phone: string
+  provinceCode: string
   provinceName: string
+  districtCode: string
   districtName: string
+  wardCode: string
   wardName: string
   address: string
 }
 
-interface GHNAddressSelectorProps {
-  onChange: (data: GHNAddressData) => void
-  initialData?: GHNAddressData
+interface VietnamAddressShippingProps {
+  onChange: (data: VietnamAddressData) => void
+  initialData?: VietnamAddressData
 }
 
-export const GHNAddressSelector = ({ onChange, initialData }: GHNAddressSelectorProps) => {
-  // Form fields
+export const VietnamAddressShipping = ({ onChange, initialData }: VietnamAddressShippingProps) => {
   const [fullName, setFullName] = useState(initialData?.fullName || '')
   const [phone, setPhone] = useState(initialData?.phone || '')
-  const [provinceName, setProvinceName] = useState(initialData?.provinceName || '')
-  const [districtName, setDistrictName] = useState(initialData?.districtName || '')
-  const [wardName, setWardName] = useState(initialData?.wardName || '')
   const [address, setAddress] = useState(initialData?.address || '')
+  const [addressData, setAddressData] = useState({
+    provinceCode: initialData?.provinceCode || '',
+    provinceName: initialData?.provinceName || '',
+    districtCode: initialData?.districtCode || '',
+    districtName: initialData?.districtName || '',
+    wardCode: initialData?.wardCode || '',
+    wardName: initialData?.wardName || ''
+  })
 
-  // Xử lý số điện thoại
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
-    // Chỉ cho phép nhập số
     if (/^\d*$/.test(value)) {
       setPhone(value)
     }
   }
 
-  // Update parent component when address data changes
+  const handleAddressChange = (data: any) => {
+    setAddressData(data)
+  }
+
   useEffect(() => {
     onChange({
       fullName,
       phone,
-      provinceName,
-      districtName,
-      wardName,
+      ...addressData,
       address
     })
-  }, [fullName, phone, provinceName, districtName, wardName, address, onChange])
+  }, [fullName, phone, addressData, address, onChange])
 
   return (
     <div className="space-y-4">
@@ -77,43 +84,10 @@ export const GHNAddressSelector = ({ onChange, initialData }: GHNAddressSelector
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="province">Tỉnh/Thành phố</Label>
-          <Input
-            id="province"
-            value={provinceName}
-            onChange={(e) => setProvinceName(e.target.value)}
-            className="mt-1"
-            placeholder="Nhập tỉnh/thành phố"
-            required
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="district">Quận/Huyện</Label>
-          <Input
-            id="district"
-            value={districtName}
-            onChange={(e) => setDistrictName(e.target.value)}
-            className="mt-1"
-            placeholder="Nhập quận/huyện"
-            required
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="ward">Phường/Xã</Label>
-          <Input
-            id="ward"
-            value={wardName}
-            onChange={(e) => setWardName(e.target.value)}
-            className="mt-1"
-            placeholder="Nhập phường/xã"
-            required
-          />
-        </div>
-      </div>
+      <VietnamAddressAPI
+        value={addressData}
+        onChange={handleAddressChange}
+      />
 
       <div>
         <Label htmlFor="address">Địa chỉ cụ thể</Label>
