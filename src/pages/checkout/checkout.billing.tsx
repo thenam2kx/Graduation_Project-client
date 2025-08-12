@@ -23,9 +23,12 @@ import PaymentLoading from '@/components/payment/payment-loading'
 import { useNavigate, useLocation } from 'react-router'
 import { USER_KEYS } from '@/services/user-service/user.keys'
 import DiscountInput from '@/components/DiscountInput'
-import { getShippingRateByProvince } from '@/services/shipping-service/shipping-rates'
+import { calculateShippingFee, getEstimatedDeliveryTime, type ShippingMethod } from '@/services/shipping-service/shipping-calculator'
 import { getFlashSaleProducts, checkFlashSaleLimit } from '@/services/flash-sale-service/flash-sale.apis'
 import { FLASH_SALE_KEYS } from '@/services/flash-sale-service/flash-sale.keys'
+import { ProvinceSelector } from '@/components/address/ProvinceSelector'
+import { DistrictSelector } from '@/components/address/DistrictSelector'
+import { WardSelector } from '@/components/address/WardSelector'
 
 
 const formSchema = z.object({
@@ -61,7 +64,10 @@ const CheckoutForm = () => {
     province: '',
     district: '',
     ward: '',
-    address: ''
+    address: '',
+    provinceCode: '',
+    districtCode: '',
+    wardCode: ''
   })
   const [selectedCartItems, setSelectedCartItems] = useState<any[]>([])
   const [flashSaleInfo, setFlashSaleInfo] = useState<{[key: string]: any}>({})
@@ -237,16 +243,27 @@ const CheckoutForm = () => {
     }
   })
 
+  // Helper function to get current province name for shipping calculation
+  const getProvinceName = () => {
+    if (shippingAddress === 'same' && selectedAddress) {
+      return selectedAddress.province
+    } else if (shippingAddress === 'different' && addressFormData.province) {
+      return addressFormData.province
+    }
+    return ''
+  }
+
 
   const handleSubmitAddress = (values: z.infer<typeof formSchema>) => {
-    setAddressFormData({
+    setAddressFormData(prev => ({
+      ...prev,
       receiverName: values.receiverName,
       receiverPhone: values.receiverPhone,
       province: values.province,
       district: values.district,
       ward: values.ward,
       address: values.address
-    })
+    }))
     toast.success('Địa chỉ đã được lưu thành công!')
   }
 
@@ -359,22 +376,17 @@ const CheckoutForm = () => {
       provinceName = addressFormData.province;
     }
     
-    // Nếu có tỉnh thành, tính phí vận chuyển dựa trên khoảng cách
+    // Nếu có tỉnh thành, tính phí vận chuyển dựa trên tỉnh thành
     if (provinceName) {
       try {
-        return getShippingRateByProvince(provinceName, shippingMethod);
+        return calculateShippingFee(provinceName, shippingMethod as ShippingMethod);
       } catch (error) {
         console.error('Error calculating shipping fee:', error);
       }
     }
     
     // Giá mặc định nếu không có tỉnh thành hoặc có lỗi
-    switch (shippingMethod) {
-      case 'standard': return 30000;
-      case 'express-ghn': return 45000;
-      case 'express': return 60000;
-      default: return 30000;
-    }
+    return calculateShippingFee('', shippingMethod as ShippingMethod);
   }
   
   // Kiểm tra xem phương thức vận chuyển có cần tạo vận đơn không
@@ -569,46 +581,89 @@ const CheckoutForm = () => {
                                   )}
                                 />
                               </div>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <FormField
-                                  control={form.control}
-                                  name="province"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Tỉnh/Thành phố</FormLabel>
-                                      <FormControl>
-                                        <Input placeholder="Nhập tỉnh/thành phố" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={form.control}
-                                  name="district"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Quận/Huyện</FormLabel>
-                                      <FormControl>
-                                        <Input placeholder="Nhập quận/huyện" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={form.control}
-                                  name="ward"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Phường/Xã</FormLabel>
-                                      <FormControl>
-                                        <Input placeholder="Nhập phường/xã" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <FormField
+                                    control={form.control}
+                                    name="province"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Tỉnh/Thành phố</FormLabel>
+                                        <FormControl>
+                                          <ProvinceSelector
+                                            value={addressFormData.provinceCode}
+                                            onChange={(code, name) => {
+                                              field.onChange(name)
+                                              setAddressFormData(prev => ({ 
+                                                ...prev, 
+                                                province: name, 
+                                                provinceCode: code,
+                                                district: '',
+                                                districtCode: '',
+                                                ward: '',
+                                                wardCode: ''
+                                              }))
+                                              form.setValue('district', '')
+                                              form.setValue('ward', '')
+                                            }}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={form.control}
+                                    name="district"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Quận/Huyện</FormLabel>
+                                        <FormControl>
+                                          <DistrictSelector
+                                            provinceCode={addressFormData.provinceCode}
+                                            value={addressFormData.districtCode}
+                                            onChange={(code, name) => {
+                                              field.onChange(name)
+                                              setAddressFormData(prev => ({ 
+                                                ...prev, 
+                                                district: name, 
+                                                districtCode: code,
+                                                ward: '',
+                                                wardCode: ''
+                                              }))
+                                              form.setValue('ward', '')
+                                            }}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={form.control}
+                                    name="ward"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Phường/Xã</FormLabel>
+                                        <FormControl>
+                                          <WardSelector
+                                            districtCode={addressFormData.districtCode}
+                                            value={addressFormData.wardCode}
+                                            onChange={(code, name) => {
+                                              field.onChange(name)
+                                              setAddressFormData(prev => ({ 
+                                                ...prev, 
+                                                ward: name, 
+                                                wardCode: code
+                                              }))
+                                            }}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
                               </div>
                               <FormField
                                 control={form.control}
@@ -623,21 +678,7 @@ const CheckoutForm = () => {
                                   </FormItem>
                                 )}
                               />
-                              <Button
-                                type="button"
-                                className='cursor-pointer'
-                                onClick={() => {
-                                  form.trigger().then(isValid => {
-                                    if (isValid) {
-                                      const values = form.getValues()
-                                      setAddressFormData(values)
-                                      toast.success('Địa chỉ đã được lưu thành công!')
-                                    }
-                                  })
-                                }}
-                              >
-                                Lưu
-                              </Button>
+
                             </div>
                           </Form>
                         )
@@ -666,9 +707,15 @@ const CheckoutForm = () => {
                               <SelectValue placeholder="Chọn phương thức vận chuyển" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="standard">Giao hàng tiêu chuẩn (2-3 ngày) - {formatCurrencyVND(getShippingFee())}</SelectItem>
-                              <SelectItem value="express-ghn">Giao hàng nhanh - GHN (1-2 ngày) - {formatCurrencyVND(shippingMethod === 'express-ghn' ? getShippingFee() : Math.round(getShippingFee() * 1.5))}</SelectItem>
-                              <SelectItem value="express">Giao hàng hỏa tốc (24h) - {formatCurrencyVND(shippingMethod === 'express' ? getShippingFee() : Math.round(getShippingFee() * 2))}</SelectItem>
+                              <SelectItem value="standard">
+                                Giao hàng tiêu chuẩn ({getEstimatedDeliveryTime(getProvinceName(), 'standard')}) - {formatCurrencyVND(calculateShippingFee(getProvinceName(), 'standard'))}
+                              </SelectItem>
+                              <SelectItem value="express-ghn">
+                                Giao hàng nhanh - GHN ({getEstimatedDeliveryTime(getProvinceName(), 'express-ghn')}) - {formatCurrencyVND(calculateShippingFee(getProvinceName(), 'express-ghn'))}
+                              </SelectItem>
+                              <SelectItem value="express">
+                                Giao hàng hỏa tốc ({getEstimatedDeliveryTime(getProvinceName(), 'express')}) - {formatCurrencyVND(calculateShippingFee(getProvinceName(), 'express'))}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
