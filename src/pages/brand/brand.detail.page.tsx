@@ -43,7 +43,7 @@ const BrandDetailPage = () => {
   // Lấy sản phẩm theo brand
   const { data: productsData, isLoading: isLoadingProducts } = useQuery({
     queryKey: [PRODUCT_KEYS.FETCH_LIST_PRODUCT, 'brand', brandId],
-    queryFn: () => fetchListProduct({ brand: brandId }),
+    queryFn: () => fetchListProduct({ current: 1, pageSize: 100, qs: `brandId=${brandId}` }),
     enabled: !!brandId,
     select: (res) => res.data
   })
@@ -142,7 +142,7 @@ const BrandDetailPage = () => {
           </div>
         ) : (
           <>
-            <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8'>
+            <div className='grid mt-10 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8'>
               {currentProducts.map((product, idx) => (
                 <motion.div
                   key={product._id}
