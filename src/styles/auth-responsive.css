@@ -1,0 +1,106 @@
+/* Auth Pages Responsive Styles */
+
+/* Mobile First Approach */
+@media (max-width: 640px) {
+  /* Hide decorative elements on small screens */
+  .auth-decorative {
+    display: none !important;
+  }
+  
+  /* Adjust form spacing */
+  .auth-form-container {
+    padding: 1rem !important;
+    min-height: 100vh;
+  }
+  
+  /* Adjust button sizes */
+  .auth-button {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  /* Adjust input sizes */
+  .auth-input {
+    padding: 0.75rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  /* Adjust headings */
+  .auth-heading {
+    font-size: 1.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  /* Adjust text */
+  .auth-text {
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Tablet */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .auth-form-container {
+    padding: 2rem !important;
+  }
+  
+  .auth-button {
+    padding: 0.875rem 1.25rem !important;
+    font-size: 1rem !important;
+  }
+  
+  .auth-heading {
+    font-size: 1.875rem !important;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .auth-image-container {
+    display: block !important;
+  }
+  
+  .auth-form-container {
+    min-height: auto !important;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 1023px) and (orientation: landscape) {
+  .auth-container {
+    height: auto !important;
+    min-height: 100vh;
+  }
+  
+  .auth-form-container {
+    padding: 1rem !important;
+  }
+}
+
+/* High DPI screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .auth-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Focus states for accessibility */
+.auth-input:focus,
+.auth-button:focus {
+  outline: 2px solid #8a33fd;
+  outline-offset: 2px;
+}
+
+/* Loading states */
+.auth-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Animation performance */
+@media (prefers-reduced-motion: reduce) {
+  .auth-motion {
+    animation: none !important;
+    transition: none !important;
+  }
+}
