@@ -13,10 +13,10 @@ const App = () => {
         await fetchAccountAPI()
       } catch (error) {
         console.error('Error fetching account data:', error)
-        navigate('/signin')
+        // Không redirect, để user tự do xem trang
       }
     })()
-  }, [navigate])
+  }, [])
 
   return (
     <div>
