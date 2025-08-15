@@ -420,11 +420,6 @@ const ProductDetail = () => {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-gray-900">Số lượng</span>
-                {flashSaleInfo && flashSaleLimit && (
-                  <span className="text-sm text-red-600">
-                    Flash Sale: Còn {flashSaleLimit.remainingQuantity}/{flashSaleLimit.limitQuantity}
-                  </span>
-                )}
               </div>
               <div className="flex items-center border rounded-md w-fit">
                 <button
