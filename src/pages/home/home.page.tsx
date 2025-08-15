@@ -488,7 +488,7 @@ const HomePage = () => {
                     <img
                       src={slide.left.bg || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=400'}
                       alt={slide.left.title || 'Collection'}
-                      className='object-cover w-full h-80 md:h-full transition-transform duration-700 hover:scale-110'
+                      className='object-contain w-full h-60 md:h-80 transition-transform duration-700 hover:scale-105'
                       onError={(e) => {
                         e.currentTarget.src = 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=400';
                       }}
