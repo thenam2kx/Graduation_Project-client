@@ -15,6 +15,10 @@ interface AddressData {
   provinceCode?: string
   districtCode?: string
   wardCode?: string
+  orderValue?: number
+  cartItems?: any[]
+  onDiscountApplied?: (discount: any) => void
+  appliedDiscount?: any
 }
 
 const AddressRegistrationForm = () => {
@@ -36,7 +40,14 @@ const AddressRegistrationForm = () => {
   const handleAddressChange = (addressData: AddressData) => {
     setFormData(prev => ({
       ...prev,
-      address: addressData
+      address: {
+        province: addressData.province,
+        district: addressData.district,
+        ward: addressData.ward,
+        provinceCode: addressData.provinceCode || '',
+        districtCode: addressData.districtCode || '',
+        wardCode: addressData.wardCode || ''
+      }
     }))
     setAddressSelected(true)
   }

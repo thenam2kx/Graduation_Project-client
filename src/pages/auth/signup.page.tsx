@@ -28,7 +28,7 @@ const SignupPage = () => {
   const [isHovered, setIsHovered] = useState(false)
 
   const signupMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof formSchema>) => {
+    mutationFn: async (data: { email: string; password: string }) => {
       const res = await signupAPI(data)
       if (res.data) {
         return res.data
@@ -56,7 +56,9 @@ const SignupPage = () => {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    signupMutation.mutate(values as { email: string; password: string })
+    if (values.email && values.password) {
+      signupMutation.mutate({ email: values.email, password: values.password })
+    }
   }
 
   return (

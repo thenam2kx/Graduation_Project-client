@@ -30,7 +30,7 @@ const SigninPage = () => {
   const [isHovered, setIsHovered] = useState(false)
 
   const signinMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof formSchema>) => {
+    mutationFn: async (data: { email: string; password: string }) => {
       const res = await signinAPI(data)
       if (res.data) {
         return res.data
@@ -60,7 +60,9 @@ const SigninPage = () => {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    signinMutation.mutate(values as { email: string; password: string })
+    if (values.email && values.password) {
+      signinMutation.mutate({ email: values.email, password: values.password })
+    }
   }
 
   return (

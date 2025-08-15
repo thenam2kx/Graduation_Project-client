@@ -12,8 +12,8 @@ interface Product {
   price?: number
   img?: string
   image?: string
-  brand?: string
-  brandId?: string
+  brand?: string | { _id: string; name: string } | null
+  brandId?: string | { _id: string; name: string }
 }
 
 interface Brand {
@@ -66,8 +66,8 @@ const BrandDetailPage = () => {
     return product.brandId === brandId || 
            product.brand === brandId || 
            product.brand === brand.name ||
-           (product.brandId && product.brandId._id === brandId) ||
-           (typeof product.brand === 'object' && product.brand._id === brandId)
+           (typeof product.brandId === 'object' && product.brandId && product.brandId._id === brandId) ||
+           (typeof product.brand === 'object' && product.brand && product.brand._id === brandId)
   })
   
   console.log('Brand ID:', brandId)

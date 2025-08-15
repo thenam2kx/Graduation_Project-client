@@ -23,7 +23,7 @@ const ForgotPasswordPage = () => {
   const navigate = useNavigate()
 
   const sendEmailMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof formSchema>) => {
+    mutationFn: async (data: { email: string }) => {
       const res = await forgotPasswordAPI(data)
       const response = res as IBackendResponse<null>
       if (response.statusCode === 200) {
@@ -50,7 +50,9 @@ const ForgotPasswordPage = () => {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    sendEmailMutation.mutate(values as { email: string })
+    if (values.email) {
+      sendEmailMutation.mutate({ email: values.email })
+    }
   }
 
   return (

@@ -18,12 +18,12 @@ const ProvinceSelect = ({ onProvinceChange, onDistrictChange, onWardChange }: Pr
   const [selectedWard, setSelectedWard] = useState('')
 
   useEffect(() => {
-    getProvinces().then(setProvinces)
+    setProvinces(getProvinces())
   }, [])
 
   useEffect(() => {
     if (selectedProvince) {
-      getDistricts(selectedProvince).then(setDistricts)
+      setDistricts(getDistricts(selectedProvince))
       setWards([])
       setSelectedDistrict('')
       setSelectedWard('')
@@ -32,7 +32,7 @@ const ProvinceSelect = ({ onProvinceChange, onDistrictChange, onWardChange }: Pr
 
   useEffect(() => {
     if (selectedDistrict) {
-      getWards(selectedDistrict).then(setWards)
+      setWards(getWards(selectedDistrict))
       setSelectedWard('')
     }
   }, [selectedDistrict])

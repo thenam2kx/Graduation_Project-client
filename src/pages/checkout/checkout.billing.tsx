@@ -283,7 +283,12 @@ const CheckoutForm = () => {
         toast.error('Vui lòng nhập đầy đủ thông tin địa chỉ giao hàng')
         return
       }
-      setAddressFormData(formValues)
+      setAddressFormData({
+        ...formValues,
+        provinceCode: '',
+        districtCode: '',
+        wardCode: ''
+      } as any)
     } else if (shippingAddress === 'same' && !selectedAddress) {
       toast.error('Vui lòng chọn địa chỉ giao hàng')
       return
@@ -312,7 +317,7 @@ const CheckoutForm = () => {
     const totalPrice = subtotal + shippingPrice - discountAmount
 
     // Lấy ghi chú hiện tại (nếu có)
-    const currentNote = form.getValues()?.note || '';
+    const currentNote = (form.getValues() as any)?.note || '';
     
     // Tạo ghi chú mới với tiền tố GHN nếu cần
     // Đảm bảo note không bao giờ rỗng
