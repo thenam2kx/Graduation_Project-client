@@ -69,7 +69,7 @@ const NotificationBell = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute left-1/2 sm:right-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-lg shadow-lg border z-50 transform -translate-x-1/2 sm:translate-x-0">
+        <div className="absolute top-full mt-2 w-72 sm:w-80 bg-white rounded-lg shadow-lg border z-50 -right-4 sm:right-0">
           <div className="p-4 border-b">
             <div className="flex justify-between items-center">
               <h3 className="font-semibold">Thông báo</h3>
