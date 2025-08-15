@@ -137,7 +137,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({
                   className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                 >
                   <img
-                    src={product.image || '/placeholder-product.jpg'}
+                    src={Array.isArray(product.image) ? product.image[0] : product.image || '/placeholder-product.jpg'}
                     alt={product.name}
                     className="w-12 h-12 object-cover rounded"
                   />

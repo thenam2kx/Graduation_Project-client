@@ -60,7 +60,7 @@ const SigninPage = () => {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    signinMutation.mutate(values)
+    signinMutation.mutate(values as { email: string; password: string })
   }
 
   return (
@@ -192,7 +192,8 @@ const SigninPage = () => {
                   </div>
 
                   <motion.div
-                    whileHover={() => setIsHovered(true)}
+                    whileHover={{ scale: 1.02 }}
+                    onHoverStart={() => setIsHovered(true)}
                     onHoverEnd={() => setIsHovered(false)}
                   >
                     <Button

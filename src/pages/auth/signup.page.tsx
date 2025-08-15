@@ -56,7 +56,7 @@ const SignupPage = () => {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    signupMutation.mutate(values)
+    signupMutation.mutate(values as { email: string; password: string })
   }
 
   return (

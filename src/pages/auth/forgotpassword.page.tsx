@@ -50,7 +50,7 @@ const ForgotPasswordPage = () => {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    sendEmailMutation.mutate(values)
+    sendEmailMutation.mutate(values as { email: string })
   }
 
   return (

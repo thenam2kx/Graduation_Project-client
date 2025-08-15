@@ -12,7 +12,19 @@ export interface IOrder {
     district?: string
     province?: string
   }
-  addressFree?: string
+  addressFree?: {
+    receiverName?: string
+    receiverPhone?: string
+    province?: string
+    district?: string
+    ward?: string
+    address?: string
+  } | string
+  shipping?: {
+    orderCode?: string
+    statusCode?: string
+    statusName?: string
+  }
   discountId?: string | null
   createdAt: string
   updatedAt: string

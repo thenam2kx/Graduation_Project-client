@@ -11,8 +11,12 @@ export interface IProduct {
   brandId?: {
     name: string
     _id: string
-  }
-  image?: string[]
+  } | string
+  brand?: {
+    _id: string
+    name: string
+  } | null
+  image?: string[] | string
   stock?: number
   status?: string
   variants?: {
@@ -21,6 +25,7 @@ export interface IProduct {
     stock: number
     price: number
     image: string
+    discount?: number
     variant_attributes: {
       _id?: string
       variantId: string

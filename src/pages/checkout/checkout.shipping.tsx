@@ -101,7 +101,7 @@ const CheckoutShipping = () => {
               ) : (
                 <div>
                   <Label htmlFor="shippingMethod">Chọn phương thức vận chuyển</Label>
-                  <Select value={shippingMethod} onValueChange={setShippingMethod}>
+                  <Select value={shippingMethod} onValueChange={(value: string) => setShippingMethod(value as ShippingMethod)}>
                     <SelectTrigger id="shippingMethod" className="mt-1 w-full">
                       <SelectValue placeholder="Chọn phương thức vận chuyển" />
                     </SelectTrigger>
