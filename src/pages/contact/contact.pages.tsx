@@ -33,7 +33,7 @@ export const ContactForm = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset
-  } = useForm<ContactFormProps>({
+  } = useForm({
     resolver: zodResolver(contactSchema)
   })
 

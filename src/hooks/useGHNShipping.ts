@@ -24,7 +24,7 @@ export const useGHNShipping = ({ addressData, cartItems }: UseGHNShippingProps) 
     const fetchServices = async () => {
       setLoading(true)
       try {
-        const services = await GHNService.getAvailableServices(addressData.districtId)
+        const services = await GHNService.getAvailableServices(Number(addressData.districtId))
         setAvailableServices(services)
 
         // Tự động chọn service_id phù hợp với phương thức vận chuyển

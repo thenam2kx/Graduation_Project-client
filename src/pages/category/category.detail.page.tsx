@@ -41,29 +41,15 @@ const CategoryDetailPage = () => {
   // Lấy sản phẩm theo category
   const { data: productsData, isLoading: isLoadingProducts } = useQuery({
     queryKey: [PRODUCT_KEYS.FETCH_LIST_PRODUCT, 'category', categoryId],
-    queryFn: () => fetchListProduct({ category: categoryId }),
+    queryFn: () => fetchListProduct({ current: 1, pageSize: 100, qs: `categoryId=${categoryId}` }),
     enabled: !!categoryId,
     select: (res) => res.data
   })
 
   const category: Category = categoryData || {}
   
-  // Xử lý dữ liệu sản phẩm
-  let allProducts: Product[] = []
-  if (productsData?.results && Array.isArray(productsData.results)) {
-    allProducts = productsData.results
-  } else if (productsData && Array.isArray(productsData)) {
-    allProducts = productsData
-  } else if (productsData?.data?.results && Array.isArray(productsData.data.results)) {
-    allProducts = productsData.data.results
-  }
-  
-  // Filter sản phẩm theo category (client-side)
-  const products: Product[] = allProducts.filter(product => {
-    return product.categoryId === categoryId || 
-           (product.categoryId && product.categoryId._id === categoryId) ||
-           (typeof product.categoryId === 'object' && product.categoryId._id === categoryId)
-  })
+  // Xử lý dữ liệu sản phẩm (API đã filter theo categoryId)
+  const products: Product[] = productsData?.results || []
 
   // Pagination
   const totalPages = Math.ceil(products.length / productsPerPage)
@@ -79,7 +65,7 @@ const CategoryDetailPage = () => {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className='min-h-screen bg-gray-50 mt-[80px]'>
       {/* Header */}
       <div className='bg-white shadow-sm'>
         <div className='container mx-auto px-4 py-6'>
@@ -132,7 +118,7 @@ const CategoryDetailPage = () => {
           </div>
         ) : (
           <>
-            <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8'>
+            <div className='grid grid-cols-2 mt-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8'>
               {currentProducts.map((product, idx) => (
                 <motion.div
                   key={product._id}

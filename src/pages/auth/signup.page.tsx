@@ -28,7 +28,7 @@ const SignupPage = () => {
   const [isHovered, setIsHovered] = useState(false)
 
   const signupMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof formSchema>) => {
+    mutationFn: async (data: { email: string; password: string }) => {
       const res = await signupAPI(data)
       if (res.data) {
         return res.data
@@ -56,23 +56,25 @@ const SignupPage = () => {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    signupMutation.mutate(values)
+    if (values.email && values.password) {
+      signupMutation.mutate({ email: values.email, password: values.password })
+    }
   }
 
   return (
-    <div className="flex flex-row justify-center items-center w-screen h-screen overflow-hidden p-0 m-0 bg-gradient-to-br from-purple-50 to-pink-50">
-      <div className="w-full relative flex justify-center items-center">
-        <div className="flex shadow-2xl rounded-xl overflow-hidden max-w-7xl w-full">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
+      <div className="w-full max-w-7xl mx-auto">
+        <div className="flex flex-col lg:flex-row shadow-2xl rounded-xl overflow-hidden bg-white">
           {/* Left Image */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="w-1/2 h-screen relative overflow-hidden"
+            className="hidden lg:block lg:w-1/2 relative"
           >
             <div className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-pink-900/40 z-10"></div>
             <img
-              className="w-full h-full object-cover"
+              className="w-full h-96 lg:h-screen object-cover"
               alt="Bộ sưu tập nước hoa"
               src="https://images.unsplash.com/photo-1590736704728-f4730bb30770?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cGVyZnVtZXxlbnwwfHwwfHx8MA%3D%3D"
             />
@@ -92,13 +94,13 @@ const SignupPage = () => {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="w-1/2 px-16 py-10 relative bg-white"
+            className="w-full lg:w-1/2 p-6 lg:p-16 flex flex-col justify-center overflow-y-auto"
           >
             <motion.h1
               initial={{ y: -20 }}
               animate={{ y: 0 }}
               transition={{ duration: 0.5 }}
-              className="font-bold text-[#333333] text-3xl mb-4"
+              className="font-bold text-[#333333] text-2xl lg:text-3xl mb-4"
             >
               Đăng ký
             </motion.h1>
@@ -107,7 +109,7 @@ const SignupPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="mb-6 font-medium text-[#666666cc] text-base"
+              className="mb-6 font-medium text-[#666666cc] text-sm lg:text-base"
             >
               Đăng ký miễn phí để truy cập vào bất kỳ sản phẩm nào của chúng tôi
             </motion.p>
@@ -121,7 +123,7 @@ const SignupPage = () => {
             >
               <Button
                 variant="outline"
-                className="w-full flex items-center justify-center gap-3 px-5 py-4 rounded-lg border border-solid border-[#3c4242] font-medium text-[#8a33fd] text-xl hover:bg-purple-50"
+                className="w-full flex items-center justify-center gap-3 px-5 py-3 lg:py-4 rounded-lg border border-solid border-[#3c4242] font-medium text-[#8a33fd] text-lg lg:text-xl hover:bg-purple-50"
               >
                 <img className="w-5 h-5" alt="Google" src={googleIcon} />
                 Tiếp tục với Google
@@ -129,7 +131,7 @@ const SignupPage = () => {
 
               <Button
                 variant="outline"
-                className="w-full flex items-center justify-center gap-3 px-5 py-4 rounded-lg border border-solid border-[#3c4242] font-medium text-[#8a33fd] text-xl hover:bg-purple-50"
+                className="w-full flex items-center justify-center gap-3 px-5 py-3 lg:py-4 rounded-lg border border-solid border-[#3c4242] font-medium text-[#8a33fd] text-lg lg:text-xl hover:bg-purple-50"
               >
                 <img className="w-5 h-5" alt="Twitter" src={twitterIcon} />
                 Tiếp tục với Facebook
@@ -200,7 +202,7 @@ const SignupPage = () => {
                   >
                     <Button
                       type="submit"
-                      className={`w-40 flex items-center justify-center gap-3 px-5 py-4 rounded-lg font-medium text-white text-lg transition-all duration-500 ${isHovered ? 'bg-gradient-to-r from-purple-600 to-pink-500 shadow-lg shadow-purple-300' : 'bg-[#8a33fd]'}`}
+                      className={`w-full lg:w-40 flex items-center justify-center gap-3 px-5 py-3 lg:py-4 rounded-lg font-medium text-white text-base lg:text-lg transition-all duration-500 ${isHovered ? 'bg-gradient-to-r from-purple-600 to-pink-500 shadow-lg shadow-purple-300' : 'bg-[#8a33fd]'}`}
                     >
                       Đăng ký
                     </Button>
@@ -214,7 +216,7 @@ const SignupPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
-              className="mt-6 font-normal text-[#3c4242] text-base"
+              className="mt-6 font-normal text-[#3c4242] text-sm lg:text-base"
             >
               Bạn đã có tài khoản?{' '}
               <Link to="/signin" className="text-purple-700 underline hover:text-purple-900 transition-colors duration-300">
@@ -227,7 +229,7 @@ const SignupPage = () => {
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 1.2, duration: 0.8 }}
-              className="absolute bottom-10 right-10 w-24 h-24 rounded-full bg-gradient-to-br from-purple-200/30 to-pink-200/30 blur-md z-0"
+              className="absolute bottom-10 right-10 w-24 h-24 rounded-full bg-gradient-to-br from-purple-200/30 to-pink-200/30 blur-md z-0 hidden lg:block"
             />
           </motion.div>
         </div>

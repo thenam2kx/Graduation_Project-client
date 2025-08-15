@@ -288,7 +288,7 @@ const ProductDetail = () => {
           {/* Product Images */}
           <div className="lg:col-span-7 flex flex-col md:flex-row gap-4">
             <div className="flex md:flex-col gap-2 order-2 md:order-1">
-              {product?.image && product?.image.length > 0 && product?.image.map((img: string, index: number) => (
+              {product?.image && Array.isArray(product.image) && product.image.map((img: string, index: number) => (
                 <div
                   key={index}
                   className={`w-16 h-16 md:w-20 md:h-20 rounded-lg border overflow-hidden cursor-pointer transition-colors ${selectedImage === img ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-500'}`}
@@ -318,7 +318,7 @@ const ProductDetail = () => {
           <div className="lg:col-span-5 flex flex-col">
             {/* Brand & Title */}
             <div className="mb-4">
-              <div className="text-sm font-medium text-purple-600 mb-2">{product?.brandId?.name || 'Thương hiệu'}</div>
+              <div className="text-sm font-medium text-purple-600 mb-2">{typeof product?.brandId === 'object' ? product?.brandId?.name : 'Thương hiệu'}</div>
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{product?.name}</h1>
               {/* Price */}
               <div className="flex items-center gap-3 mt-2">

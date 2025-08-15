@@ -66,8 +66,8 @@ const OrderDetails = () => {
   const getShippingAddress = () => {
     if (order?.addressFree) {
       return {
-        name: order.addressFree.receiverName || order.userId?.fullName,
-        phone: order.addressFree.receiverPhone || order.userId?.phone,
+        name: (typeof order.addressFree === 'object' ? order.addressFree.receiverName : null) || order.userId?.fullName,
+        phone: (typeof order.addressFree === 'object' ? order.addressFree.receiverPhone : null) || order.userId?.phone,
         address: formatFreeAddress(order.addressFree)
       }
     } else if (order?.addressId) {

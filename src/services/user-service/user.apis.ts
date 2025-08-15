@@ -11,13 +11,13 @@ export const fetchUserAPI = async (id: string) => {
 }
 
 //Api updateinfor
-export const updateUserAPI = async (id: string, data: { fullName: string; phone: string }) => {
+export const updateUserAPI = async (id: string, data: { fullName?: string; phone?: string }) => {
   const url = `/api/v1/users/${id}`
   return axios.patch<IBackendResponse<IUser>>(url, data)
 }
 
 // Api handle address
-export const createAddressAPI = async (userId: string, address: IAddress) => {
+export const createAddressAPI = async (userId: string, address: Omit<IAddress, '_id' | 'userId'>) => {
   const url = `/api/v1/users/${userId}/addresses`
   return axios.post<IBackendResponse<IAddress>>(url, address)
 }

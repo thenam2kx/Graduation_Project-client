@@ -2,10 +2,12 @@ import { createSlice } from '@reduxjs/toolkit'
 
 interface IState {
   IdCartUser?: string
+  selectedItems: string[]
 }
 
 const initialState: IState = {
-  IdCartUser: ''
+  IdCartUser: '',
+  selectedItems: []
 }
 
 const cartSlice = createSlice({

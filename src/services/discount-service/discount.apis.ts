@@ -15,9 +15,21 @@ export interface IDiscount {
   description?: string
 }
 
+export interface IApplyDiscountResponse {
+  discountAmount: number
+  finalAmount: number
+  discountCode: string
+  discount: {
+    code: string
+    type: string
+    value: number
+    description?: string
+  }
+}
+
 export const applyDiscountAPI = async (code: string, orderValue: number) => {
   try {
-    const response = await axios.post<IBackendResponse<any>>('/api/v1/discounts/apply', {
+    const response = await axios.post<IBackendResponse<IApplyDiscountResponse>>('/api/v1/discounts/apply', {
       code,
       orderValue
     })

@@ -11,6 +11,10 @@ export interface VNPayPaymentResponse {
   paymentUrl: string
   message?: string
   error?: string
+  data?: {
+    paymentUrl: string
+    orderId: string
+  }
 }
 
 export interface VNPayReturnResponse {
