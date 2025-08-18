@@ -130,6 +130,7 @@ interface Category {
 interface Brand {
   _id: string
   name: string
+  avatar?: string
   img?: string
   logo?: string
   image?: string
@@ -488,7 +489,7 @@ const HomePage = () => {
                     <img
                       src={slide.left.bg || 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=400'}
                       alt={slide.left.title || 'Collection'}
-                      className='object-cover w-full h-80 md:h-full transition-transform duration-700 hover:scale-110'
+                      className='object-contain w-full h-60 md:h-80 transition-transform duration-700 hover:scale-105'
                       onError={(e) => {
                         e.currentTarget.src = 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=400';
                       }}
@@ -772,6 +773,12 @@ const HomePage = () => {
             <div className='w-1.5 h-8 bg-blue-600 rounded-full mr-3'></div>
             <h3 className='text-2xl sm:text-3xl font-bold'>Thương hiệu nổi bật</h3>
           </div>
+          <button
+            className='text-blue-600 text-sm sm:text-base font-medium hover:underline flex items-center'
+            onClick={() => navigate('/brands')}
+          >
+            Xem tất cả <ChevronRight size={14} className='ml-1' />
+          </button>
         </div>
 
         <div className='bg-gradient-to-r from-blue-50 to-sky-50 p-4 sm:p-6 rounded-2xl'>
@@ -802,37 +809,47 @@ const HomePage = () => {
             {brands.map((brand: Brand, idx: number) => (
               <SwiperSlide key={brand._id || idx}>
                 <motion.div
-                  className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition p-3 sm:p-5 flex flex-col items-center group cursor-pointer'
+                  className='bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 p-4 sm:p-6 flex flex-col items-center justify-center group cursor-pointer relative overflow-hidden h-[140px] sm:h-[160px]'
                   custom={idx}
                   initial='hidden'
                   whileInView='visible'
                   viewport={{ once: true }}
                   variants={fadeInUp}
-                  whileHover={{ y: -5 }}
+                  whileHover={{ y: -8, scale: 1.02 }}
                   onClick={() => navigate(`/brand/${brand._id}`)}
                 >
-                  <div className='h-12 sm:h-16 flex items-center justify-center mb-2 sm:mb-3'>
+                  {/* Background decoration */}
+                  <div className='absolute top-0 right-0 w-16 h-16 bg-blue-100 rounded-full -mr-8 -mt-8 opacity-50 group-hover:opacity-70 transition-opacity'></div>
+                  <div className='absolute bottom-0 left-0 w-12 h-12 bg-sky-100 rounded-full -ml-6 -mb-6 opacity-50 group-hover:opacity-70 transition-opacity'></div>
+
+                  {/* Brand logo/image */}
+                  <div className='relative z-10 w-16 h-16 sm:w-20 sm:h-20 mb-3 sm:mb-4 flex items-center justify-center bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl group-hover:from-blue-100 group-hover:to-sky-100 transition-all duration-300'>
                     <img
-                      src={brand.img || brand.logo || brand.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}&background=3b82f6&color=fff&size=200`}
+                      src={brand.avatar || brand.img || brand.logo || brand.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}&background=3b82f6&color=fff&size=200`}
                       alt={brand.name || 'Brand'}
-                      className='max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-300'
+                      className='w-12 h-12 sm:w-16 sm:h-16 object-contain group-hover:scale-110 transition-transform duration-300 rounded-lg'
                       onError={(e) => {
                         e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}&background=3b82f6&color=fff&size=200`;
                       }}
                     />
                   </div>
 
-                  <div className='font-medium text-sm sm:text-base text-center line-clamp-1 max-w-[120px] sm:max-w-[150px]'>
+                  {/* Brand name */}
+                  <div className='relative z-10 font-semibold text-sm sm:text-base text-center line-clamp-2 max-w-[100px] sm:max-w-[120px] mb-2 group-hover:text-blue-600 transition-colors'>
                     {brand.name}
                   </div>
 
-                  <div className='w-8 sm:w-12 h-0.5 bg-blue-500 mt-1 sm:mt-2 group-hover:w-16 sm:group-hover:w-20 transition-all duration-300'></div>
+                  {/* Decorative line */}
+                  <div className='relative z-10 w-8 sm:w-12 h-0.5 bg-gradient-to-r from-blue-400 to-sky-400 group-hover:w-16 sm:group-hover:w-20 transition-all duration-300 rounded-full'></div>
+
+                  {/* Hover effect overlay */}
+                  <div className='absolute inset-0 bg-gradient-to-t from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl'></div>
                 </motion.div>
               </SwiperSlide>
             ))}
+
+
           </Swiper>
-
-
         </div>
       </motion.section>
     </div>

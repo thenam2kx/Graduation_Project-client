@@ -141,7 +141,7 @@ export default function ShoppingCartPage() {
       return sum + originalPrice * item.quantity
     }
   }, 0)
-  const shippingFee = selectedCartItems.length > 0 ? 30000 : 0 // Chỉ tính phí ship nếu có sản phẩm chọn
+  const shippingFee = 0 // Bỏ phí ship, luôn bằng 0
   const discountAmount = appliedDiscount?.discountAmount || 0
   const total = subtotal + shippingFee - discountAmount
 
@@ -160,8 +160,8 @@ export default function ShoppingCartPage() {
 
       {/* Cart Table */}
       <div className="max-w-7xl mx-auto px-4 mb-8">
-        <div className="bg-[#3c4242] text-white">
-          <div className="grid grid-cols-13 gap-4 p-4 text-sm font-medium">
+        <div className="bg-[#3c4242] text-white hidden md:block">
+          <div className="grid grid-cols-12 gap-4 p-4 text-sm font-medium">
             <div className="col-span-1 flex items-center">
               <input
                 type="checkbox"
@@ -175,13 +175,14 @@ export default function ShoppingCartPage() {
             <div className="col-span-2">GIÁ</div>
             <div className="col-span-2">SỐ LƯỢNG</div>
             <div className="col-span-2">TỔNG CỘNG</div>
-            <div className="col-span-2">HÀNH ĐỘNG</div>
+            <div className="col-span-1">XÓA</div>
           </div>
         </div>
 
         {cartItems.map((item: ICartItem) => (
           <div key={item._id} className="border-b border-[#f3f3f3] p-4">
-            <div className="grid grid-cols-13 gap-4 items-center">
+            {/* Desktop Layout */}
+            <div className="hidden md:grid md:grid-cols-12 gap-4 items-center">
               <div className="col-span-1 flex items-center">
                 <input
                   type="checkbox"
@@ -270,7 +271,7 @@ export default function ShoppingCartPage() {
                 })()}
               </div>
 
-              <div className="col-span-2">
+              <div className="col-span-1">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -279,6 +280,104 @@ export default function ShoppingCartPage() {
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
+              </div>
+            </div>
+
+            {/* Mobile Layout */}
+            <div className="md:hidden">
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(item._id)}
+                  onChange={() => handleSelectItem(item._id)}
+                  className="w-4 h-4 mt-1"
+                  aria-label="Chọn sản phẩm"
+                />
+                <img
+                  src={item.variantId?.image ? `http://localhost:8080${item.variantId?.image}` : `${item.productId.image[0]}`}
+                  alt={item.productId.name}
+                  width={60}
+                  height={60}
+                  className="rounded-lg bg-[#f6f6f6] flex-shrink-0"
+                  crossOrigin='anonymous'
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-[#333333] cursor-pointer text-sm" onClick={() => navigate(`/productDetail/${item.productId._id}`)}>{item.productId.name}</h3>
+                  <p className="text-xs text-[#807d7e]">Dung tích: {item.value} ml</p>
+                  
+                  <div className="mt-2">
+                    {(() => {
+                      const flashSale = flashSaleInfo[item._id]
+                      const originalPrice = item.variantId?.price || 0
+                      
+                      if (flashSale && item.quantity <= (flashSale.limitInfo?.remainingQuantity || 0)) {
+                        const flashSalePrice = originalPrice * (1 - flashSale.discountPercent / 100)
+                        return (
+                          <div className="flex flex-col">
+                            <span className="font-medium text-red-600 text-sm">{formatCurrencyVND(flashSalePrice)}</span>
+                            <span className="text-xs text-gray-500 line-through">{formatCurrencyVND(originalPrice)}</span>
+                            <span className="text-xs text-red-600">⚡ -{flashSale.discountPercent}%</span>
+                          </div>
+                        )
+                      } else {
+                        return (
+                          <div className="flex flex-col">
+                            <span className="font-medium text-[#333333] text-sm">{formatCurrencyVND(originalPrice)}</span>
+                            {flashSale && item.quantity > (flashSale.limitInfo?.remainingQuantity || 0) && (
+                              <span className="text-xs text-orange-600">⚠️ Vượt quá flash sale</span>
+                            )}
+                          </div>
+                        )
+                      }
+                    })()}
+                  </div>
+
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="w-7 h-7"
+                        onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                      >
+                        <Minus className="w-3 h-3" />
+                      </Button>
+                      <span className="w-6 text-center text-sm">{item.quantity}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="w-7 h-7"
+                        onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                      >
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-[#333333] text-sm">
+                        {(() => {
+                          const flashSale = flashSaleInfo[item._id]
+                          const originalPrice = item.variantId?.price || 0
+                          
+                          if (flashSale && item.quantity <= (flashSale.limitInfo?.remainingQuantity || 0)) {
+                            const flashSalePrice = originalPrice * (1 - flashSale.discountPercent / 100)
+                            return formatCurrencyVND(flashSalePrice * item.quantity)
+                          } else {
+                            return formatCurrencyVND(originalPrice * item.quantity)
+                          }
+                        })()}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-[#8a33fd] hover:text-[#6639a6] w-7 h-7"
+                        onClick={() => removeItem(item._id)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -308,10 +407,6 @@ export default function ShoppingCartPage() {
               <span className="font-medium text-[#333333]">
                 {formatCurrencyVND(subtotal)}
               </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#333333]">Phí ship</span>
-              <span className="font-medium text-[#333333]">{formatCurrencyVND(shippingFee)}</span>
             </div>
             {appliedDiscount && (
               <div className="flex justify-between text-green-600">
