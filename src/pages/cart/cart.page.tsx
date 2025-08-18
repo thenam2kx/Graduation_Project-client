@@ -141,7 +141,7 @@ export default function ShoppingCartPage() {
       return sum + originalPrice * item.quantity
     }
   }, 0)
-  const shippingFee = selectedCartItems.length > 0 ? 30000 : 0 // Chỉ tính phí ship nếu có sản phẩm chọn
+  const shippingFee = 0 // Bỏ phí ship, luôn bằng 0
   const discountAmount = appliedDiscount?.discountAmount || 0
   const total = subtotal + shippingFee - discountAmount
 
@@ -407,10 +407,6 @@ export default function ShoppingCartPage() {
               <span className="font-medium text-[#333333]">
                 {formatCurrencyVND(subtotal)}
               </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#333333]">Phí ship</span>
-              <span className="font-medium text-[#333333]">{formatCurrencyVND(shippingFee)}</span>
             </div>
             {appliedDiscount && (
               <div className="flex justify-between text-green-600">
