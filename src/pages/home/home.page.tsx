@@ -773,12 +773,7 @@ const HomePage = () => {
             <div className='w-1.5 h-8 bg-blue-600 rounded-full mr-3'></div>
             <h3 className='text-2xl sm:text-3xl font-bold'>Thương hiệu nổi bật</h3>
           </div>
-          <button
-            className='text-blue-600 text-sm sm:text-base font-medium hover:underline flex items-center'
-            onClick={() => navigate('/brands')}
-          >
-            Xem tất cả <ChevronRight size={14} className='ml-1' />
-          </button>
+
         </div>
 
         <div className='bg-gradient-to-r from-blue-50 to-sky-50 p-4 sm:p-6 rounded-2xl'>
