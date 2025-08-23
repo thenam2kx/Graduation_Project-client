@@ -147,7 +147,7 @@ export const ContactForm = () => {
                     icon: Phone,
                     title: 'Gọi ngay',
                     subtitle: 'Tư vấn miễn phí',
-                    value: '+84 775 703 144',
+                    value: '+84 0931 696 302',
                     color: 'from-blue-500 to-cyan-500',
                     bgColor: 'bg-blue-50'
                   },
@@ -155,7 +155,7 @@ export const ContactForm = () => {
                     icon: Mail,
                     title: 'Email chúng tôi',
                     subtitle: 'Phản hồi trong 2 giờ',
-                    value: 'ygvv468@company.com',
+                    value: 'vietperfume@company.com',
                     color: 'from-green-500 to-emerald-500',
                     bgColor: 'bg-green-50'
                   },
@@ -163,7 +163,7 @@ export const ContactForm = () => {
                     icon: MapPin,
                     title: 'Địa chỉ văn phòng',
                     subtitle: 'Ghé thăm chúng tôi',
-                    value: '123 Đường ABC, Thạch Bích, Thanh oai',
+                    value: 'Trinh Văn Bô, Nam Từ Liêm, Hà Nội',
                     color: 'from-purple-500 to-pink-500',
                     bgColor: 'bg-purple-50'
                   },
@@ -203,28 +203,11 @@ export const ContactForm = () => {
                 ))}
               </div>
 
-              {/* Social Proof */}
-              <Card className='border-0 shadow-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white'>
-                <CardContent className='p-8 text-center'>
-                  <div className='flex justify-center mb-4'>
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className='w-6 h-6 text-yellow-300 fill-current animate-pulse'
-                        style={{ animationDelay: `${i * 0.1}s` }}
-                      />
-                    ))}
-                  </div>
-                  <h3 className='text-xl font-bold mb-2'>Hơn 1000+ khách hàng tin tưởng</h3>
-                  <p className='text-indigo-100'>'Dịch vụ tuyệt vời, hỗ trợ nhanh chóng và chuyên nghiệp!'</p>
-                  <div className='mt-4 text-sm text-indigo-200'>CEO - PHẠM VĂN TAM</div>
-                </CardContent>
-              </Card>
             </div>
 
             {/* Contact Form */}
             <div className='lg:col-span-3'>
-              <Card className='border-0 shadow-2xl bg-white/90 backdrop-blur-lg overflow-hidden'>
+              <Card className='border-0 shadow bg-white/90 backdrop-blur-lg overflow-hidden pb-10'>
                 <div className='absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500'></div>
 
                 <CardContent className='p-10'>
@@ -400,6 +383,23 @@ export const ContactForm = () => {
               </Card>
             </div>
           </div>
+          {/* Social Proof */}
+          <Card className='border-0 mt-10 shadow-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white'>
+            <CardContent className='p-8 text-center'>
+              <div className='flex justify-center mb-4'>
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className='w-6 h-6 text-yellow-300 fill-current animate-pulse'
+                    style={{ animationDelay: `${i * 0.1}s` }}
+                  />
+                ))}
+              </div>
+              <h3 className='text-xl font-bold mb-2'>Hơn 1000+ khách hàng tin tưởng</h3>
+              <p className='text-indigo-100'>'Dịch vụ tuyệt vời, hỗ trợ nhanh chóng và chuyên nghiệp!'</p>
+              <div className='mt-4 text-sm text-indigo-200'>CEO - PHẠM VĂN TAM</div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

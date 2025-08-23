@@ -256,7 +256,7 @@ const ProductDetail = () => {
     <div className="bg-white flex flex-row justify-center w-full">
       <div className="bg-white overflow-hidden w-full max-w-[1440px] relative px-4 md:px-8">
         {/* Breadcrumb */}
-        <div className="py-4 mt-[80px]">
+        <div className="py-4">
           <Breadcrumb>
             <BreadcrumbList className="flex items-center gap-2">
               <BreadcrumbItem>

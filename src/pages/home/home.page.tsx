@@ -42,13 +42,13 @@ interface Review {
 }
 
 const bannerSlides = [
-  {
-    title: 'Khám phá nước hoa chính hãng',
-    desc: 'Nước hoa nam & nữ - Sang trọng, quyến rũ, cá tính',
-    img: 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=1000',
-    btn: 'Mua ngay',
-    bgColor: 'from-purple-600 to-blue-400'
-  },
+  // {
+  //   title: 'Khám phá nước hoa chính hãng',
+  //   desc: 'Nước hoa nam & nữ - Sang trọng, quyến rũ, cá tính',
+  //   img: 'https://images.unsplash.com/photo-1615368144592-35d25066b873?q=80&w=1000',
+  //   btn: 'Mua ngay',
+  //   bgColor: 'from-purple-600 to-blue-400'
+  // },
   {
     title: 'Ưu đãi mùa hè',
     desc: 'Giảm giá lên đến 30% cho nước hoa hot',
