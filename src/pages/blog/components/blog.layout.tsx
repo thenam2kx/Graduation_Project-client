@@ -33,7 +33,7 @@ export const BlogLayout: React.FC<BlogLayoutProps> = ({
   return (
     <div className='bg-gradient-to-b from-[#b7d1d2]/30 to-gray-50 min-h-screen p-3 md:p-6'>
       {/* Header */}
-      <header className='container mx-auto mb-6'>
+      <header className='container mx-auto' style={{ marginBottom: '24px' }}>
         <div className='bg-white rounded-xl shadow-lg p-4 md:p-6'>
           <Breadcrumb className='mb-2'>
             <BreadcrumbList className='flex items-center gap-[15px]'>
