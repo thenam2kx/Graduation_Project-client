@@ -106,9 +106,9 @@ const ReviewForm = ({ productId, orderId, onSuccess }: ReviewFormProps) => {
     return (
       <div className="bg-gray-50 p-4 rounded-lg">
         {reviewCount === 0 ? (
-          <p>Bạn cần mua sản phẩm này trước khi đánh giá.</p>
+          <p>Bạn cần mua sản phẩm này và hoàn thành đơn hàng trước khi đánh giá. Đánh giá sản phẩm từ trang quản lý đơn hàng.</p>
         ) : (
-          <p>Bạn đã đạt giới hạn đánh giá cho sản phẩm này (tối đa 2 lần).</p>
+          <p>Bạn đã đạt giới hạn đánh giá cho sản phẩm này (tối đa 2 lần). Để đánh giá lại, bạn cần mua lại sản phẩm.</p>
         )}
       </div>
     )
@@ -207,7 +207,7 @@ const ReviewForm = ({ productId, orderId, onSuccess }: ReviewFormProps) => {
         {submitting ? 'Đang gửi...' : 'Gửi đánh giá'}
       </Button>
       <p className="text-xs text-gray-500 mt-2">
-        Đánh giá của bạn sẽ được hiển thị ngay sau khi gửi.
+        Lưu ý: Chỉ có thể đánh giá sản phẩm từ đơn hàng đã hoàn thành. Mỗi sản phẩm chỉ được đánh giá tối đa 2 lần.
       </p>
     </div>
   )
