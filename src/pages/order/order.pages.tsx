@@ -211,6 +211,16 @@ const OrdersPages = () => {
                             <span>Ngày giao dự kiến: {order.estimatedDelivery}</span>
                             <span>Thanh toán: {getPaymentMethodLabel(order.paymentMethod)}</span>
                           </div>
+                          {orders.find(o => o._id === order.id)?.reason && (order.status === 'cancelled' || order.status === 'refunded') && (
+                            <div className='mt-2 p-2 bg-red-50 border border-red-200 rounded-md'>
+                              <span className='text-sm font-medium text-red-800'>
+                                {order.status === 'cancelled' ? 'Lý do hủy:' : 'Lý do hoàn tiền:'}
+                              </span>
+                              <span className='text-sm text-red-700 ml-2'>
+                                {orders.find(o => o._id === order.id)?.reason}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 

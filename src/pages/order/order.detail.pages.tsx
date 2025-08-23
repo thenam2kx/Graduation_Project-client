@@ -208,6 +208,18 @@ const OrderDetails = () => {
                         <p className='font-medium text-gray-900'>{getShippingMethodLabel(order.shippingMethod)}</p>
                       </div>
                     </div>
+                    
+                    {order.reason && (order.status === 'cancelled' || order.status === 'refunded') && (
+                      <div className='flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-200'>
+                        <div className='w-4 h-4 rounded-full bg-red-500 mt-0.5 flex-shrink-0'></div>
+                        <div>
+                          <p className='text-sm font-medium text-red-800'>
+                            {order.status === 'cancelled' ? 'Lý do hủy đơn:' : 'Lý do hoàn tiền:'}
+                          </p>
+                          <p className='text-sm text-red-700 mt-1'>{order.reason}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
