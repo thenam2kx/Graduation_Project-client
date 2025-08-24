@@ -145,6 +145,29 @@ export default function ShoppingCartPage() {
   const discountAmount = appliedDiscount?.discountAmount || 0
   const total = subtotal + shippingFee - discountAmount
 
+  // Tự động áp dụng lại mã giảm giá khi selectedItems thay đổi
+  useEffect(() => {
+    if (appliedDiscount && selectedCartItems.length > 0) {
+      // Gọi lại API áp dụng mã giảm giá với subtotal mới
+      const reapplyDiscount = async () => {
+        try {
+          const { applyDiscountAPI } = await import('@/services/discount-service/discount.apis')
+          const response = await applyDiscountAPI(appliedDiscount.discount.code, subtotal)
+          if (response && response.data) {
+            setAppliedDiscount(response.data)
+          }
+        } catch (error) {
+          // Nếu mã không còn hợp lệ với giá trị mới, xóa mã giảm giá
+          setAppliedDiscount(null)
+        }
+      }
+      reapplyDiscount()
+    } else if (appliedDiscount && selectedCartItems.length === 0) {
+      // Nếu không có sản phẩm nào được chọn, xóa mã giảm giá
+      setAppliedDiscount(null)
+    }
+  }, [selectedItems, subtotal])
+
 
   return (
     <div>
