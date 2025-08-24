@@ -26,7 +26,7 @@ const OrderDetails = () => {
   const [searchParams] = useSearchParams()
   const tab = searchParams.get('tab') || 'pending'
 
-  const { data: order, isLoading } = useQuery<IOrder>({
+  const { data: order, isLoading, error } = useQuery<IOrder>({
     queryKey: ['order', orderId],
     queryFn: async () => {
       const res = await instance.get(`/api/v1/orders/${orderId}`)
@@ -102,6 +102,22 @@ const OrderDetails = () => {
     )
   }
 
+  if (error) {
+    console.error('Error fetching order:', error)
+    return (
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center'>
+        <Card className='p-8 text-center'>
+          <CardContent>
+            <Package className='h-16 w-16 text-red-400 mx-auto mb-4' />
+            <h2 className='text-xl font-semibold text-gray-900 mb-2'>Lỗi tải đơn hàng</h2>
+            <p className='text-gray-600'>Có lỗi xảy ra khi tải thông tin đơn hàng. Vui lòng thử lại.</p>
+            <p className='text-red-600 text-sm mt-2'>{error?.message || 'Unknown error'}</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   if (!order) {
     return (
       <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center'>
@@ -125,7 +141,7 @@ const OrderDetails = () => {
             variant='ghost'
             size='sm'
             className='p-2 h-auto hover:bg-white/50 rounded-full transition-all duration-200'
-            onClick={() => nav(`/account/683f11fbc1c5cb3b5e991c17/order?tab=${tab}`)} // thay userId nếu cần
+            onClick={() => nav(`/account/${order?.userId?._id}/order?tab=${tab}`)}
           >
             <ArrowLeft className='h-5 w-5 text-gray-700' />
           </Button>
@@ -175,7 +191,7 @@ const OrderDetails = () => {
                       <Tag className='h-4 w-4 text-gray-500' />
                       <div>
                         <p className='text-sm text-gray-600'>Mã giảm giá</p>
-                        <p className='font-medium text-gray-900'>{order.discountId || 'Không áp dụng'}</p>
+                        <p className='font-medium text-gray-900'>{order.discountId?.name || 'Không áp dụng'}</p>
                       </div>
                     </div>
                   </div>
@@ -321,7 +337,7 @@ const OrderDetails = () => {
                   {order.discountId && (
                     <div className='flex justify-between items-center'>
                       <span className='text-blue-100'>Giảm giá:</span>
-                      <span className='font-medium text-green-300'>-{formatCurrency(0)}</span>
+                      <span className='font-medium text-green-300'>-{formatCurrency(order.discountId?.value || 0)}</span>
                     </div>
                   )}
 
