@@ -1,35 +1,21 @@
-import ReviewForm from './review-form'
 import ReviewList from './review-list'
-import { useAppSelector } from '@/redux/hooks'
-import { Separator } from '@/components/ui/separator'
 
 interface ProductReviewsProps {
   productId: string;
-  orderId?: string;
 }
 
-const ProductReviews = ({ productId, orderId }: ProductReviewsProps) => {
-  const isLoggedIn = useAppSelector((state) => !!state.auth.user)
-
+const ProductReviews = ({ productId }: ProductReviewsProps) => {
   return (
     <div>
       <h3 className="text-lg font-semibold mb-4">Đánh giá sản phẩm</h3>
       {/* Danh sách đánh giá */}
       <ReviewList productId={productId} />
-      <Separator className="my-6" />
-      {/* Form đánh giá */}
-      <div className="mt-6">
-        <h4 className="text-base font-medium mb-4">Viết đánh giá của bạn</h4>
-        {isLoggedIn ? (
-          <ReviewForm
-            productId={productId}
-            orderId={orderId}
-          />
-        ) : (
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p>Vui lòng đăng nhập để đánh giá sản phẩm.</p>
-          </div>
-        )}
+      
+      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <p className="text-blue-800 text-sm">
+          💡 <strong>Lưu ý:</strong> Để đánh giá sản phẩm, bạn cần mua sản phẩm và sau khi nhận hàng, 
+          vào phần "Quản lý đơn hàng" để đánh giá.
+        </p>
       </div>
     </div>
   )

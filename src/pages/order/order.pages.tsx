@@ -11,9 +11,11 @@ import { cn } from '@/lib/utils'
 import type { IOrder, OrderItem } from '@/types/order'
 import { getPaymentMethodLabel, ORDER_STATUS, CANCEL_REASONS, REFUND_REASONS } from './order.constant.pages'
 import { confirmReceivedOrderAPI, fetchUserOrdersAPI, useRefreshOrders } from '@/services/order-service/order.apis'
+import { checkOrderReviewed } from '@/services/review-service/review.apis'
 import { toast } from 'react-toastify'
 import Modal from './order.modal.pages'
 import ReasonSelector from './order.reason.selector.pages'
+import OrderReviewModal from '@/components/review/order-review-modal'
 
 
 type TabType = (typeof ORDER_STATUS)[number]['key']
@@ -28,6 +30,9 @@ const OrdersPages = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [selectedReason, setSelectedReason] = useState('')
   const [customReason, setCustomReason] = useState('')
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [selectedOrderForReview, setSelectedOrderForReview] = useState<string | null>(null)
+  const [reviewedOrders, setReviewedOrders] = useState<Set<string>>(new Set())
 
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -59,6 +64,31 @@ const OrdersPages = () => {
   }, [user?._id, refetch])
 
   const orders: IOrder[] = data?.results || []
+
+  // Kiểm tra trạng thái đánh giá của các đơn hàng completed
+  useEffect(() => {
+    const checkReviewStatus = async () => {
+      const completedOrders = orders.filter(order => order.status === 'completed')
+      const reviewedSet = new Set<string>()
+      
+      for (const order of completedOrders) {
+        try {
+          const result = await checkOrderReviewed(order._id)
+          if (result.data?.isReviewed) {
+            reviewedSet.add(order._id)
+          }
+        } catch (error) {
+          console.error('Error checking review status:', error)
+        }
+      }
+      
+      setReviewedOrders(reviewedSet)
+    }
+    
+    if (orders.length > 0) {
+      checkReviewStatus()
+    }
+  }, [orders])
 
   const updateStatus = useMutation({
     mutationFn: async ({ orderId, status, reason }: { orderId: string; status: string; reason?: string }) => {
@@ -256,9 +286,12 @@ const OrdersPages = () => {
                               Hủy đơn
                             </Button>
                           )}
-                          {order.status === 'completed' && (
+                          {order.status === 'completed' && !reviewedOrders.has(order.id) && (
                             <Button
-                              onClick={() => navigate(`/review/order/${order.id}`)}
+                              onClick={() => {
+                                setSelectedOrderForReview(order.id)
+                                setShowReviewModal(true)
+                              }}
                               className='bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg'
                             >
                               Đánh giá sản phẩm
@@ -334,6 +367,21 @@ const OrdersPages = () => {
           }
         />
       </Modal>
+
+      <OrderReviewModal
+        orderId={selectedOrderForReview || ''}
+        isOpen={showReviewModal}
+        onClose={() => {
+          setShowReviewModal(false)
+          setSelectedOrderForReview(null)
+        }}
+        onSuccess={() => {
+          // Cập nhật trạng thái đã đánh giá
+          if (selectedOrderForReview) {
+            setReviewedOrders(prev => new Set([...prev, selectedOrderForReview]))
+          }
+        }}
+      />
     </div>
   )
 }

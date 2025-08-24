@@ -129,6 +129,25 @@ export const checkProductReviewableFromOrder = async (orderId: string) => {
   }
 };
 
+// Kiểm tra đơn hàng đã được đánh giá chưa
+export const checkOrderReviewed = async (orderId: string) => {
+  try {
+    const response = await axiosInstance.get(`/api/v1/reviews/order/${orderId}/reviewed`);
+    return response.data || {
+      success: true,
+      data: { isReviewed: false },
+      message: 'Chưa kiểm tra được trạng thái đánh giá'
+    };
+  } catch (error) {
+    console.error('Lỗi khi kiểm tra trạng thái đánh giá đơn hàng:', error);
+    return {
+      success: false,
+      data: { isReviewed: false },
+      message: 'Lỗi khi kiểm tra trạng thái đánh giá'
+    };
+  }
+};
+
 // Lấy danh sách sản phẩm có thể đánh giá theo userId
 export const getReviewableProducts = async (userId: string) => {
   try {
@@ -170,17 +189,8 @@ export const createReview = async (reviewData: {
 }) => {
   try {
     const response = await axiosInstance.post('/api/v1/reviews', reviewData);
-    return response.data || {
-      success: false,
-      data: null,
-      message: 'Lỗi khi tạo đánh giá'
-    };
-  } catch (error) {
-    console.error('Lỗi khi tạo đánh giá:', error);
-    return {
-      success: false,
-      data: null,
-      message: 'Lỗi khi tạo đánh giá'
-    };
+    return response.data;
+  } catch (error: any) {
+    throw error;
   }
 };
